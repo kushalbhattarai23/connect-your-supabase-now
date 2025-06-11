@@ -11,6 +11,10 @@ import { getEnabledApps } from "@/config/apps";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import Landing from "@/pages/Landing";
 import SettingsPage from '@/pages/Settings';
+import WalletDetail from '@/apps/finance/pages/WalletDetail';
+import CategoryDetail from '@/apps/finance/pages/CategoryDetail';
+import UniverseDashboard from '@/apps/tv-shows/pages/UniverseDashboard';
+
 const queryClient = new QueryClient();
 
 const AppRoutes = () => {
@@ -43,8 +47,11 @@ const AppRoutes = () => {
             />
           ))
         )}
-        <Route path="*" element={<div>Page not found</div>} />
+        <Route path="/finance/wallet/:walletId" element={<WalletDetail />} />
+        <Route path="/finance/category/:categoryId" element={<CategoryDetail />} />
+        <Route path="/tv-shows/universe/:universeId/dashboard" element={<UniverseDashboard />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="*" element={<div>Page not found</div>} />
       </Routes>
     </AppLayout>
   );

@@ -48,6 +48,7 @@ export const useTransfers = () => {
     mutationFn: async (transfer: Omit<Transfer, 'id' | 'created_at' | 'updated_at' | 'user_id' | 'status'>) => {
       if (!user) throw new Error('User not authenticated');
       
+      // The database trigger will handle the wallet balance updates automatically
       const { data, error } = await supabase
         .from('transfers')
         .insert({
@@ -64,7 +65,7 @@ export const useTransfers = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transfers'] });
       queryClient.invalidateQueries({ queryKey: ['wallets'] });
-      toast({ title: 'Transfer created successfully' });
+      toast({ title: 'Transfer completed successfully - wallet balances updated' });
     },
     onError: (error: Error) => {
       toast({ title: 'Error creating transfer', description: error.message, variant: 'destructive' });
@@ -73,6 +74,7 @@ export const useTransfers = () => {
 
   const updateTransfer = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Transfer> & { id: string }) => {
+      // The database trigger will handle the wallet balance updates automatically
       const { data, error } = await supabase
         .from('transfers')
         .update(updates)
@@ -86,7 +88,7 @@ export const useTransfers = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transfers'] });
       queryClient.invalidateQueries({ queryKey: ['wallets'] });
-      toast({ title: 'Transfer updated successfully' });
+      toast({ title: 'Transfer updated successfully - wallet balances updated' });
     },
     onError: (error: Error) => {
       toast({ title: 'Error updating transfer', description: error.message, variant: 'destructive' });
@@ -95,6 +97,7 @@ export const useTransfers = () => {
 
   const deleteTransfer = useMutation({
     mutationFn: async (id: string) => {
+      // The database trigger will handle the wallet balance updates automatically
       const { error } = await supabase
         .from('transfers')
         .delete()
@@ -105,7 +108,7 @@ export const useTransfers = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transfers'] });
       queryClient.invalidateQueries({ queryKey: ['wallets'] });
-      toast({ title: 'Transfer deleted successfully' });
+      toast({ title: 'Transfer deleted successfully - wallet balances updated' });
     },
     onError: (error: Error) => {
       toast({ title: 'Error deleting transfer', description: error.message, variant: 'destructive' });

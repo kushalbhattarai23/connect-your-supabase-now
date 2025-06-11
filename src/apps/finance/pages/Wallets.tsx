@@ -7,10 +7,12 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Wallet, Edit, Trash2 } from 'lucide-react';
+import { Plus, Wallet, Edit, Trash2, Eye } from 'lucide-react';
 import { useWallets } from '@/hooks/useWallets';
+import { useNavigate } from 'react-router-dom';
 
 export const FinanceWallets: React.FC = () => {
+  const navigate = useNavigate();
   const { wallets, isLoading, createWallet, updateWallet, deleteWallet } = useWallets();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingWallet, setEditingWallet] = useState<any>(null);
@@ -137,13 +139,16 @@ export const FinanceWallets: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {wallets.map((wallet) => (
-            <Card key={wallet.id} className="border-green-200">
+            <Card key={wallet.id} className="border-green-200 hover:shadow-lg transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <div className="flex items-center space-x-2 min-w-0 flex-1">
                   <Wallet className="h-5 w-5 text-green-600 flex-shrink-0" />
                   <CardTitle className="text-green-700 truncate">{wallet.name}</CardTitle>
                 </div>
                 <div className="flex space-x-1 flex-shrink-0">
+                  <Button size="sm" variant="ghost" onClick={() => navigate(`/finance/wallet/${wallet.id}`)}>
+                    <Eye className="h-4 w-4" />
+                  </Button>
                   <Button size="sm" variant="ghost" onClick={() => handleEdit(wallet)}>
                     <Edit className="h-4 w-4" />
                   </Button>

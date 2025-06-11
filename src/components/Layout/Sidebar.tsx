@@ -84,24 +84,26 @@ export const Sidebar: React.FC = () => {
               </div>
             </div>
             
-            {app.routes.map((route) => {
-              const Icon = getIcon(route.icon || 'Home');
-              return (
-                <Link
-                  key={route.path}
-                  to={route.path}
-                  className={cn(
-                    "flex items-center space-x-3 px-6 py-2 rounded-lg transition-colors text-sm",
-                    location.pathname === route.path
-                      ? `bg-${app.color}-100 text-${app.color}-700 dark:bg-${app.color}-900 dark:text-${app.color}-300`
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                  )}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span>{route.name}</span>
-                </Link>
-              );
-            })}
+            {app.routes
+              .filter(route => route.path !== '/tv-shows/show/:slug') // Remove this route from sidebar
+              .map((route) => {
+                const Icon = getIcon(route.icon || 'Home');
+                return (
+                  <Link
+                    key={route.path}
+                    to={route.path}
+                    className={cn(
+                      "flex items-center space-x-3 px-6 py-2 rounded-lg transition-colors text-sm",
+                      location.pathname === route.path
+                        ? `bg-${app.color}-100 text-${app.color}-700 dark:bg-${app.color}-900 dark:text-${app.color}-300`
+                        : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                    )}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span>{route.name}</span>
+                  </Link>
+                );
+              })}
           </div>
         ))}
       </nav>
