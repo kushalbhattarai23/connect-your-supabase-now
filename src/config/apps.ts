@@ -8,6 +8,7 @@ import TVShowMyShows from '@/apps/tv-shows/pages/MyShows';
 import TVShowPublicShows from '@/apps/tv-shows/pages/PublicShows';
 import TVShowPublicUniverses from '@/apps/tv-shows/pages/PublicUniverses';
 import TVShowPrivateUniverses from '@/apps/tv-shows/pages/PrivateUniverses';
+import TVShowDetail from '@/apps/tv-shows/pages/ShowDetail';
 
 import FinanceDashboard from '@/apps/finance/pages/Dashboard';
 import FinanceTransactions from '@/apps/finance/pages/Transactions';
@@ -30,6 +31,7 @@ export const appModules: AppModule[] = [
       { path: '/tv-shows', name: 'Dashboard', component: TVShowDashboard, icon: 'BarChart3' },
       { path: '/tv-shows/my-shows', name: 'My Shows', component: TVShowMyShows, icon: 'Heart' },
       { path: '/tv-shows/public-shows', name: 'Public Shows', component: TVShowPublicShows, icon: 'Globe' },
+      { path: '/tv-shows/show/:slug', name: 'Show Detail', component: TVShowDetail, icon: 'Tv' },
       { path: '/tv-shows/public-universes', name: 'Public Universes', component: TVShowPublicUniverses, icon: 'Users' },
       { path: '/tv-shows/private-universes', name: 'Private Universes', component: TVShowPrivateUniverses, icon: 'Lock' },
     ]

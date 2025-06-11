@@ -1,78 +1,138 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User } from '@/types';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Session, User, AuthError } from '@supabase/supabase-js';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: () => Promise<void>;
-  logout: () => void;
+  session: Session | null;
   isLoading: boolean;
+  error: AuthError | Error | null;
+  signUp: (email: string, password: string) => Promise<{
+    user: User | null;
+    error: AuthError | Error | null;
+  }>;
+  signIn: (email: string, password: string) => Promise<{
+    user: User | null;
+    error: AuthError | Error | null;
+  }>;
+  signInWithGoogle: () => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<AuthError | Error | null>(null);
 
   useEffect(() => {
-    // Check for existing session
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    setIsLoading(false);
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setIsLoading(false);
+      }
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const login = async (email: string, password: string) => {
-    setIsLoading(true);
+  const signUp = async (email: string, password: string) => {
     try {
-      // Mock login - replace with actual authentication
-      const mockUser: User = {
-        id: '1',
+      setError(null);
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { data, error } = await supabase.auth.signUp({
         email,
-        name: email.split('@')[0],
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`
-      };
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
+        password,
+        options: {
+          emailRedirectTo: redirectUrl
+        }
+      });
+
+      if (error) {
+        setError(error);
+        return { user: null, error };
+      }
+
+      return { user: data.user, error: null };
     } catch (error) {
-      throw new Error('Login failed');
-    } finally {
-      setIsLoading(false);
+      const authError = error as Error;
+      setError(authError);
+      return { user: null, error: authError };
     }
   };
 
-  const loginWithGoogle = async () => {
-    setIsLoading(true);
+  const signIn = async (email: string, password: string) => {
     try {
-      // Mock Google login - replace with actual Google OAuth
-      const mockUser: User = {
-        id: '1',
-        email: 'user@gmail.com',
-        name: 'John Doe',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=google'
-      };
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
+      setError(null);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        setError(error);
+        return { user: null, error };
+      }
+
+      return { user: data.user, error: null };
     } catch (error) {
-      throw new Error('Google login failed');
-    } finally {
-      setIsLoading(false);
+      const authError = error as Error;
+      setError(authError);
+      return { user: null, error: authError };
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
+  const signInWithGoogle = async () => {
+    try {
+      setError(null);
+      const redirectUrl = `${window.location.origin}/`;
+      
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl
+        }
+      });
+    } catch (error) {
+      const authError = error as Error;
+      setError(authError);
+    }
   };
 
-  return (
-    <AuthContext.Provider value={{ user, login, loginWithGoogle, logout, isLoading }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  const logout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      setError(error);
+    }
+  };
+
+  const value = {
+    user,
+    session,
+    isLoading,
+    error,
+    signUp,
+    signIn,
+    signInWithGoogle,
+    logout,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
