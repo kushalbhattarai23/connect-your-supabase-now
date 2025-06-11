@@ -56,4 +56,12 @@ export const appModules: AppModule[] = [
   }
 ];
 
-export const getEnabledApps = () => appModules.filter(app => app.enabled);
+export const getEnabledApps = (appSettings?: { enabledApps: { tvShows: boolean; finance: boolean; } }) => {
+  if (!appSettings) return appModules.filter(app => app.enabled);
+  
+  return appModules.filter(app => {
+    if (app.id === 'tv-shows') return appSettings.enabledApps.tvShows;
+    if (app.id === 'finance') return appSettings.enabledApps.finance;
+    return app.enabled;
+  });
+};

@@ -8,13 +8,15 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { LoginForm } from "@/components/Auth/LoginForm";
 import { AppLayout } from "@/components/Layout/AppLayout";
 import { getEnabledApps } from "@/config/apps";
+import { useAppSettings } from "@/hooks/useAppSettings";
 import Landing from "@/pages/Landing";
 
 const queryClient = new QueryClient();
 
 const AppRoutes = () => {
   const { user, isLoading } = useAuth();
-  const enabledApps = getEnabledApps();
+  const { settings } = useAppSettings();
+  const enabledApps = getEnabledApps(settings);
 
   if (isLoading) {
     return (
