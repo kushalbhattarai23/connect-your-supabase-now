@@ -17,6 +17,12 @@ export const Header: React.FC = () => {
 
   if (!user) return null;
 
+  // Get first initial for avatar fallback
+  const getInitial = () => {
+    if (!user.name) return '?';
+    return user.name.charAt(0).toUpperCase();
+  };
+
   return (
     <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-14 items-center justify-between px-6">
@@ -29,9 +35,9 @@ export const Header: React.FC = () => {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={user.avatar} alt={user.name} />
+                  <AvatarImage src={user.avatar} alt={user.name || 'User'} />
                   <AvatarFallback>
-                    {user.name.charAt(0).toUpperCase()}
+                    {getInitial()}
                   </AvatarFallback>
                 </Avatar>
               </Button>
@@ -39,7 +45,7 @@ export const Header: React.FC = () => {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <div className="flex items-center justify-start gap-2 p-2">
                 <div className="flex flex-col space-y-1 leading-none">
-                  <p className="font-medium">{user.name}</p>
+                  <p className="font-medium">{user.name || 'User'}</p>
                   <p className="w-[200px] truncate text-sm text-muted-foreground">
                     {user.email}
                   </p>
@@ -55,7 +61,7 @@ export const Header: React.FC = () => {
                 <span>Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout}>
+              <DropdownMenuItem onClick={() => logout()}>
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>
@@ -66,3 +72,5 @@ export const Header: React.FC = () => {
     </header>
   );
 };
+
+export default Header;

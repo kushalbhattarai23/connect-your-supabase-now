@@ -1,7 +1,9 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Session, User, AuthError } from '@supabase/supabase-js';
+import { Session, User as SupabaseUser, AuthError } from '@supabase/supabase-js';
+import { User } from '@/types';
+import { adaptSupabaseUser } from '@/utils/type-adapters';
 
 interface AuthContextType {
   user: User | null;
@@ -18,6 +20,12 @@ interface AuthContextType {
   }>;
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
+  // Aliases for more intuitive naming
+  login: (email: string, password: string) => Promise<{
+    user: User | null;
+    error: AuthError | Error | null;
+  }>;
+  loginWithGoogle: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,7 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
-        setUser(session?.user ?? null);
+        setUser(session?.user ? adaptSupabaseUser(session.user) : null);
         setIsLoading(false);
       }
     );
@@ -41,7 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      setUser(session?.user ?? null);
+      setUser(session?.user ? adaptSupabaseUser(session.user) : null);
       setIsLoading(false);
     });
 
@@ -68,7 +76,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { user: null, error };
       }
 
-      return { user: data.user, error: null };
+      const adaptedUser = data.user ? adaptSupabaseUser(data.user) : null;
+      return { user: adaptedUser, error: null };
     } catch (error) {
       const authError = error as Error;
       setError(authError);
@@ -89,7 +98,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { user: null, error };
       }
 
-      return { user: data.user, error: null };
+      const adaptedUser = data.user ? adaptSupabaseUser(data.user) : null;
+      return { user: adaptedUser, error: null };
     } catch (error) {
       const authError = error as Error;
       setError(authError);
@@ -130,6 +140,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn,
     signInWithGoogle,
     logout,
+    // Aliases for more intuitive naming
+    login: signIn,
+    loginWithGoogle: signInWithGoogle,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

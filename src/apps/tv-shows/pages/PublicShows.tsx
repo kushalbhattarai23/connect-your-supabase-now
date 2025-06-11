@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
-import { Loader2, Search, Tv, Globe } from 'lucide-react';
+import { Loader2, Search, Tv as TvIcon, Globe } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Show } from '@/types';
+import { adaptDbShowToShow } from '@/utils/type-adapters';
 
 export const TVShowPublicShows: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -32,7 +33,7 @@ export const TVShowPublicShows: React.FC = () => {
         throw error;
       }
 
-      return data as Show[];
+      return data ? data.map(adaptDbShowToShow) : [];
     } catch (error: any) {
       toast({
         title: 'Error fetching shows',
@@ -103,7 +104,7 @@ export const TVShowPublicShows: React.FC = () => {
                   </div>
                 ) : (
                   <div className="aspect-video w-full bg-muted flex items-center justify-center">
-                    <Tv className="h-12 w-12 text-muted-foreground" />
+                    <TvIcon className="h-12 w-12 text-muted-foreground" />
                   </div>
                 )}
                 <CardHeader className="pb-2">

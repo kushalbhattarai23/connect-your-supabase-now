@@ -8,10 +8,11 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Loader2, Heart, HeartOff, Eye, CheckCircle, Calendar, Clock } from 'lucide-react';
+import { Loader2, Heart, HeartOff, Eye, CheckCircle, Calendar, Clock, Tv as TvIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Show, Episode } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
+import { adaptDbShowToShow, adaptDbEpisodeToEpisode } from '@/utils/type-adapters';
 
 interface EpisodesBySeasonMap {
   [key: number]: {
@@ -51,7 +52,7 @@ export const ShowDetail = () => {
         if (error) throw error;
         if (!data) throw new Error('Show not found');
         
-        return data as Show;
+        return adaptDbShowToShow(data);
       } catch (error: any) {
         toast({
           title: 'Error fetching show',
@@ -98,13 +99,12 @@ export const ShowDetail = () => {
           }
         }
         
-        // Add watched status to episodes
-        const episodesWithStatus = episodes?.map(ep => ({
-          ...ep,
-          watched: !!watchedStatus[ep.id]
-        })) || [];
+        // Add watched status to episodes using our adapter
+        const adaptedEpisodes = episodes ? episodes.map(ep => 
+          adaptDbEpisodeToEpisode(ep, !!watchedStatus[ep.id])
+        ) : [];
         
-        return episodesWithStatus as Episode[];
+        return adaptedEpisodes;
       } catch (error: any) {
         toast({
           title: 'Error fetching episodes',
@@ -299,7 +299,7 @@ export const ShowDetail = () => {
               </div>
             ) : (
               <div className="aspect-[2/3] w-full bg-muted flex items-center justify-center">
-                <Tv className="h-16 w-16 text-muted-foreground" />
+                <TvIcon className="h-16 w-16 text-muted-foreground" />
               </div>
             )}
             

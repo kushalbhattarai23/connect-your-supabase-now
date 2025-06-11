@@ -7,28 +7,37 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { LogIn, Mail } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 export const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login, loginWithGoogle } = useAuth();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
     try {
-      await login(email, password);
-      toast({
-        title: "Welcome back!",
-        description: "You have been successfully logged in.",
-      });
-    } catch (error) {
+      const { user, error } = await login(email, password);
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else if (user) {
+        toast({
+          title: "Welcome back!",
+          description: "You have been successfully logged in.",
+        });
+      }
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Login failed. Please try again.",
+        description: error.message || "Login failed. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -40,11 +49,8 @@ export const LoginForm: React.FC = () => {
     setIsLoading(true);
     try {
       await loginWithGoogle();
-      toast({
-        title: "Welcome!",
-        description: "You have been successfully logged in with Google.",
-      });
-    } catch (error) {
+      // Success toast is handled by onAuthStateChange in useAuth
+    } catch (error: any) {
       toast({
         title: "Error",
         description: "Google login failed. Please try again.",
@@ -119,3 +125,5 @@ export const LoginForm: React.FC = () => {
     </div>
   );
 };
+
+export default LoginForm;

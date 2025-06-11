@@ -96,11 +96,14 @@ export const Landing: React.FC = () => {
     );
   }
 
+  // User is logged in
+  const userName = user.name || 'User';
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-6 py-12">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">Welcome back, {user.name}!</h1>
+          <h1 className="text-4xl font-bold mb-4">Welcome back, {userName}!</h1>
           <p className="text-xl text-muted-foreground">
             Choose an application to get started
           </p>
