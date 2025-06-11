@@ -1,4 +1,3 @@
-
 export interface AppModule {
   id: string;
   name: string;
@@ -35,6 +34,7 @@ export interface Show {
   poster?: string;
   airDate?: string;
   genres?: string[];
+  description?: string;
 }
 
 export interface Episode {
