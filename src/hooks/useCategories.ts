@@ -8,10 +8,11 @@ export interface Category {
   id: string;
   name: string;
   color: string;
-  type: 'income' | 'expense';
+  type?: 'income' | 'expense';
   user_id: string;
   created_at: string;
   updated_at: string;
+  organization_id?: string;
 }
 
 export const useCategories = () => {
