@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
 import { Plus, Tag, Edit, Trash2 } from 'lucide-react';
 import { useCategories } from '@/hooks/useCategories';
 
@@ -27,7 +26,6 @@ export const FinanceCategories: React.FC = () => {
   const [editingCategory, setEditingCategory] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: '',
-    type: 'expense' as 'income' | 'expense',
     color: '#22C55E'
   });
 
@@ -42,14 +40,13 @@ export const FinanceCategories: React.FC = () => {
     
     setIsDialogOpen(false);
     setEditingCategory(null);
-    setFormData({ name: '', type: 'expense', color: '#22C55E' });
+    setFormData({ name: '', color: '#22C55E' });
   };
 
   const handleEdit = (category: any) => {
     setEditingCategory(category);
     setFormData({
       name: category.name,
-      type: category.type,
       color: category.color
     });
     setIsDialogOpen(true);
@@ -60,9 +57,6 @@ export const FinanceCategories: React.FC = () => {
       deleteCategory.mutate(id);
     }
   };
-
-  const incomeCategories = categories.filter(cat => cat.type === 'income');
-  const expenseCategories = categories.filter(cat => cat.type === 'expense');
 
   return (
     <div className="space-y-6">
@@ -90,22 +84,9 @@ export const FinanceCategories: React.FC = () => {
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g., Groceries, Salary"
+                  placeholder="e.g., Groceries, Entertainment"
                   required
                 />
-              </div>
-              
-              <div>
-                <Label htmlFor="type">Type</Label>
-                <Select value={formData.type} onValueChange={(value: 'income' | 'expense') => setFormData({ ...formData, type: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="income">Income</SelectItem>
-                    <SelectItem value="expense">Expense</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
               
               <div>
@@ -142,87 +123,37 @@ export const FinanceCategories: React.FC = () => {
       
       {isLoading ? (
         <div className="text-center py-8">Loading categories...</div>
+      ) : categories.length === 0 ? (
+        <Card className="border-green-200">
+          <CardContent className="text-center py-8">
+            <Tag className="h-12 w-12 text-green-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No Categories Yet</h3>
+            <p className="text-muted-foreground mb-4">Create your first category to organize your transactions</p>
+          </CardContent>
+        </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Income Categories */}
-          <Card className="border-green-200">
-            <CardHeader>
-              <CardTitle className="text-green-700 flex items-center">
-                <Tag className="h-5 w-5 mr-2" />
-                Income Categories
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {incomeCategories.length === 0 ? (
-                <p className="text-muted-foreground text-center py-4">No income categories yet</p>
-              ) : (
-                <div className="space-y-3">
-                  {incomeCategories.map((category) => (
-                    <div key={category.id} className="flex items-center justify-between p-3 border border-green-200 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div 
-                          className="w-4 h-4 rounded-full" 
-                          style={{ backgroundColor: category.color }}
-                        />
-                        <span className="font-medium">{category.name}</span>
-                        <Badge variant="outline" className="border-green-200 text-green-700">
-                          Income
-                        </Badge>
-                      </div>
-                      <div className="flex space-x-1">
-                        <Button size="sm" variant="ghost" onClick={() => handleEdit(category)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => handleDelete(category.id)}>
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {categories.map((category) => (
+            <Card key={category.id} className="border-green-200">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div className="flex items-center space-x-2">
+                  <div 
+                    className="w-4 h-4 rounded-full" 
+                    style={{ backgroundColor: category.color }}
+                  />
+                  <CardTitle className="text-green-700">{category.name}</CardTitle>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Expense Categories */}
-          <Card className="border-green-200">
-            <CardHeader>
-              <CardTitle className="text-green-700 flex items-center">
-                <Tag className="h-5 w-5 mr-2" />
-                Expense Categories
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {expenseCategories.length === 0 ? (
-                <p className="text-muted-foreground text-center py-4">No expense categories yet</p>
-              ) : (
-                <div className="space-y-3">
-                  {expenseCategories.map((category) => (
-                    <div key={category.id} className="flex items-center justify-between p-3 border border-green-200 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div 
-                          className="w-4 h-4 rounded-full" 
-                          style={{ backgroundColor: category.color }}
-                        />
-                        <span className="font-medium">{category.name}</span>
-                        <Badge variant="outline" className="border-red-200 text-red-700">
-                          Expense
-                        </Badge>
-                      </div>
-                      <div className="flex space-x-1">
-                        <Button size="sm" variant="ghost" onClick={() => handleEdit(category)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => handleDelete(category.id)}>
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                <div className="flex space-x-1">
+                  <Button size="sm" variant="ghost" onClick={() => handleEdit(category)}>
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => handleDelete(category.id)}>
+                    <Trash2 className="h-4 w-4 text-red-500" />
+                  </Button>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardHeader>
+            </Card>
+          ))}
         </div>
       )}
     </div>

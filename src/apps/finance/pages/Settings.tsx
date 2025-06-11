@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -5,11 +6,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Download, Upload, BadgeIndianRupee, CreditCard, ArrowRight } from 'lucide-react';
+import { Download, Upload, BadgeIndianRupee } from 'lucide-react';
 import { currencies, defaultCurrency } from '@/config/currencies';
 import { useWallets } from '@/hooks/useWallets';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useCategories } from '@/hooks/useCategories';
+import { useTransfers } from '@/hooks/useTransfers';
 import { useAppSettings } from '@/hooks/useAppSettings';
 
 export const FinanceSettings: React.FC = () => {
@@ -18,6 +20,7 @@ export const FinanceSettings: React.FC = () => {
   const { wallets } = useWallets();
   const { transactions } = useTransactions();
   const { categories } = useCategories();
+  const { transfers } = useTransfers();
   const { settings, toggleApp } = useAppSettings();
 
   const handleCurrencyChange = (value: string) => {
@@ -58,8 +61,15 @@ export const FinanceSettings: React.FC = () => {
         })),
         categories: categories.map(c => ({
           name: c.name,
-          color: c.color,
-          type: c.type
+          color: c.color
+        })),
+        transfers: transfers.map(t => ({
+          from_wallet_id: t.from_wallet_id,
+          to_wallet_id: t.to_wallet_id,
+          amount: t.amount,
+          date: t.date,
+          description: t.description,
+          status: t.status
         })),
         exportDate: new Date().toISOString()
       };
@@ -94,7 +104,7 @@ export const FinanceSettings: React.FC = () => {
           try {
             const jsonData = JSON.parse(event.target?.result as string);
             
-            if (!jsonData.wallets || !jsonData.transactions || !jsonData.categories) {
+            if (!jsonData.wallets || !jsonData.transactions || !jsonData.categories || !jsonData.transfers) {
               throw new Error('Invalid file format');
             }
             

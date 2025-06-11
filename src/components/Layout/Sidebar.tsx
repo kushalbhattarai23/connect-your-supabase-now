@@ -2,6 +2,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { getEnabledApps } from '@/config/apps';
+import { useAppSettings } from '@/hooks/useAppSettings';
 import { cn } from '@/lib/utils';
 import { 
   Tv, 
@@ -39,7 +40,8 @@ const iconMap = {
 
 export const Sidebar: React.FC = () => {
   const location = useLocation();
-  const enabledApps = getEnabledApps();
+  const { settings } = useAppSettings();
+  const enabledApps = getEnabledApps(settings);
 
   const getIcon = (iconName: string) => {
     const IconComponent = iconMap[iconName as keyof typeof iconMap];
