@@ -15,6 +15,8 @@ export interface Transfer {
   user_id: string;
   created_at: string;
   updated_at: string;
+  from_wallet?: { name: string };
+  to_wallet?: { name: string };
 }
 
 export const useTransfers = () => {

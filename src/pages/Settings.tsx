@@ -130,13 +130,13 @@ export const FinanceSettings: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto px-4 py-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-green-700">Finance Settings</h1>
-        <p className="text-muted-foreground">Configure your finance preferences</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-green-700">Finance Settings</h1>
+        <p className="text-muted-foreground text-sm sm:text-base">Configure your finance preferences</p>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="border-green-200">
           <CardHeader>
             <CardTitle className="text-green-700">App Preferences</CardTitle>
@@ -144,7 +144,7 @@ export const FinanceSettings: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
-              <div>
+              <div className="flex-1 min-w-0">
                 <Label htmlFor="tv-shows-toggle">TV Show Tracker</Label>
                 <p className="text-sm text-muted-foreground">
                   Track your favorite TV shows and episodes
@@ -154,11 +154,12 @@ export const FinanceSettings: React.FC = () => {
                 id="tv-shows-toggle" 
                 checked={settings.enabledApps.tvShows}
                 onCheckedChange={() => toggleApp('tvShows')}
+                className="flex-shrink-0"
               />
             </div>
             
             <div className="flex items-center justify-between">
-              <div>
+              <div className="flex-1 min-w-0">
                 <Label htmlFor="finance-toggle">Finance Manager</Label>
                 <p className="text-sm text-muted-foreground">
                   Manage your personal finances and expenses
@@ -168,6 +169,7 @@ export const FinanceSettings: React.FC = () => {
                 id="finance-toggle" 
                 checked={settings.enabledApps.finance}
                 onCheckedChange={() => toggleApp('finance')}
+                className="flex-shrink-0"
               />
             </div>
           </CardContent>
@@ -254,33 +256,33 @@ export const FinanceSettings: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
-              <div>
+              <div className="flex-1 min-w-0">
                 <Label htmlFor="show-cents">Show Cents</Label>
                 <p className="text-sm text-muted-foreground">
                   Display decimal places in monetary values
                 </p>
               </div>
-              <Switch id="show-cents" defaultChecked />
+              <Switch id="show-cents" defaultChecked className="flex-shrink-0" />
             </div>
             
             <div className="flex items-center justify-between">
-              <div>
+              <div className="flex-1 min-w-0">
                 <Label htmlFor="thousand-separator">Use Thousand Separator</Label>
                 <p className="text-sm text-muted-foreground">
                   Add commas to separate thousands in numbers
                 </p>
               </div>
-              <Switch id="thousand-separator" defaultChecked />
+              <Switch id="thousand-separator" defaultChecked className="flex-shrink-0" />
             </div>
             
             <div className="flex items-center justify-between">
-              <div>
+              <div className="flex-1 min-w-0">
                 <Label htmlFor="colorize-amounts">Colorize Amounts</Label>
                 <p className="text-sm text-muted-foreground">
                   Show expenses in red and income in green
                 </p>
               </div>
-              <Switch id="colorize-amounts" defaultChecked />
+              <Switch id="colorize-amounts" defaultChecked className="flex-shrink-0" />
             </div>
           </CardContent>
         </Card>

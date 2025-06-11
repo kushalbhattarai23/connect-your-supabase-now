@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface AppSettings {
   enabledApps: {
@@ -17,6 +18,7 @@ const defaultSettings: AppSettings = {
 
 export const useAppSettings = () => {
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
+  const { logout } = useAuth();
 
   useEffect(() => {
     const savedSettings = localStorage.getItem('appSettings');
@@ -35,13 +37,16 @@ export const useAppSettings = () => {
     localStorage.setItem('appSettings', JSON.stringify(updatedSettings));
   };
 
-  const toggleApp = (app: 'tvShows' | 'finance') => {
+  const toggleApp = async (app: 'tvShows' | 'finance') => {
     updateSettings({
       enabledApps: {
         ...settings.enabledApps,
         [app]: !settings.enabledApps[app]
       }
     });
+    
+    // Log out user when app preferences change
+    await logout();
   };
 
   return {

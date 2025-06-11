@@ -62,21 +62,21 @@ export const FinanceTransfers: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="container mx-auto px-4 py-6 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-green-700">Transfers</h1>
-          <p className="text-muted-foreground">Transfer money between wallets</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-green-700">Transfers</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">Transfer money between wallets</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-green-600 hover:bg-green-700">
+            <Button className="bg-green-600 hover:bg-green-700 w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
               Add Transfer
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>{editingTransfer ? 'Edit Transfer' : 'Create New Transfer'}</DialogTitle>
             </DialogHeader>
@@ -147,11 +147,11 @@ export const FinanceTransfers: React.FC = () => {
                 />
               </div>
               
-              <div className="flex gap-4">
-                <Button type="submit" className="bg-green-600 hover:bg-green-700">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button type="submit" className="bg-green-600 hover:bg-green-700 flex-1">
                   {editingTransfer ? 'Update' : 'Create'} Transfer
                 </Button>
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">
                   Cancel
                 </Button>
               </div>
@@ -164,8 +164,8 @@ export const FinanceTransfers: React.FC = () => {
         <div className="text-center py-8">Loading transfers...</div>
       ) : transfers.length === 0 ? (
         <Card className="border-green-200">
-          <CardContent className="text-center py-8">
-            <ArrowLeftRight className="h-12 w-12 text-green-500 mx-auto mb-4" />
+          <CardContent className="text-center py-12">
+            <ArrowLeftRight className="h-16 w-16 text-green-500 mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">No Transfers Yet</h3>
             <p className="text-muted-foreground mb-4">Create your first transfer between wallets</p>
           </CardContent>
@@ -174,20 +174,20 @@ export const FinanceTransfers: React.FC = () => {
         <div className="space-y-4">
           {transfers.map((transfer) => (
             <Card key={transfer.id} className="border-green-200">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-center space-x-4">
-                    <ArrowLeftRight className="h-8 w-8 text-green-600" />
-                    <div>
-                      <p className="font-semibold text-green-700">
+                    <ArrowLeftRight className="h-8 w-8 text-green-600 flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-green-700 truncate">
                         {getWalletName(transfer.from_wallet_id)} → {getWalletName(transfer.to_wallet_id)}
                       </p>
-                      <p className="text-sm text-muted-foreground">{transfer.description}</p>
+                      <p className="text-sm text-muted-foreground truncate">{transfer.description}</p>
                       <p className="text-sm text-muted-foreground">{new Date(transfer.date).toLocaleDateString()}</p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    <div className="text-left sm:text-right">
                       <p className="text-xl font-bold text-green-700">रु {transfer.amount.toLocaleString()}</p>
                       <Badge variant="outline" className="border-green-200 text-green-700">
                         {transfer.status}

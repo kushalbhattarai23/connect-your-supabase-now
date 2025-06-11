@@ -55,21 +55,21 @@ export const FinanceWallets: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="container mx-auto px-4 py-6 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-green-700">Wallets</h1>
-          <p className="text-muted-foreground">Manage your accounts and balances</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-green-700">Wallets</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">Manage your accounts and balances</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-green-600 hover:bg-green-700">
+            <Button className="bg-green-600 hover:bg-green-700 w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
               Add Wallet
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>{editingWallet ? 'Edit Wallet' : 'Create New Wallet'}</DialogTitle>
             </DialogHeader>
@@ -111,11 +111,11 @@ export const FinanceWallets: React.FC = () => {
                 </Select>
               </div>
               
-              <div className="flex gap-4">
-                <Button type="submit" className="bg-green-600 hover:bg-green-700">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button type="submit" className="bg-green-600 hover:bg-green-700 flex-1">
                   {editingWallet ? 'Update' : 'Create'} Wallet
                 </Button>
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">
                   Cancel
                 </Button>
               </div>
@@ -128,22 +128,22 @@ export const FinanceWallets: React.FC = () => {
         <div className="text-center py-8">Loading wallets...</div>
       ) : wallets.length === 0 ? (
         <Card className="border-green-200">
-          <CardContent className="text-center py-8">
-            <Wallet className="h-12 w-12 text-green-500 mx-auto mb-4" />
+          <CardContent className="text-center py-12">
+            <Wallet className="h-16 w-16 text-green-500 mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">No Wallets Yet</h3>
             <p className="text-muted-foreground mb-4">Create your first wallet to start tracking your finances</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {wallets.map((wallet) => (
             <Card key={wallet.id} className="border-green-200">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <div className="flex items-center space-x-2">
-                  <Wallet className="h-5 w-5 text-green-600" />
-                  <CardTitle className="text-green-700">{wallet.name}</CardTitle>
+                <div className="flex items-center space-x-2 min-w-0 flex-1">
+                  <Wallet className="h-5 w-5 text-green-600 flex-shrink-0" />
+                  <CardTitle className="text-green-700 truncate">{wallet.name}</CardTitle>
                 </div>
-                <div className="flex space-x-1">
+                <div className="flex space-x-1 flex-shrink-0">
                   <Button size="sm" variant="ghost" onClick={() => handleEdit(wallet)}>
                     <Edit className="h-4 w-4" />
                   </Button>
