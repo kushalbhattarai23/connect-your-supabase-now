@@ -56,6 +56,11 @@ export const FinanceTransfers: React.FC = () => {
     }
   };
 
+  const getWalletName = (walletId: string) => {
+    const wallet = wallets.find(w => w.id === walletId);
+    return wallet ? wallet.name : 'Unknown Wallet';
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -175,7 +180,7 @@ export const FinanceTransfers: React.FC = () => {
                     <ArrowLeftRight className="h-8 w-8 text-green-600" />
                     <div>
                       <p className="font-semibold text-green-700">
-                        {transfer.from_wallet?.name} → {transfer.to_wallet?.name}
+                        {getWalletName(transfer.from_wallet_id)} → {getWalletName(transfer.to_wallet_id)}
                       </p>
                       <p className="text-sm text-muted-foreground">{transfer.description}</p>
                       <p className="text-sm text-muted-foreground">{new Date(transfer.date).toLocaleDateString()}</p>
