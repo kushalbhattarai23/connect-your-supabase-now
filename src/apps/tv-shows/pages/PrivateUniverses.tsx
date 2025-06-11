@@ -2,46 +2,35 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Users, Edit, Trash2, Globe, Lock } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Globe, Lock, Calendar, User, Trash2 } from 'lucide-react';
 import { useUniverses } from '@/hooks/useUniverses';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
-export const TVShowPrivateUniverses: React.FC = () => {
-  const { universes, isLoading, createUniverse, updateUniverse, deleteUniverse } = useUniverses();
+export const PrivateUniverses: React.FC = () => {
+  const { user } = useAuth();
+  const { universes, isLoading, createUniverse, deleteUniverse } = useUniverses();
+  const navigate = useNavigate();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingUniverse, setEditingUniverse] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     is_public: false
   });
 
+  const myUniverses = universes.filter(universe => universe.creator_id === user?.id);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (editingUniverse) {
-      updateUniverse.mutate({ id: editingUniverse.id, ...formData });
-    } else {
-      createUniverse.mutate(formData);
-    }
-    
-    setIsDialogOpen(false);
-    setEditingUniverse(null);
+    createUniverse.mutate(formData);
     setFormData({ name: '', description: '', is_public: false });
-  };
-
-  const handleEdit = (universe: any) => {
-    setEditingUniverse(universe);
-    setFormData({
-      name: universe.name,
-      description: universe.description || '',
-      is_public: universe.is_public
-    });
-    setIsDialogOpen(true);
+    setIsDialogOpen(false);
   };
 
   const handleDelete = (id: string) => {
@@ -50,64 +39,64 @@ export const TVShowPrivateUniverses: React.FC = () => {
     }
   };
 
-  const privateUniverses = universes.filter(u => !u.is_public);
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="container mx-auto px-4 py-6 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-purple-700">Private Universes</h1>
-          <p className="text-muted-foreground">Manage your personal show universes</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-blue-700">My Universes</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
+            Create and manage your TV show universes
+          </p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-purple-600 hover:bg-purple-700">
+            <Button className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
               Create Universe
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>{editingUniverse ? 'Edit Universe' : 'Create New Universe'}</DialogTitle>
+              <DialogTitle>Create New Universe</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="name">Universe Name</Label>
+                <Label htmlFor="name">Name</Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g., Marvel Cinematic Universe"
                   required
                 />
               </div>
-              
               <div>
                 <Label htmlFor="description">Description</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Describe your universe..."
-                  rows={3}
                 />
               </div>
-              
               <div className="flex items-center space-x-2">
                 <Switch
-                  id="is_public"
+                  id="public"
                   checked={formData.is_public}
                   onCheckedChange={(checked) => setFormData({ ...formData, is_public: checked })}
                 />
-                <Label htmlFor="is_public">Make this universe public</Label>
+                <Label htmlFor="public">Make this universe public</Label>
               </div>
-              
-              <div className="flex gap-4">
-                <Button type="submit" className="bg-purple-600 hover:bg-purple-700">
-                  {editingUniverse ? 'Update' : 'Create'} Universe
-                </Button>
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+              <div className="flex gap-2">
+                <Button type="submit" className="flex-1">Create Universe</Button>
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">
                   Cancel
                 </Button>
               </div>
@@ -115,44 +104,74 @@ export const TVShowPrivateUniverses: React.FC = () => {
           </DialogContent>
         </Dialog>
       </div>
-      
-      {isLoading ? (
-        <div className="text-center py-8">Loading universes...</div>
-      ) : privateUniverses.length === 0 ? (
-        <Card className="border-purple-200">
-          <CardContent className="text-center py-8">
-            <Lock className="h-12 w-12 text-purple-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Private Universes Yet</h3>
-            <p className="text-muted-foreground mb-4">Create your first private universe to organize your shows</p>
+
+      {myUniverses.length === 0 ? (
+        <Card className="border-blue-200">
+          <CardContent className="text-center py-12">
+            <Globe className="h-16 w-16 text-blue-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No Universes Yet</h3>
+            <p className="text-muted-foreground">
+              Create your first universe to start organizing your TV shows!
+            </p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {privateUniverses.map((universe) => (
-            <Card key={universe.id} className="border-purple-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <div className="flex items-center space-x-2">
-                  <Lock className="h-5 w-5 text-purple-600" />
-                  <CardTitle className="text-purple-700">{universe.name}</CardTitle>
-                </div>
-                <div className="flex space-x-1">
-                  <Button size="sm" variant="ghost" onClick={() => handleEdit(universe)}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => handleDelete(universe.id)}>
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          {myUniverses.map((universe) => (
+            <Card 
+              key={universe.id} 
+              className="border-blue-200 hover:shadow-lg transition-shadow cursor-pointer group"
+              onClick={() => navigate(`/tv-shows/universe/${universe.id}`)}
+            >
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between gap-2">
+                  <CardTitle className="text-blue-700 text-lg line-clamp-2 group-hover:text-blue-800">
+                    {universe.name}
+                  </CardTitle>
+                  <div className="flex items-center gap-1">
+                    <Badge variant="outline" className={universe.is_public ? "border-green-200 text-green-700" : "border-yellow-200 text-yellow-700"}>
+                      {universe.is_public ? (
+                        <>
+                          <Globe className="w-3 h-3 mr-1" />
+                          Public
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="w-3 h-3 mr-1" />
+                          Private
+                        </>
+                      )}
+                    </Badge>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(universe.id);
+                      }}
+                      className="text-red-500 hover:text-red-700 h-6 w-6 p-0"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-3">{universe.description}</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    Created: {new Date(universe.created_at).toLocaleDateString()}
-                  </span>
-                  <div className="flex items-center space-x-1">
-                    <Lock className="h-3 w-3 text-purple-500" />
-                    <span className="text-xs text-purple-600">Private</span>
+              
+              <CardContent className="space-y-3">
+                {universe.description && (
+                  <p className="text-sm text-muted-foreground line-clamp-3">
+                    {universe.description}
+                  </p>
+                )}
+                
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-muted-foreground">
+                  <div className="flex items-center">
+                    <User className="w-3 h-3 mr-1" />
+                    <span>You</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Calendar className="w-3 h-3 mr-1" />
+                    <span>{new Date(universe.created_at).toLocaleDateString()}</span>
                   </div>
                 </div>
               </CardContent>
@@ -164,4 +183,4 @@ export const TVShowPrivateUniverses: React.FC = () => {
   );
 };
 
-export default TVShowPrivateUniverses;
+export default PrivateUniverses;

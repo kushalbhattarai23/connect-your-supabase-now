@@ -14,6 +14,7 @@ import SettingsPage from '@/pages/Settings';
 import WalletDetail from '@/apps/finance/pages/WalletDetail';
 import CategoryDetail from '@/apps/finance/pages/CategoryDetail';
 import UniverseDashboard from '@/apps/tv-shows/pages/UniverseDashboard';
+import UniverseDetail from '@/apps/tv-shows/pages/UniverseDetail';
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,7 @@ const AppRoutes = () => {
         <Route path="/finance/wallet/:walletId" element={<WalletDetail />} />
         <Route path="/finance/category/:categoryId" element={<CategoryDetail />} />
         <Route path="/tv-shows/universe/:universeId/dashboard" element={<UniverseDashboard />} />
+        <Route path="/tv-shows/universe/:universeId" element={<UniverseDetail />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<div>Page not found</div>} />
       </Routes>

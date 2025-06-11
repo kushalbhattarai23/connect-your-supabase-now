@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { getEnabledApps } from '@/config/apps';
 import { useAppSettings } from '@/hooks/useAppSettings';
@@ -18,8 +18,12 @@ import {
   Tag, 
   FileBarChart, 
   Settings as SettingsIcon,
-  Home
+  Home,
+  Menu,
+  X
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const iconMap = {
   Tv,
@@ -35,10 +39,12 @@ const iconMap = {
   Tag,
   FileBarChart,
   Settings: SettingsIcon,
-  Home
+  Home,
+  Menu,
+  X
 };
 
-export const Sidebar: React.FC = () => {
+const SidebarContent = () => {
   const location = useLocation();
   const { settings } = useAppSettings();
   const enabledApps = getEnabledApps(settings);
@@ -49,7 +55,7 @@ export const Sidebar: React.FC = () => {
   };
 
   return (
-    <div className="w-64 bg-card border-r border-border h-full flex flex-col">
+    <div className="flex flex-col h-full">
       <div className="p-6">
         <Link to="/" className="flex items-center space-x-2">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
@@ -85,7 +91,7 @@ export const Sidebar: React.FC = () => {
             </div>
             
             {app.routes
-              .filter(route => route.path !== '/tv-shows/show/:slug') // Remove this route from sidebar
+              .filter(route => route.path !== '/tv-shows/show/:slug')
               .map((route) => {
                 const Icon = getIcon(route.icon || 'Home');
                 return (
@@ -110,15 +116,44 @@ export const Sidebar: React.FC = () => {
 
       <div className="p-4 border-t border-border">
         <Link
-          to="/profile"
+          to="/settings"
           className="flex items-center space-x-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
         >
-          <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-            <span className="text-xs text-primary-foreground font-medium">U</span>
-          </div>
-          <span>Profile</span>
+          <SettingsIcon className="w-4 h-4" />
+          <span>Settings</span>
         </Link>
       </div>
     </div>
+  );
+};
+
+export const Sidebar: React.FC = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      {/* Mobile Sidebar */}
+      <div className="md:hidden">
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+          <SheetTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="fixed top-4 left-4 z-50 md:hidden"
+            >
+              <Menu className="h-6 w-6" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="p-0 w-64">
+            <SidebarContent />
+          </SheetContent>
+        </Sheet>
+      </div>
+
+      {/* Desktop Sidebar */}
+      <div className="hidden md:flex w-64 bg-card border-r border-border h-full flex-col">
+        <SidebarContent />
+      </div>
+    </>
   );
 };

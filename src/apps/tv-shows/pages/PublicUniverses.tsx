@@ -44,12 +44,12 @@ export const PublicUniverses: React.FC = () => {
           {publicUniverses.map((universe) => (
             <Card 
               key={universe.id} 
-              className="border-blue-200 hover:shadow-lg transition-shadow cursor-pointer"
+              className="border-blue-200 hover:shadow-lg transition-shadow cursor-pointer group"
               onClick={() => navigate(`/tv-shows/universe/${universe.id}`)}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-blue-700 text-lg line-clamp-2">
+                  <CardTitle className="text-blue-700 text-lg line-clamp-2 group-hover:text-blue-800">
                     {universe.name}
                   </CardTitle>
                   <Badge variant="outline" className="border-green-200 text-green-700 flex-shrink-0">
