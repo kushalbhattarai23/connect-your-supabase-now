@@ -48,17 +48,14 @@ export const CategoryDetail: React.FC = () => {
         <Card className="border-green-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Amount</CardTitle>
-            {category.type === 'income' ? 
-              <TrendingUp className="h-4 w-4 text-green-500" /> : 
-              <TrendingDown className="h-4 w-4 text-red-500" />
-            }
+            <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold" style={{ color: category.color }}>
               रु {totalAmount.toLocaleString()}
             </div>
             <Badge variant="outline" style={{ borderColor: category.color, color: category.color }}>
-              {category.type}
+              {category.name}
             </Badge>
           </CardContent>
         </Card>
