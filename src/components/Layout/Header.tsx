@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -14,7 +15,7 @@ import { LogOut, Settings, User } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const { user, logout } = useAuth();
-
+  const navigate = useNavigate();
   if (!user) return null;
 
   // Get first initial for avatar fallback
@@ -56,10 +57,11 @@ export const Header: React.FC = () => {
                 <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
-              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/settings')}>
+  <Settings className="mr-2 h-4 w-4" />
+  <span>Settings</span>
+</DropdownMenuItem>
+
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => logout()}>
                 <LogOut className="mr-2 h-4 w-4" />
