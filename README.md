@@ -1,73 +1,131 @@
-# Welcome to your Lovable project
+# 🎯 TestTrack Hub
 
-## Project info
+**A comprehensive tracking platform combining two powerful systems:**
 
-**URL**: https://lovable.dev/projects/f98ba3e9-252c-4627-b709-4bb1d87dfc3e
+- 📺 **TV Universe Tracker** – Organize and monitor your favorite TV shows and fictional universes.  
+- 💰 **Finance Hub** – Track personal finances including wallets, transactions, categories, and more.
 
-## How can I edit this code?
+🌐 **Live Demo:** [trackerhub](https://trackerhub.netlify.app)
 
-There are several ways of editing your application.
+---
 
-**Use Lovable**
+## ✨ Features
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/f98ba3e9-252c-4627-b709-4bb1d87dfc3e) and start prompting.
+### 🔑 Login
+Email Password Registration
+Trying to add Google Login
+--
+### 📺 TV Universe Tracker
+A modern system to track shows, seasons, and universes.
 
-Changes made via Lovable will be committed automatically to this repo.
+#### Show Management
+- Browse and track public TV shows  
+- Detailed info: seasons, episodes  
+- Track individual episode progress  
+- Mark shows/seasons/episodes as watched or unwatched  
+- Search and filter functionality  
 
-**Use your preferred IDE**
+#### Universe System
+- Create/manage TV show universes  
+- Add shows to universes  
+- Public/private universe support  
+- Universe dashboard with statistics  
+- Episode timeline across shows in a universe  
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### 💰 Finance Hub *(New!)*
+A personal finance tracker to manage daily expenses and income.
 
-Follow these steps:
+#### Wallets & Transactions
+- Add multiple wallets (e.g., cash, bank, credit)  
+- Track income and expenses  
+- Create categories (e.g., groceries, bills, salary)  
+- *(Upcoming)* Transfer between wallets  
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+#### Reports & Insights
+- Daily, weekly, and monthly financial reports  
+- Summary dashboard with key financial metrics  
+- Category-based spending breakdown  
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+---
 
-# Step 3: Install the necessary dependencies.
-npm i
+### 👤 User Features
+- Secure authentication with email/password  
+- Personalized dashboards for both modules  
+- Visual charts for progress and finance stats  
+- User-specific data isolation (Supabase RLS)  
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+---
+
+### 🔧 Admin Features
+- Admin dashboard for managing content and users  
+- Bulk import TV shows/episodes via CSV  
+- Support for flexible CSV formats  
+
+---
+
+## 🧰 Tech Stack
+
+### 🖥️ Frontend
+- React 18 + TypeScript  
+- Vite for fast dev/build  
+- TailwindCSS for styling  
+- [shadcn/ui](https://ui.shadcn.com) for UI components  
+- Lucide React for icons  
+- React Router for routing  
+- React Query for data fetching  
+- React Hook Form for form handling  
+
+### 🗄️ Backend
+- **Supabase** (PostgreSQL, Auth, RLS, real-time)  
+- Role-based access control  
+- Real-time data via Supabase subscriptions  
+
+### 🛠️ Dev Tools
+- ESLint & Prettier  
+- TypeScript  
+- Hot Module Replacement (HMR)  
+- .env configuration for environment variables  
+
+---
+
+## 🔑 Pages & Routes
+
+### TV Universe Tracker
+- `/` — Dashboard  
+- `/shows/public`  
+- `/shows/my`  
+- `/universes/public`  
+- `/universes/my`  
+- `/show/:showSlug`  
+- `/universe/:universeSlug`  
+
+### Finance Hub
+- `/finance/dashboard`  
+- `/finance/wallets`  
+- `/finance/transactions`  
+- `/finance/categories`  
+- `/finance/reports`  
+
+---
+
+## 🧠 Acknowledgments
+
+- Built with [Vite](https://vitejs.dev) + [React](https://react.dev)  
+- UI powered by [shadcn/ui](https://ui.shadcn.com)  
+- Icons by [Lucide](https://lucide.dev)  
+- Backend by [Supabase](https://supabase.com)  
+- AI support via [Bolt.new](https://bolt.new) & [Lovable.dev](https://lovable.dev)  
+
+---
+
+## 🚀 Get Started
+
+Clone the repo:
+
+```bash
+git clone https://github.com/your-username/track-hub.git
+cd track-hub
+npm install
 npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/f98ba3e9-252c-4627-b709-4bb1d87dfc3e) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
