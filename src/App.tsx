@@ -10,7 +10,7 @@ import { AppLayout } from "@/components/Layout/AppLayout";
 import { getEnabledApps } from "@/config/apps";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import Landing from "@/pages/Landing";
-
+import SettingsPage from '@/pages/Settings';
 const queryClient = new QueryClient();
 
 const AppRoutes = () => {
@@ -44,6 +44,7 @@ const AppRoutes = () => {
           ))
         )}
         <Route path="*" element={<div>Page not found</div>} />
+        <Route path="/settings" element={<SettingsPage />} />
       </Routes>
     </AppLayout>
   );
