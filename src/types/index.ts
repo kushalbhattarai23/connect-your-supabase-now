@@ -66,8 +66,7 @@ export interface Wallet {
   name: string;
   balance: number;
   currency: string;
-  color: string;
-  icon: string;
+
 }
 
 export interface Transaction {
