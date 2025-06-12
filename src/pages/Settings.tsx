@@ -46,9 +46,7 @@ export const FinanceSettings: React.FC = () => {
         wallets: wallets.map(w => ({
           name: w.name,
           balance: w.balance,
-          currency: w.currency,
-          color: w.color,
-          icon: w.icon
+          currency: w.currency
         })),
         transactions: transactions.map(t => ({
           reason: t.reason,
