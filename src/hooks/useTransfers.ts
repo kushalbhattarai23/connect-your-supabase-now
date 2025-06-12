@@ -48,7 +48,20 @@ export const useTransfers = () => {
     mutationFn: async (transfer: Omit<Transfer, 'id' | 'created_at' | 'updated_at' | 'user_id' | 'status'>) => {
       if (!user) throw new Error('User not authenticated');
       
-      // The database trigger will handle the wallet balance updates automatically
+      // Start a transaction to handle wallet balance updates
+      const { data: fromWallet, error: fromWalletError } = await supabase
+        .from('wallets')
+        .select('balance')
+        .eq('id', transfer.from_wallet_id)
+        .single();
+      
+      if (fromWalletError) throw fromWalletError;
+      
+      if (fromWallet.balance < transfer.amount) {
+        throw new Error('Insufficient balance in source wallet');
+      }
+      
+      // Create the transfer
       const { data, error } = await supabase
         .from('transfers')
         .insert({
@@ -60,6 +73,19 @@ export const useTransfers = () => {
         .single();
         
       if (error) throw error;
+      
+      // Update wallet balances
+      await Promise.all([
+        supabase
+          .from('wallets')
+          .update({ balance: fromWallet.balance - transfer.amount })
+          .eq('id', transfer.from_wallet_id),
+        supabase
+          .from('wallets')
+          .update({ balance: supabase.rpc('increment', { amount: transfer.amount }) })
+          .eq('id', transfer.to_wallet_id)
+      ]);
+      
       return data;
     },
     onSuccess: () => {
@@ -74,7 +100,28 @@ export const useTransfers = () => {
 
   const updateTransfer = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Transfer> & { id: string }) => {
-      // The database trigger will handle the wallet balance updates automatically
+      // Get the original transfer to reverse its effect
+      const { data: originalTransfer, error: originalError } = await supabase
+        .from('transfers')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (originalError) throw originalError;
+      
+      // Reverse the original transfer's effect on wallet balances
+      await Promise.all([
+        supabase
+          .from('wallets')
+          .update({ balance: supabase.rpc('increment', { amount: originalTransfer.amount }) })
+          .eq('id', originalTransfer.from_wallet_id),
+        supabase
+          .from('wallets')
+          .update({ balance: supabase.rpc('increment', { amount: -originalTransfer.amount }) })
+          .eq('id', originalTransfer.to_wallet_id)
+      ]);
+      
+      // Update the transfer
       const { data, error } = await supabase
         .from('transfers')
         .update(updates)
@@ -83,6 +130,21 @@ export const useTransfers = () => {
         .single();
         
       if (error) throw error;
+      
+      // Apply the new transfer's effect on wallet balances
+      if (updates.amount && updates.from_wallet_id && updates.to_wallet_id) {
+        await Promise.all([
+          supabase
+            .from('wallets')
+            .update({ balance: supabase.rpc('increment', { amount: -updates.amount }) })
+            .eq('id', updates.from_wallet_id),
+          supabase
+            .from('wallets')
+            .update({ balance: supabase.rpc('increment', { amount: updates.amount }) })
+            .eq('id', updates.to_wallet_id)
+        ]);
+      }
+      
       return data;
     },
     onSuccess: () => {
@@ -97,7 +159,28 @@ export const useTransfers = () => {
 
   const deleteTransfer = useMutation({
     mutationFn: async (id: string) => {
-      // The database trigger will handle the wallet balance updates automatically
+      // Get the transfer to reverse its effect
+      const { data: transfer, error: transferError } = await supabase
+        .from('transfers')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (transferError) throw transferError;
+      
+      // Reverse the transfer's effect on wallet balances
+      await Promise.all([
+        supabase
+          .from('wallets')
+          .update({ balance: supabase.rpc('increment', { amount: transfer.amount }) })
+          .eq('id', transfer.from_wallet_id),
+        supabase
+          .from('wallets')
+          .update({ balance: supabase.rpc('increment', { amount: -transfer.amount }) })
+          .eq('id', transfer.to_wallet_id)
+      ]);
+      
+      // Delete the transfer
       const { error } = await supabase
         .from('transfers')
         .delete()
