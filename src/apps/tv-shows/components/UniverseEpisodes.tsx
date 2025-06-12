@@ -1,235 +1,251 @@
 
-import React, { useState, useMemo } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Play, Filter, RefreshCw } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Search, Filter, Calendar, Tv, LayoutGrid, List } from 'lucide-react';
 import { useUniverseEpisodes } from '@/hooks/useUniverseEpisodes';
-import { EpisodeTableRow } from './EpisodeTableRow';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { EpisodeTableRow } from './EpisodeTableRow';
+import { EpisodeCard } from './EpisodeCard';
 
 interface UniverseEpisodesProps {
   universeId: string;
 }
 
-const BATCH_SIZE = 50;
-
 export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }) => {
-  const [filter, setFilter] = useState<'all' | 'watched' | 'not-watched'>('all');
-  const [showFilter, setShowFilter] = useState<string>('all');
-  const [displayCount, setDisplayCount] = useState(BATCH_SIZE);
+  const { episodes, isLoading } = useUniverseEpisodes(universeId);
   const isMobile = useIsMobile();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'watched' | 'unwatched'>('all');
+  const [showFilter, setShowFilter] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
-  const { episodes, isLoading, refetch } = useUniverseEpisodes(universeId);
+  const filteredEpisodes = episodes.filter(episode => {
+    const matchesSearch = episode.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         episode.show?.title?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || 
+                         (statusFilter === 'watched' && episode.watched) ||
+                         (statusFilter === 'unwatched' && !episode.watched);
+    
+    const matchesShow = showFilter === 'all' || episode.show_id === showFilter;
+    
+    return matchesSearch && matchesStatus && matchesShow;
+  });
 
-  React.useEffect(() => {
-    console.log('Universe changed, refreshing episodes');
-    setDisplayCount(BATCH_SIZE);
-    refetch();
-  }, [universeId, refetch]);
-
-  const uniqueShows = useMemo(() => {
-    const shows = episodes
-      .map(ep => ep.show)
-      .filter((show, index, self) => 
-        show && self.findIndex(s => s?.id === show.id) === index
-      );
-    return shows.filter(Boolean);
-  }, [episodes]);
-
-  const filteredEpisodes = useMemo(() => {
-    let filtered = episodes;
-
-    if (filter === 'watched') {
-      filtered = filtered.filter(ep => ep.watched);
-    } else if (filter === 'not-watched') {
-      filtered = filtered.filter(ep => !ep.watched);
+  const uniqueShows = episodes.reduce((acc, episode) => {
+    if (episode.show && !acc.find(s => s.id === episode.show!.id)) {
+      acc.push(episode.show);
     }
+    return acc;
+  }, [] as Array<{ id: string; title: string }>);
 
-    if (showFilter !== 'all') {
-      filtered = filtered.filter(ep => ep.show_id === showFilter);
-    }
-
-    return filtered;
-  }, [episodes, filter, showFilter]);
-
-  const displayedEpisodes = useMemo(() => {
-    return filteredEpisodes.slice(0, displayCount);
-  }, [filteredEpisodes, displayCount]);
-
-  const handleRefresh = () => {
-    console.log('Manual refresh triggered');
-    setDisplayCount(BATCH_SIZE);
-    refetch();
-  };
-
-  const handleLoadMore = () => {
-    setDisplayCount(prev => Math.min(prev + BATCH_SIZE, filteredEpisodes.length));
-  };
+  const watchedCount = episodes.filter(e => e.watched).length;
+  const totalCount = episodes.length;
+  const progressPercentage = totalCount > 0 ? (watchedCount / totalCount) * 100 : 0;
 
   if (isLoading) {
     return (
       <Card className="border-blue-200">
-        <CardContent className="text-center py-8 sm:py-12">
-          <div className="animate-spin rounded-full h-6 sm:h-8 w-6 sm:w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-muted-foreground text-sm sm:text-base">Loading episodes...</p>
+        <CardContent className="text-center py-12">
+          <div className="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading episodes...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (episodes.length === 0) {
+    return (
+      <Card className="border-blue-200">
+        <CardContent className="text-center py-12">
+          <Tv className="h-16 w-16 text-blue-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">No Episodes Found</h3>
+          <p className="text-muted-foreground">
+            Add some shows to this universe to see their episodes here.
+          </p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {/* Filter Controls */}
-      <div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-4 sm:items-center sm:justify-between">
-        <div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-4">
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-blue-600 flex-shrink-0" />
-            <Select value={filter} onValueChange={(value: any) => setFilter(value)}>
-              <SelectTrigger className="w-full sm:w-40">
+    <div className="space-y-4 sm:space-y-6">
+      {/* Statistics */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+        <Card className="border-blue-200">
+          <CardContent className="p-3 sm:p-4 text-center">
+            <div className="text-xl sm:text-2xl font-bold text-blue-700">{totalCount}</div>
+            <p className="text-xs sm:text-sm text-muted-foreground">Total Episodes</p>
+          </CardContent>
+        </Card>
+        <Card className="border-green-200">
+          <CardContent className="p-3 sm:p-4 text-center">
+            <div className="text-xl sm:text-2xl font-bold text-green-700">{watchedCount}</div>
+            <p className="text-xs sm:text-sm text-muted-foreground">Watched</p>
+          </CardContent>
+        </Card>
+        <Card className="border-orange-200">
+          <CardContent className="p-3 sm:p-4 text-center">
+            <div className="text-xl sm:text-2xl font-bold text-orange-700">{totalCount - watchedCount}</div>
+            <p className="text-xs sm:text-sm text-muted-foreground">Remaining</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Progress Bar */}
+      <Card className="border-blue-200">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium">Watch Progress</span>
+            <span className="text-sm text-muted-foreground">{Math.round(progressPercentage)}%</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${progressPercentage}%` }}
+            ></div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Filters and Controls */}
+      <Card className="border-blue-200">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base sm:text-lg">Episodes</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Search and View Toggle */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                placeholder="Search episodes..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
+            {/* View Mode Toggle - only show on desktop */}
+            {!isMobile && (
+              <div className="flex border rounded-lg p-1">
+                <Button
+                  variant={viewMode === 'table' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('table')}
+                  className="px-3"
+                >
+                  <List className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={viewMode === 'cards' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('cards')}
+                  className="px-3"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as any)}>
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Episodes</SelectItem>
-                <SelectItem value="not-watched">Unwatched</SelectItem>
                 <SelectItem value="watched">Watched</SelectItem>
+                <SelectItem value="unwatched">Unwatched</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={showFilter} onValueChange={setShowFilter}>
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectValue placeholder="Filter by show" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Shows</SelectItem>
+                {uniqueShows.map((show) => (
+                  <SelectItem key={show.id} value={show.id}>
+                    {show.title}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
-          <Select value={showFilter} onValueChange={setShowFilter}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Filter by show" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Shows</SelectItem>
-              {uniqueShows.map((show) => (
-                <SelectItem key={show?.id} value={show?.id || ''}>
-                  {show?.title}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <Button onClick={handleRefresh} variant="outline" size="sm" className="w-full sm:w-auto">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Refresh
-        </Button>
-      </div>
-
-      {/* Episode Statistics */}
-      {filteredEpisodes.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-          <Card className="border-blue-200">
-            <CardContent className="p-3 sm:p-4 text-center">
-              <div className="text-xl sm:text-2xl font-bold text-blue-700">{filteredEpisodes.length}</div>
-              <p className="text-xs sm:text-sm text-muted-foreground">Total Episodes</p>
-            </CardContent>
-          </Card>
-          <Card className="border-green-200">
-            <CardContent className="p-3 sm:p-4 text-center">
-              <div className="text-xl sm:text-2xl font-bold text-green-700">
-                {filteredEpisodes.filter(ep => ep.watched).length}
-              </div>
-              <p className="text-xs sm:text-sm text-muted-foreground">Watched</p>
-            </CardContent>
-          </Card>
-          <Card className="border-gray-200 col-span-2 sm:col-span-1">
-            <CardContent className="p-3 sm:p-4 text-center">
-              <div className="text-xl sm:text-2xl font-bold text-gray-700">
-                {filteredEpisodes.filter(ep => !ep.watched).length}
-              </div>
-              <p className="text-xs sm:text-sm text-muted-foreground">Unwatched</p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Episodes Table */}
-      {episodes.length === 0 ? (
-        <Card className="border-blue-200">
-          <CardContent className="text-center py-8 sm:py-12">
-            <Play className="h-12 sm:h-16 w-12 sm:w-16 text-blue-500 mx-auto mb-4" />
-            <h3 className="text-base sm:text-lg font-semibold mb-2">No Episodes Found</h3>
-            <p className="text-muted-foreground mb-4 text-sm sm:text-base px-4">
-              No episodes are available in this universe yet.
+          {/* Results count */}
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              Showing {filteredEpisodes.length} of {totalCount} episodes
             </p>
-            <Button onClick={handleRefresh} variant="outline" size="sm">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Try Again
-            </Button>
-          </CardContent>
-        </Card>
-      ) : filteredEpisodes.length === 0 ? (
-        <Card className="border-blue-200">
-          <CardContent className="text-center py-8 sm:py-12">
-            <Play className="h-12 sm:h-16 w-12 sm:w-16 text-blue-500 mx-auto mb-4" />
-            <h3 className="text-base sm:text-lg font-semibold mb-2">No Episodes Match Filters</h3>
-            <p className="text-muted-foreground text-sm sm:text-base px-4">
-              No episodes match your current filters.
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Episodes Display */}
+      {filteredEpisodes.length === 0 ? (
+        <Card className="border-orange-200">
+          <CardContent className="text-center py-8">
+            <Filter className="h-12 w-12 text-orange-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No Episodes Match Your Filters</h3>
+            <p className="text-muted-foreground">
+              Try adjusting your search terms or filters to find more episodes.
             </p>
           </CardContent>
         </Card>
       ) : (
         <>
-          <Card className="overflow-hidden">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-left font-semibold text-blue-600 min-w-[120px] px-2 sm:px-4">
-                      Show
-                    </TableHead>
-                    {!isMobile && (
-                      <TableHead className="text-center font-semibold text-blue-600 w-20">
-                        Season
-                      </TableHead>
-                    )}
-                    <TableHead className="text-center font-semibold text-blue-600 w-20 px-2">
-                      Episode
-                    </TableHead>
-                    <TableHead className="text-left font-semibold text-blue-600 min-w-[150px] px-2 sm:px-4">
-                      Title
-                    </TableHead>
-                    {!isMobile && (
-                      <TableHead className="text-center font-semibold text-blue-600 min-w-[100px]">
-                        Air Date
-                      </TableHead>
-                    )}
-                    <TableHead className="text-center font-semibold text-blue-600 w-20">
-                      Watched
-                    </TableHead>
-                    <TableHead className="text-center font-semibold text-blue-600 min-w-[120px] px-2 sm:px-4">
-                      Action
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {displayedEpisodes.map((episode) => (
-                    <EpisodeTableRow key={episode.id} episode={episode} />
-                  ))}
-                </TableBody>
-              </Table>
+          {/* Mobile: Always show cards */}
+          {isMobile ? (
+            <div className="grid grid-cols-1 gap-4">
+              {filteredEpisodes.map((episode) => (
+                <EpisodeCard key={episode.id} episode={episode} />
+              ))}
             </div>
-          </Card>
-
-          {/* Load More Button */}
-          {displayedEpisodes.length < filteredEpisodes.length && (
-            <div className="text-center">
-              <Button onClick={handleLoadMore} variant="outline" className="w-full sm:w-auto">
-                Load More Episodes ({filteredEpisodes.length - displayedEpisodes.length} remaining)
-              </Button>
-            </div>
+          ) : (
+            /* Desktop: Show based on view mode */
+            viewMode === 'cards' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredEpisodes.map((episode) => (
+                  <EpisodeCard key={episode.id} episode={episode} />
+                ))}
+              </div>
+            ) : (
+              <Card className="border-blue-200">
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-blue-50/50">
+                          <TableHead className="font-semibold text-blue-700">Show</TableHead>
+                          <TableHead className="text-center font-semibold text-blue-700">Season</TableHead>
+                          <TableHead className="text-center font-semibold text-blue-700">Episode</TableHead>
+                          <TableHead className="font-semibold text-blue-700">Title</TableHead>
+                          <TableHead className="text-center font-semibold text-blue-700">Air Date</TableHead>
+                          <TableHead className="text-center font-semibold text-blue-700">Status</TableHead>
+                          <TableHead className="text-center font-semibold text-blue-700">Action</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredEpisodes.map((episode) => (
+                          <EpisodeTableRow key={episode.id} episode={episode} />
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            )
           )}
-
-          <div className="text-center text-xs sm:text-sm text-muted-foreground px-4">
-            Showing {displayedEpisodes.length} of {filteredEpisodes.length} episodes
-            {filteredEpisodes.length !== episodes.length && (
-              <span> (filtered from {episodes.length} total)</span>
-            )}
-          </div>
         </>
       )}
     </div>
