@@ -1,6 +1,6 @@
 # 🎯 Testing Track Hub
 
-**A comprehensive tracking platform combining two powerful systems:**
+**A comprehensive Modular tracking platform combining two powerful systems:**
 
 - 📺 **TV Universe Tracker** – Organize and monitor your favorite TV shows and fictional universes.  
 - 💰 **Finance Hub** – Track personal finances including wallets, transactions, categories, and more.
