@@ -21,31 +21,91 @@ export const useUserShows = () => {
     queryFn: async () => {
       if (!user) return [];
       
-      const { data, error } = await supabase
-        .from('user_show_tracking')
-        .select(`
-          *,
-          shows (
-            id,
-            title,
-            description,
-            poster_url
-          )
-        `)
-        .eq('user_id', user.id);
+      try {
+        // Get user's tracked shows
+        const { data: trackedShows, error: trackingError } = await supabase
+          .from('user_show_tracking')
+          .select(`
+            show_id,
+            shows (
+              id,
+              title,
+              description,
+              poster_url,
+              slug
+            )
+          `)
+          .eq('user_id', user.id);
+          
+        if (trackingError) throw trackingError;
         
-      if (error) throw error;
-      
-      // Transform the data to match UserShow interface
-      return data.map(item => ({
-        id: item.shows.id,
-        title: item.shows.title,
-        description: item.shows.description,
-        poster_url: item.shows.poster_url,
-        totalEpisodes: Math.floor(Math.random() * 100) + 10, // Mock data
-        watchedEpisodes: Math.floor(Math.random() * 50), // Mock data
-        status: ['watching', 'completed', 'not_started'][Math.floor(Math.random() * 3)] as any
-      })) as UserShow[];
+        if (!trackedShows || trackedShows.length === 0) {
+          return [];
+        }
+
+        // Get episode counts and watch status for each show
+        const showsWithProgress = await Promise.all(
+          trackedShows.map(async (item) => {
+            const show = item.shows;
+            if (!show) return null;
+
+            // Get total episodes for this show
+            const { data: episodes, error: episodesError } = await supabase
+              .from('episodes')
+              .select('id')
+              .eq('show_id', show.id);
+
+            if (episodesError) {
+              console.error('Error fetching episodes:', episodesError);
+              return null;
+            }
+
+            const totalEpisodes = episodes?.length || 0;
+
+            // Get watched episodes count
+            let watchedEpisodes = 0;
+            if (totalEpisodes > 0) {
+              const episodeIds = episodes?.map(ep => ep.id) || [];
+              
+              const { data: watchedData, error: watchedError } = await supabase
+                .from('user_episode_status')
+                .select('episode_id')
+                .eq('user_id', user.id)
+                .eq('status', 'watched')
+                .in('episode_id', episodeIds);
+
+              if (!watchedError && watchedData) {
+                watchedEpisodes = watchedData.length;
+              }
+            }
+
+            // Determine status based on progress
+            let status: 'watching' | 'completed' | 'not_started' = 'not_started';
+            if (watchedEpisodes === totalEpisodes && totalEpisodes > 0) {
+              status = 'completed';
+            } else if (watchedEpisodes > 0) {
+              status = 'watching';
+            }
+
+            return {
+              id: show.id,
+              title: show.title,
+              description: show.description,
+              poster_url: show.poster_url,
+              totalEpisodes,
+              watchedEpisodes,
+              status
+            } as UserShow;
+          })
+        );
+
+        // Filter out null results and return
+        return showsWithProgress.filter(Boolean) as UserShow[];
+        
+      } catch (error) {
+        console.error('Error fetching user shows:', error);
+        return [];
+      }
     },
     enabled: !!user
   });

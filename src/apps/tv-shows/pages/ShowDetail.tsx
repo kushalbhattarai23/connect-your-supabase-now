@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useToast } from '@/hooks/use-toast';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2, Heart, HeartOff, Eye, CheckCircle, Calendar, Clock, Tv as TvIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Show, Episode } from '@/types';
@@ -26,6 +26,7 @@ export const ShowDetail = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<string>("overview");
   
   // Fetch show details
@@ -213,12 +214,60 @@ export const ShowDetail = () => {
       
       return { episodeId, watched };
     },
-    onSuccess: (data) => {
-      // Update local state by refetching
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['showEpisodes', show?.id] });
     },
     onError: (error: Error) => {
       toast({
         title: 'Error updating episode status',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  });
+  
+  // Mark all episodes in a season as watched
+  const { mutate: markSeasonWatched } = useMutation({
+    mutationFn: async (seasonNumber: number) => {
+      if (!user || !episodesData) {
+        throw new Error('You must be logged in to mark episodes');
+      }
+
+      const seasonEpisodes = episodesData.filter(ep => ep.season === seasonNumber);
+      
+      for (const episode of seasonEpisodes) {
+        await toggleWatchStatus({ episodeId: episode.id, watched: true });
+      }
+    },
+    onSuccess: () => {
+      toast({ title: 'Season marked as watched' });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error marking season as watched',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  });
+
+  // Mark all episodes as watched
+  const { mutate: markAllWatched } = useMutation({
+    mutationFn: async () => {
+      if (!user || !episodesData) {
+        throw new Error('You must be logged in to mark episodes');
+      }
+
+      for (const episode of episodesData) {
+        await toggleWatchStatus({ episodeId: episode.id, watched: true });
+      }
+    },
+    onSuccess: () => {
+      toast({ title: 'All episodes marked as watched' });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error marking all episodes as watched',
         description: error.message,
         variant: 'destructive',
       });
@@ -244,7 +293,7 @@ export const ShowDetail = () => {
     enabled: !!user && !!show?.id
   });
   
-  // Organize episodes by season
+  // Organize episodes by season with current season first
   const episodesBySeason: EpisodesBySeasonMap = {};
   
   if (episodesData) {
@@ -263,6 +312,18 @@ export const ShowDetail = () => {
       }
     });
   }
+
+  // Sort seasons to show currently watching first, then completed ones
+  const sortedSeasons = Object.entries(episodesBySeason).sort(([, a], [, b]) => {
+    const aCompleted = a.watchedCount === a.episodes.length;
+    const bCompleted = b.watchedCount === b.episodes.length;
+    
+    if (aCompleted !== bCompleted) {
+      return aCompleted ? 1 : -1; // Currently watching first
+    }
+    
+    return parseInt(a.episodes[0]?.season?.toString() || '0') - parseInt(b.episodes[0]?.season?.toString() || '0');
+  });
   
   // Calculate total watched progress
   const totalEpisodes = episodesData?.length || 0;
@@ -323,23 +384,36 @@ export const ShowDetail = () => {
               )}
               
               {user && (
-                <Button 
-                  onClick={() => toggleTracking()} 
-                  variant={isTracking ? "default" : "outline"}
-                  className="w-full"
-                >
-                  {isTracking ? (
-                    <>
-                      <HeartOff className="h-4 w-4 mr-2" />
-                      Remove from My Shows
-                    </>
-                  ) : (
-                    <>
-                      <Heart className="h-4 w-4 mr-2" />
-                      Add to My Shows
-                    </>
+                <>
+                  <Button 
+                    onClick={() => toggleTracking()} 
+                    variant={isTracking ? "default" : "outline"}
+                    className="w-full"
+                  >
+                    {isTracking ? (
+                      <>
+                        <HeartOff className="h-4 w-4 mr-2" />
+                        Remove from My Shows
+                      </>
+                    ) : (
+                      <>
+                        <Heart className="h-4 w-4 mr-2" />
+                        Add to My Shows
+                      </>
+                    )}
+                  </Button>
+                  
+                  {isTracking && totalEpisodes > 0 && (
+                    <Button 
+                      onClick={() => markAllWatched()}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Mark All Watched
+                    </Button>
                   )}
-                </Button>
+                </>
               )}
             </CardContent>
           </Card>
@@ -393,100 +467,121 @@ export const ShowDetail = () => {
                 <div className="flex justify-center items-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
-              ) : Object.keys(episodesBySeason).length === 0 ? (
+              ) : sortedSeasons.length === 0 ? (
                 <Card>
                   <CardContent className="py-8 text-center">
                     <p>No episodes available for this show.</p>
                   </CardContent>
                 </Card>
               ) : (
-                Object.entries(episodesBySeason).map(([season, data]) => (
-                  <Card key={season} className="overflow-hidden">
-                    <CardHeader className="bg-muted/40">
-                      <div className="flex justify-between items-center">
-                        <CardTitle>Season {season}</CardTitle>
-                        <div className="text-sm text-muted-foreground">
-                          {data.watchedCount}/{data.episodes.length} watched
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-0 divide-y divide-border">
-                      {/* Unwatched Episodes First */}
-                      {data.episodes
-                        .filter(ep => !ep.watched)
-                        .map(episode => (
-                          <div key={episode.id} className="p-4 flex items-center justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-start">
-                                <div className="bg-secondary text-secondary-foreground px-2 py-1 rounded text-xs font-medium mr-3">
-                                  S{episode.season.toString().padStart(2, '0')}E{episode.episode.toString().padStart(2, '0')}
-                                </div>
-                                <div>
-                                  <div className="font-medium">{episode.title}</div>
-                                  {episode.airDate && (
-                                    <div className="text-xs text-muted-foreground">
-                                      {new Date(episode.airDate).toLocaleDateString()}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
+                <Accordion type="multiple" className="space-y-4">
+                  {sortedSeasons.map(([season, data]) => {
+                    const isCompleted = data.watchedCount === data.episodes.length;
+                    return (
+                      <AccordionItem key={season} value={season} className="border rounded-lg">
+                        <AccordionTrigger className="px-4 hover:no-underline">
+                          <div className="flex justify-between items-center w-full">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold">Season {season}</span>
+                              <Badge variant={isCompleted ? "default" : "outline"}>
+                                {data.watchedCount}/{data.episodes.length} watched
+                              </Badge>
                             </div>
-                            {user && (
+                            {user && !isCompleted && (
                               <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                className="ml-2"
-                                onClick={() => toggleWatchStatus({ 
-                                  episodeId: episode.id, 
-                                  watched: !episode.watched 
-                                })}
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  markSeasonWatched(parseInt(season));
+                                }}
+                                className="mr-2"
                               >
-                                <Clock className="h-4 w-4 mr-2" />
-                                Mark Watched
+                                Mark Season Watched
                               </Button>
                             )}
                           </div>
-                        ))}
-                      
-                      {/* Watched Episodes Below */}
-                      {data.episodes
-                        .filter(ep => ep.watched)
-                        .map(episode => (
-                          <div key={episode.id} className="p-4 flex items-center justify-between bg-muted/20">
-                            <div className="flex-1">
-                              <div className="flex items-start">
-                                <div className="bg-secondary text-secondary-foreground px-2 py-1 rounded text-xs font-medium mr-3">
-                                  S{episode.season.toString().padStart(2, '0')}E{episode.episode.toString().padStart(2, '0')}
-                                </div>
-                                <div>
-                                  <div className="font-medium">{episode.title}</div>
-                                  {episode.airDate && (
-                                    <div className="text-xs text-muted-foreground">
-                                      {new Date(episode.airDate).toLocaleDateString()}
+                        </AccordionTrigger>
+                        <AccordionContent className="px-4 pb-4">
+                          <div className="space-y-2">
+                            {/* Unwatched Episodes First */}
+                            {data.episodes
+                              .filter(ep => !ep.watched)
+                              .map(episode => (
+                                <div key={episode.id} className="p-3 border rounded flex items-center justify-between">
+                                  <div className="flex-1">
+                                    <div className="flex items-start gap-3">
+                                      <div className="bg-secondary text-secondary-foreground px-2 py-1 rounded text-xs font-medium">
+                                        S{episode.season.toString().padStart(2, '0')}E{episode.episode.toString().padStart(2, '0')}
+                                      </div>
+                                      <div>
+                                        <div className="font-medium">{episode.title}</div>
+                                        {episode.airDate && (
+                                          <div className="text-xs text-muted-foreground">
+                                            {new Date(episode.airDate).toLocaleDateString()}
+                                          </div>
+                                        )}
+                                      </div>
                                     </div>
+                                  </div>
+                                  {user && (
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline"
+                                      onClick={() => toggleWatchStatus({ 
+                                        episodeId: episode.id, 
+                                        watched: !episode.watched 
+                                      })}
+                                    >
+                                      <Clock className="h-4 w-4 mr-2" />
+                                      Mark Watched
+                                    </Button>
                                   )}
                                 </div>
-                              </div>
-                            </div>
-                            {user && (
-                              <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                className="ml-2 text-green-600"
-                                onClick={() => toggleWatchStatus({ 
-                                  episodeId: episode.id, 
-                                  watched: !episode.watched 
-                                })}
-                              >
-                                <CheckCircle className="h-4 w-4 mr-2" />
-                                Watched
-                              </Button>
-                            )}
+                              ))}
+                            
+                            {/* Watched Episodes Below */}
+                            {data.episodes
+                              .filter(ep => ep.watched)
+                              .map(episode => (
+                                <div key={episode.id} className="p-3 border rounded flex items-center justify-between bg-muted/20">
+                                  <div className="flex-1">
+                                    <div className="flex items-start gap-3">
+                                      <div className="bg-secondary text-secondary-foreground px-2 py-1 rounded text-xs font-medium">
+                                        S{episode.season.toString().padStart(2, '0')}E{episode.episode.toString().padStart(2, '0')}
+                                      </div>
+                                      <div>
+                                        <div className="font-medium">{episode.title}</div>
+                                        {episode.airDate && (
+                                          <div className="text-xs text-muted-foreground">
+                                            {new Date(episode.airDate).toLocaleDateString()}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  {user && (
+                                    <Button 
+                                      size="sm" 
+                                      variant="ghost" 
+                                      className="text-green-600"
+                                      onClick={() => toggleWatchStatus({ 
+                                        episodeId: episode.id, 
+                                        watched: !episode.watched 
+                                      })}
+                                    >
+                                      <CheckCircle className="h-4 w-4 mr-2" />
+                                      Watched
+                                    </Button>
+                                  )}
+                                </div>
+                              ))}
                           </div>
-                        ))}
-                    </CardContent>
-                  </Card>
-                ))
+                        </AccordionContent>
+                      </AccordionItem>
+                    );
+                  })}
+                </Accordion>
               )}
             </TabsContent>
           </Tabs>

@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Play, Eye, Calendar, Filter } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Play, Eye, Calendar, Filter, Clock, CheckCircle } from 'lucide-react';
 import { useUniverseEpisodes, UniverseEpisode } from '@/hooks/useUniverseEpisodes';
 import { useNavigate } from 'react-router-dom';
 
@@ -68,7 +69,7 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
     setDisplayedCount(prev => Math.min(prev + batchSize, filteredEpisodes.length));
   };
 
-  const handleEpisodeClick = (episode: UniverseEpisode) => {
+  const handleShowClick = (episode: UniverseEpisode) => {
     if (episode.show?.slug) {
       navigate(`/tv-shows/show/${episode.show.slug}`);
     }
@@ -129,66 +130,73 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
         </Card>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {displayedEpisodes.map((episode) => (
-              <Card 
-                key={episode.id} 
-                className={`border-blue-200 hover:shadow-lg transition-all cursor-pointer ${
-                  episode.watched ? 'bg-green-50' : 'bg-white'
-                }`}
-                onClick={() => handleEpisodeClick(episode)}
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="text-blue-700 text-sm line-clamp-2">
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Show</TableHead>
+                  <TableHead>Season</TableHead>
+                  <TableHead>Episode</TableHead>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Air Date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {displayedEpisodes.map((episode) => (
+                  <TableRow key={episode.id} className={episode.watched ? 'bg-green-50' : ''}>
+                    <TableCell 
+                      className="font-medium cursor-pointer text-blue-600 hover:underline"
+                      onClick={() => handleShowClick(episode)}
+                    >
                       {episode.show?.title}
-                    </CardTitle>
-                    <Badge variant={episode.watched ? "default" : "outline"} className="flex-shrink-0">
-                      {episode.watched ? (
-                        <>
-                          <Eye className="w-3 h-3 mr-1" />
-                          Watched
-                        </>
-                      ) : (
-                        'Not Watched'
-                      )}
-                    </Badge>
-                  </div>
-                  <p className="text-sm font-medium text-gray-600">
-                    S{episode.season_number}E{episode.episode_number}: {episode.title}
-                  </p>
-                </CardHeader>
-                
-                <CardContent className="space-y-2">
-                  {episode.air_date && (
-                    <div className="flex items-center text-xs text-muted-foreground">
-                      <Calendar className="w-3 h-3 mr-1" />
-                      {new Date(episode.air_date).toLocaleDateString()}
-                    </div>
-                  )}
-                  
-                  {episode.watched && episode.watched_at && (
-                    <div className="text-xs text-green-600">
-                      Watched: {new Date(episode.watched_at).toLocaleDateString()}
-                    </div>
-                  )}
-                  
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full mt-2"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEpisodeClick(episode);
-                    }}
-                  >
-                    <Play className="w-3 h-3 mr-1" />
-                    View Show
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                    </TableCell>
+                    <TableCell>S{episode.season_number}</TableCell>
+                    <TableCell>E{episode.episode_number}</TableCell>
+                    <TableCell>{episode.title}</TableCell>
+                    <TableCell>
+                      {episode.air_date ? new Date(episode.air_date).toLocaleDateString() : 'TBA'}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={episode.watched ? "default" : "outline"}>
+                        {episode.watched ? (
+                          <>
+                            <Eye className="w-3 h-3 mr-1" />
+                            Watched
+                          </>
+                        ) : (
+                          <>
+                            <Clock className="w-3 h-3 mr-1" />
+                            Unwatched
+                          </>
+                        )}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        size="sm"
+                        variant={episode.watched ? "outline" : "default"}
+                        onClick={() => handleShowClick(episode)}
+                      >
+                        {episode.watched ? (
+                          <>
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Watched
+                          </>
+                        ) : (
+                          <>
+                            <Clock className="w-3 h-3 mr-1" />
+                            Mark Watched
+                          </>
+                        )}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
 
           {hasMore && (
             <div className="text-center">
