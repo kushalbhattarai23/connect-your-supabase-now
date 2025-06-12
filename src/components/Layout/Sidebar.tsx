@@ -22,7 +22,8 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  User
+  User,
+  Target
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -44,7 +45,8 @@ const iconMap = {
   Home,
   Menu,
   X,
-  User
+  User,
+  Target
 };
 
 interface SidebarContentProps {
@@ -160,21 +162,21 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
               </Link>
             )}
 
-            {/* Add loans route for Finance */}
+            {/* Add budgets route for Finance */}
             {app.id === 'finance' && (
               <Link
-                to="/finance/loans"
-                title={isCollapsed ? "Loans" : undefined}
+                to="/finance/budgets"
+                title={isCollapsed ? "Budgets" : undefined}
                 className={cn(
                   "flex items-center space-x-3 px-3 lg:px-6 py-2 rounded-lg transition-colors text-sm",
-                  location.pathname === '/finance/loans'
+                  location.pathname === '/finance/budgets'
                     ? `bg-${app.color}-100 text-${app.color}-700 dark:bg-${app.color}-900 dark:text-${app.color}-300`
                     : "text-muted-foreground hover:text-foreground hover:bg-accent",
                   isCollapsed && "lg:justify-center lg:space-x-0 lg:px-3"
                 )}
               >
-                <DollarSign className="w-4 h-4 flex-shrink-0" />
-                {!isCollapsed && <span>Loans</span>}
+                <Target className="w-4 h-4 flex-shrink-0" />
+                {!isCollapsed && <span>Budgets</span>}
               </Link>
             )}
           </div>
