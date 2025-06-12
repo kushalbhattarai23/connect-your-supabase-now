@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,8 +19,7 @@ export const FinanceWallets: React.FC = () => {
     name: '',
     balance: 0,
     currency: 'NPR',
-    color: '#22C55E',
-    icon: 'wallet'
+
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -35,7 +33,7 @@ export const FinanceWallets: React.FC = () => {
     
     setIsDialogOpen(false);
     setEditingWallet(null);
-    setFormData({ name: '', balance: 0, currency: 'NPR', color: '#22C55E', icon: 'wallet' });
+    setFormData({ name: '', balance: 0, currency: 'NPR' });
   };
 
   const handleEdit = (wallet: any) => {
@@ -44,8 +42,7 @@ export const FinanceWallets: React.FC = () => {
       name: wallet.name,
       balance: wallet.balance,
       currency: wallet.currency,
-      color: wallet.color || '#22C55E',
-      icon: wallet.icon || 'wallet'
+
     });
     setIsDialogOpen(true);
   };
