@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,7 @@ import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components
 import { Play, Filter, RefreshCw } from 'lucide-react';
 import { useUniverseEpisodes } from '@/hooks/useUniverseEpisodes';
 import { EpisodeTableRow } from './EpisodeTableRow';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface UniverseEpisodesProps {
   universeId: string;
@@ -17,6 +19,7 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
   const [filter, setFilter] = useState<'all' | 'watched' | 'not-watched'>('all');
   const [showFilter, setShowFilter] = useState<string>('all');
   const [displayCount, setDisplayCount] = useState(BATCH_SIZE);
+  const isMobile = useIsMobile();
 
   const { episodes, isLoading, refetch } = useUniverseEpisodes(universeId);
 
@@ -68,9 +71,9 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
   if (isLoading) {
     return (
       <Card className="border-blue-200">
-        <CardContent className="text-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading episodes...</p>
+        <CardContent className="text-center py-8 sm:py-12">
+          <div className="animate-spin rounded-full h-6 sm:h-8 w-6 sm:w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-muted-foreground text-sm sm:text-base">Loading episodes...</p>
         </CardContent>
       </Card>
     );
@@ -79,12 +82,12 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
   return (
     <div className="space-y-4">
       {/* Filter Controls */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-4 sm:items-center sm:justify-between">
+        <div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-4">
           <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-blue-600" />
+            <Filter className="w-4 h-4 text-blue-600 flex-shrink-0" />
             <Select value={filter} onValueChange={(value: any) => setFilter(value)}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-full sm:w-40">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
@@ -96,7 +99,7 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
           </div>
 
           <Select value={showFilter} onValueChange={setShowFilter}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder="Filter by show" />
             </SelectTrigger>
             <SelectContent>
@@ -110,7 +113,7 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
           </Select>
         </div>
 
-        <Button onClick={handleRefresh} variant="outline" size="sm">
+        <Button onClick={handleRefresh} variant="outline" size="sm" className="w-full sm:w-auto">
           <RefreshCw className="w-4 h-4 mr-2" />
           Refresh
         </Button>
@@ -118,27 +121,27 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
 
       {/* Episode Statistics */}
       {filteredEpisodes.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
           <Card className="border-blue-200">
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-blue-700">{filteredEpisodes.length}</div>
-              <p className="text-sm text-muted-foreground">Total Episodes</p>
+            <CardContent className="p-3 sm:p-4 text-center">
+              <div className="text-xl sm:text-2xl font-bold text-blue-700">{filteredEpisodes.length}</div>
+              <p className="text-xs sm:text-sm text-muted-foreground">Total Episodes</p>
             </CardContent>
           </Card>
           <Card className="border-green-200">
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-green-700">
+            <CardContent className="p-3 sm:p-4 text-center">
+              <div className="text-xl sm:text-2xl font-bold text-green-700">
                 {filteredEpisodes.filter(ep => ep.watched).length}
               </div>
-              <p className="text-sm text-muted-foreground">Watched</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Watched</p>
             </CardContent>
           </Card>
-          <Card className="border-gray-200">
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-gray-700">
+          <Card className="border-gray-200 col-span-2 sm:col-span-1">
+            <CardContent className="p-3 sm:p-4 text-center">
+              <div className="text-xl sm:text-2xl font-bold text-gray-700">
                 {filteredEpisodes.filter(ep => !ep.watched).length}
               </div>
-              <p className="text-sm text-muted-foreground">Unwatched</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Unwatched</p>
             </CardContent>
           </Card>
         </div>
@@ -147,13 +150,13 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
       {/* Episodes Table */}
       {episodes.length === 0 ? (
         <Card className="border-blue-200">
-          <CardContent className="text-center py-12">
-            <Play className="h-16 w-16 text-blue-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Episodes Found</h3>
-            <p className="text-muted-foreground mb-4">
+          <CardContent className="text-center py-8 sm:py-12">
+            <Play className="h-12 sm:h-16 w-12 sm:w-16 text-blue-500 mx-auto mb-4" />
+            <h3 className="text-base sm:text-lg font-semibold mb-2">No Episodes Found</h3>
+            <p className="text-muted-foreground mb-4 text-sm sm:text-base px-4">
               No episodes are available in this universe yet.
             </p>
-            <Button onClick={handleRefresh} variant="outline">
+            <Button onClick={handleRefresh} variant="outline" size="sm">
               <RefreshCw className="w-4 h-4 mr-2" />
               Try Again
             </Button>
@@ -161,47 +164,67 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
         </Card>
       ) : filteredEpisodes.length === 0 ? (
         <Card className="border-blue-200">
-          <CardContent className="text-center py-12">
-            <Play className="h-16 w-16 text-blue-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Episodes Match Filters</h3>
-            <p className="text-muted-foreground">
+          <CardContent className="text-center py-8 sm:py-12">
+            <Play className="h-12 sm:h-16 w-12 sm:w-16 text-blue-500 mx-auto mb-4" />
+            <h3 className="text-base sm:text-lg font-semibold mb-2">No Episodes Match Filters</h3>
+            <p className="text-muted-foreground text-sm sm:text-base px-4">
               No episodes match your current filters.
             </p>
           </CardContent>
         </Card>
       ) : (
         <>
-          <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-left font-semibold text-blue-600">Show</TableHead>
-                  <TableHead className="text-center font-semibold text-blue-600">Season</TableHead>
-                  <TableHead className="text-center font-semibold text-blue-600">Episode</TableHead>
-                  <TableHead className="text-left font-semibold text-blue-600">Title</TableHead>
-                  <TableHead className="text-center font-semibold text-blue-600">Air Date</TableHead>
-                  <TableHead className="text-center font-semibold text-blue-600">Watched</TableHead>
-                  <TableHead className="text-center font-semibold text-blue-600">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {displayedEpisodes.map((episode) => (
-                  <EpisodeTableRow key={episode.id} episode={episode} />
-                ))}
-              </TableBody>
-            </Table>
+          <Card className="overflow-hidden">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-left font-semibold text-blue-600 min-w-[120px] px-2 sm:px-4">
+                      Show
+                    </TableHead>
+                    {!isMobile && (
+                      <TableHead className="text-center font-semibold text-blue-600 w-20">
+                        Season
+                      </TableHead>
+                    )}
+                    <TableHead className="text-center font-semibold text-blue-600 w-20 px-2">
+                      Episode
+                    </TableHead>
+                    <TableHead className="text-left font-semibold text-blue-600 min-w-[150px] px-2 sm:px-4">
+                      Title
+                    </TableHead>
+                    {!isMobile && (
+                      <TableHead className="text-center font-semibold text-blue-600 min-w-[100px]">
+                        Air Date
+                      </TableHead>
+                    )}
+                    <TableHead className="text-center font-semibold text-blue-600 w-20">
+                      Watched
+                    </TableHead>
+                    <TableHead className="text-center font-semibold text-blue-600 min-w-[120px] px-2 sm:px-4">
+                      Action
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {displayedEpisodes.map((episode) => (
+                    <EpisodeTableRow key={episode.id} episode={episode} />
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </Card>
 
           {/* Load More Button */}
           {displayedEpisodes.length < filteredEpisodes.length && (
             <div className="text-center">
-              <Button onClick={handleLoadMore} variant="outline">
+              <Button onClick={handleLoadMore} variant="outline" className="w-full sm:w-auto">
                 Load More Episodes ({filteredEpisodes.length - displayedEpisodes.length} remaining)
               </Button>
             </div>
           )}
 
-          <div className="text-center text-sm text-muted-foreground">
+          <div className="text-center text-xs sm:text-sm text-muted-foreground px-4">
             Showing {displayedEpisodes.length} of {filteredEpisodes.length} episodes
             {filteredEpisodes.length !== episodes.length && (
               <span> (filtered from {episodes.length} total)</span>
