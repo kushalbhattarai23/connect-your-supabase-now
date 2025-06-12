@@ -7,11 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Edit, Trash2, Calendar, DollarSign } from 'lucide-react';
+import { Plus, Edit, Trash2, DollarSign, User } from 'lucide-react';
 import { useLoans, CreateLoanData } from '@/hooks/useLoans';
 import { formatCurrency } from '@/lib/utils';
 
-const loanTypes = ['personal', 'mortgage', 'car', 'student', 'business', 'other'] as const;
+const loanTypes = ['Personal', 'Mortgage', 'Car', 'Student', 'Business', 'Other'] as const;
 const loanStatuses = ['active', 'paid_off', 'defaulted'] as const;
 
 export const Loans: React.FC = () => {
@@ -22,22 +22,22 @@ export const Loans: React.FC = () => {
 
   const [formData, setFormData] = useState<CreateLoanData>({
     name: '',
-    type: 'personal',
+    type: 'Personal',
     amount: 0,
     remaining_amount: 0,
     status: 'active',
-    due_date: '',
+    person: '',
     description: ''
   });
 
   const resetForm = () => {
     setFormData({
       name: '',
-      type: 'personal',
+      type: 'Personal',
       amount: 0,
       remaining_amount: 0,
       status: 'active',
-      due_date: '',
+      person: '',
       description: ''
     });
   };
@@ -70,7 +70,7 @@ export const Loans: React.FC = () => {
       amount: loan.amount,
       remaining_amount: loan.remaining_amount,
       status: loan.status,
-      due_date: loan.due_date || '',
+      person: loan.person || '',
       description: loan.description || ''
     });
     setIsEditOpen(true);
@@ -132,7 +132,7 @@ export const Loans: React.FC = () => {
                   <SelectContent>
                     {loanTypes.map((type) => (
                       <SelectItem key={type} value={type}>
-                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                        {type}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -140,7 +140,7 @@ export const Loans: React.FC = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="amount">Total Amount</Label>
+                  <Label htmlFor="amount">Loan Amount</Label>
                   <Input
                     id="amount"
                     type="number"
@@ -161,12 +161,13 @@ export const Loans: React.FC = () => {
                 </div>
               </div>
               <div>
-                <Label htmlFor="due_date">Due Date</Label>
+                <Label htmlFor="person">Person (Who took the loan)</Label>
                 <Input
-                  id="due_date"
-                  type="date"
-                  value={formData.due_date}
-                  onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                  id="person"
+                  value={formData.person}
+                  onChange={(e) => setFormData({ ...formData, person: e.target.value })}
+                  placeholder="Enter person's name"
+                  required
                 />
               </div>
               <div>
@@ -221,13 +222,13 @@ export const Loans: React.FC = () => {
                   {formatCurrency(loan.remaining_amount)} / {formatCurrency(loan.amount)}
                 </span>
               </div>
-              {loan.due_date && (
+              {loan.person && (
                 <div className="flex items-center">
-                  <Calendar className="h-4 w-4 mr-2 text-green-600" />
-                  <span className="text-sm">Due: {new Date(loan.due_date).toLocaleDateString()}</span>
+                  <User className="h-4 w-4 mr-2 text-green-600" />
+                  <span className="text-sm">{loan.person}</span>
                 </div>
               )}
-              <div className="text-xs text-muted-foreground capitalize">
+              <div className="text-xs text-muted-foreground">
                 {loan.type} loan
               </div>
               {loan.description && (
@@ -244,7 +245,6 @@ export const Loans: React.FC = () => {
             <DialogTitle>Edit Loan</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            
             <div>
               <Label htmlFor="edit-name">Loan Name</Label>
               <Input
@@ -263,7 +263,7 @@ export const Loans: React.FC = () => {
                 <SelectContent>
                   {loanTypes.map((type) => (
                     <SelectItem key={type} value={type}>
-                      {type.charAt(0).toUpperCase() + type.slice(1)}
+                      {type}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -286,7 +286,7 @@ export const Loans: React.FC = () => {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="edit-amount">Total Amount</Label>
+                <Label htmlFor="edit-amount">Loan Amount</Label>
                 <Input
                   id="edit-amount"
                   type="number"
@@ -307,12 +307,13 @@ export const Loans: React.FC = () => {
               </div>
             </div>
             <div>
-              <Label htmlFor="edit-due-date">Due Date</Label>
+              <Label htmlFor="edit-person">Person (Who took the loan)</Label>
               <Input
-                id="edit-due-date"
-                type="date"
-                value={formData.due_date}
-                onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                id="edit-person"
+                value={formData.person}
+                onChange={(e) => setFormData({ ...formData, person: e.target.value })}
+                placeholder="Enter person's name"
+                required
               />
             </div>
             <div>
