@@ -16,7 +16,7 @@ import WalletDetail from '@/apps/finance/pages/WalletDetail';
 import CategoryDetail from '@/apps/finance/pages/CategoryDetail';
 import UniverseDashboard from '@/apps/tv-shows/pages/UniverseDashboard';
 import UniverseDetail from '@/apps/tv-shows/pages/UniverseDetail';
-import PrivateUniverses from '@/apps/tv-shows/pages/PrivateUniverses';
+import Universes from '@/apps/tv-shows/pages/Universes';
 import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient();
@@ -59,7 +59,7 @@ const AppRoutes = () => {
         )}
         <Route path="/finance/wallet/:walletId" element={<WalletDetail />} />
         <Route path="/finance/category/:categoryId" element={<CategoryDetail />} />
-        <Route path="/tv-shows/universes" element={<PrivateUniverses />} />
+        <Route path="/tv-shows/universes" element={<Universes />} />
         <Route path="/tv-shows/universe/:universeId/dashboard" element={<UniverseDashboard />} />
         <Route path="/tv-shows/universe/:universeId" element={<UniverseDetail />} />
         <Route path="/settings" element={<SettingsPage />} />
