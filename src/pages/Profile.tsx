@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +12,7 @@ import { User, Lock, Save } from 'lucide-react';
 const Profile: React.FC = () => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -22,24 +22,55 @@ const Profile: React.FC = () => {
     confirmPassword: ''
   });
 
+  useEffect(() => {
+    if (user) {
+      fetchProfile();
+    }
+  }, [user]);
+
+  const fetchProfile = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user?.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      if (data) {
+        setProfile(data);
+        setFormData(prev => ({
+          ...prev,
+          firstName: data.first_name || '',
+          lastName: data.last_name || ''
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
+
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      // Update profile information
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
           id: user?.id,
           first_name: formData.firstName,
           last_name: formData.lastName,
+          updated_at: new Date().toISOString()
         });
 
       if (profileError) throw profileError;
 
       toast.success('Profile updated successfully');
-      setFormData(prev => ({ ...prev, firstName: '', lastName: '' }));
+      fetchProfile(); // Refresh profile data
     } catch (error) {
       console.error('Profile update error:', error);
       toast.error('Failed to update profile');
@@ -85,12 +116,16 @@ const Profile: React.FC = () => {
     }
   };
 
+  const displayName = profile?.first_name && profile?.last_name 
+    ? `${profile.first_name} ${profile.last_name}`
+    : profile?.first_name || profile?.last_name || user?.email?.split('@')[0] || 'User';
+
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold">Profile Settings</h1>
         <p className="text-muted-foreground">
-          Manage your account information and security settings
+          Welcome, {displayName}! Manage your account information and security settings
         </p>
       </div>
 
