@@ -48,7 +48,7 @@ export const useTransfers = () => {
     mutationFn: async (transfer: Omit<Transfer, 'id' | 'created_at' | 'updated_at' | 'user_id' | 'status'>) => {
       if (!user) throw new Error('User not authenticated');
       
-      // Start a transaction to handle wallet balance updates
+      // Get wallet balances
       const { data: fromWallet, error: fromWalletError } = await supabase
         .from('wallets')
         .select('balance')
@@ -60,6 +60,14 @@ export const useTransfers = () => {
       if (fromWallet.balance < transfer.amount) {
         throw new Error('Insufficient balance in source wallet');
       }
+
+      const { data: toWallet, error: toWalletError } = await supabase
+        .from('wallets')
+        .select('balance')
+        .eq('id', transfer.to_wallet_id)
+        .single();
+      
+      if (toWalletError) throw toWalletError;
       
       // Create the transfer
       const { data, error } = await supabase
@@ -82,7 +90,7 @@ export const useTransfers = () => {
           .eq('id', transfer.from_wallet_id),
         supabase
           .from('wallets')
-          .update({ balance: supabase.rpc('increment', { amount: transfer.amount }) })
+          .update({ balance: toWallet.balance + transfer.amount })
           .eq('id', transfer.to_wallet_id)
       ]);
       
@@ -108,16 +116,33 @@ export const useTransfers = () => {
         .single();
         
       if (originalError) throw originalError;
+
+      // Get current wallet balances
+      const { data: fromWallet, error: fromWalletError } = await supabase
+        .from('wallets')
+        .select('balance')
+        .eq('id', originalTransfer.from_wallet_id)
+        .single();
+      
+      if (fromWalletError) throw fromWalletError;
+
+      const { data: toWallet, error: toWalletError } = await supabase
+        .from('wallets')
+        .select('balance')
+        .eq('id', originalTransfer.to_wallet_id)
+        .single();
+      
+      if (toWalletError) throw toWalletError;
       
       // Reverse the original transfer's effect on wallet balances
       await Promise.all([
         supabase
           .from('wallets')
-          .update({ balance: supabase.rpc('increment', { amount: originalTransfer.amount }) })
+          .update({ balance: fromWallet.balance + originalTransfer.amount })
           .eq('id', originalTransfer.from_wallet_id),
         supabase
           .from('wallets')
-          .update({ balance: supabase.rpc('increment', { amount: -originalTransfer.amount }) })
+          .update({ balance: toWallet.balance - originalTransfer.amount })
           .eq('id', originalTransfer.to_wallet_id)
       ]);
       
@@ -131,16 +156,33 @@ export const useTransfers = () => {
         
       if (error) throw error;
       
-      // Apply the new transfer's effect on wallet balances
+      // Apply the new transfer's effect on wallet balances if amount/wallets changed
       if (updates.amount && updates.from_wallet_id && updates.to_wallet_id) {
+        // Get updated wallet balances for new wallets
+        const { data: newFromWallet, error: newFromError } = await supabase
+          .from('wallets')
+          .select('balance')
+          .eq('id', updates.from_wallet_id)
+          .single();
+        
+        if (newFromError) throw newFromError;
+
+        const { data: newToWallet, error: newToError } = await supabase
+          .from('wallets')
+          .select('balance')
+          .eq('id', updates.to_wallet_id)
+          .single();
+        
+        if (newToError) throw newToError;
+
         await Promise.all([
           supabase
             .from('wallets')
-            .update({ balance: supabase.rpc('increment', { amount: -updates.amount }) })
+            .update({ balance: newFromWallet.balance - updates.amount })
             .eq('id', updates.from_wallet_id),
           supabase
             .from('wallets')
-            .update({ balance: supabase.rpc('increment', { amount: updates.amount }) })
+            .update({ balance: newToWallet.balance + updates.amount })
             .eq('id', updates.to_wallet_id)
         ]);
       }
@@ -167,16 +209,33 @@ export const useTransfers = () => {
         .single();
         
       if (transferError) throw transferError;
+
+      // Get current wallet balances
+      const { data: fromWallet, error: fromWalletError } = await supabase
+        .from('wallets')
+        .select('balance')
+        .eq('id', transfer.from_wallet_id)
+        .single();
+      
+      if (fromWalletError) throw fromWalletError;
+
+      const { data: toWallet, error: toWalletError } = await supabase
+        .from('wallets')
+        .select('balance')
+        .eq('id', transfer.to_wallet_id)
+        .single();
+      
+      if (toWalletError) throw toWalletError;
       
       // Reverse the transfer's effect on wallet balances
       await Promise.all([
         supabase
           .from('wallets')
-          .update({ balance: supabase.rpc('increment', { amount: transfer.amount }) })
+          .update({ balance: fromWallet.balance + transfer.amount })
           .eq('id', transfer.from_wallet_id),
         supabase
           .from('wallets')
-          .update({ balance: supabase.rpc('increment', { amount: -transfer.amount }) })
+          .update({ balance: toWallet.balance - transfer.amount })
           .eq('id', transfer.to_wallet_id)
       ]);
       
