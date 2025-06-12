@@ -14,12 +14,18 @@ interface UniverseEpisodesProps {
 }
 
 export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }) => {
-  const { episodes, isLoading } = useUniverseEpisodes(universeId);
+  const { episodes, isLoading, refetch } = useUniverseEpisodes(universeId);
   const [filter, setFilter] = useState<'all' | 'watched' | 'not-watched'>('all');
   const [showFilter, setShowFilter] = useState<string>('all');
-  const [batchSize] = useState(20);
+  const [batchSize] = useState(50); // Increased batch size for better performance
   const [displayedCount, setDisplayedCount] = useState(batchSize);
   const navigate = useNavigate();
+
+  // Refresh episodes when universe changes
+  React.useEffect(() => {
+    refetch();
+    setDisplayedCount(batchSize);
+  }, [universeId, refetch]);
 
   const uniqueShows = useMemo(() => {
     const shows = episodes
@@ -124,7 +130,10 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
             <Play className="h-16 w-16 text-blue-500 mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">No Episodes Found</h3>
             <p className="text-muted-foreground">
-              No episodes match your current filters.
+              {episodes.length === 0 
+                ? "No episodes are available in this universe yet."
+                : "No episodes match your current filters."
+              }
             </p>
           </CardContent>
         </Card>
@@ -208,6 +217,9 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
 
           <div className="text-center text-sm text-muted-foreground">
             Showing {displayedEpisodes.length} of {filteredEpisodes.length} episodes
+            {episodes.length !== filteredEpisodes.length && (
+              <span> (filtered from {episodes.length} total)</span>
+            )}
           </div>
         </>
       )}

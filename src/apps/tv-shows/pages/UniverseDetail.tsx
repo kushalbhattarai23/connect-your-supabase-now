@@ -19,6 +19,7 @@ export const UniverseDetail: React.FC = () => {
   const { universeShows, availableShows, addShowToUniverse, removeShowFromUniverse } = useUniverseShows(universeId || '');
   const [selectedShow, setSelectedShow] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [episodeKey, setEpisodeKey] = useState(0); // Key to force episode refresh
 
   const universe = universes.find(u => u.id === universeId);
   const isOwner = user?.id === universe?.creator_id;
@@ -40,7 +41,11 @@ export const UniverseDetail: React.FC = () => {
 
   const handleAddShow = () => {
     if (selectedShow) {
-      addShowToUniverse.mutate(selectedShow);
+      addShowToUniverse.mutate(selectedShow, {
+        onSuccess: () => {
+          setEpisodeKey(prev => prev + 1); // Force episode refresh
+        }
+      });
       setSelectedShow('');
       setIsDialogOpen(false);
     }
@@ -48,7 +53,11 @@ export const UniverseDetail: React.FC = () => {
 
   const handleRemoveShow = (showUniverseId: string) => {
     if (confirm('Are you sure you want to remove this show from the universe?')) {
-      removeShowFromUniverse.mutate(showUniverseId);
+      removeShowFromUniverse.mutate(showUniverseId, {
+        onSuccess: () => {
+          setEpisodeKey(prev => prev + 1); // Force episode refresh
+        }
+      });
     }
   };
 
@@ -232,7 +241,7 @@ export const UniverseDetail: React.FC = () => {
         <TabsContent value="episodes" className="space-y-4">
           <div>
             <h2 className="text-xl font-semibold text-blue-700 mb-4">Episodes in this Universe</h2>
-            <UniverseEpisodes universeId={universeId || ''} />
+            <UniverseEpisodes key={episodeKey} universeId={universeId || ''} />
           </div>
         </TabsContent>
       </Tabs>
