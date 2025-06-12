@@ -1,9 +1,8 @@
+
 import { AppModule } from '@/types';
-import { Main } from '@/pages/main';
-import { TvShows } from '@/apps/tv-shows/pages/TvShows';
+import Landing from '@/pages/Landing';
 import { ShowDetail } from '@/apps/tv-shows/pages/ShowDetail';
 import { UniverseDetail } from '@/apps/tv-shows/pages/UniverseDetail';
-import { CreateUniverse } from '@/apps/tv-shows/pages/CreateUniverse';
 
 import FinanceTransactions from '@/apps/finance/pages/Transactions';
 import AllTransactions from '@/apps/finance/pages/AllTransactions';
@@ -15,6 +14,7 @@ import FinanceTransfers from '@/apps/finance/pages/Transfers';
 import FinanceDashboard from '@/apps/finance/pages/Dashboard';
 import FinanceReports from '@/apps/finance/pages/Reports';
 import FinanceSettings from '@/apps/finance/pages/Settings';
+import { AppSettings } from '@/hooks/useAppSettings';
 
 export const tvShowsApp: AppModule = {
   id: 'tv-shows',
@@ -25,10 +25,9 @@ export const tvShowsApp: AppModule = {
   description: 'Track your favorite TV shows',
   enabled: true,
   routes: [
-    { path: '/tv-shows', name: 'TV Shows', component: TvShows },
+    { path: '/tv-shows', name: 'TV Shows', component: ShowDetail },
     { path: '/tv-shows/show/:showId', name: 'Show Detail', component: ShowDetail },
     { path: '/tv-shows/universe/:universeId', name: 'Universe Detail', component: UniverseDetail },
-    { path: '/tv-shows/create-universe', name: 'Create Universe', component: CreateUniverse },
   ]
 };
 
@@ -64,9 +63,22 @@ export const apps: AppModule[] = [
     description: 'Your personal home page',
     enabled: true,
     routes: [
-      { path: '/', name: 'Home', component: Main }
+      { path: '/', name: 'Home', component: Landing }
     ]
   },
   tvShowsApp,
   financeApp,
 ];
+
+export const getEnabledApps = (settings?: AppSettings): AppModule[] => {
+  if (!settings) {
+    return apps;
+  }
+  
+  return apps.filter(app => {
+    if (app.id === 'home') return true;
+    if (app.id === 'tv-shows') return settings.enabledApps.tvShows;
+    if (app.id === 'finance') return settings.enabledApps.finance;
+    return true;
+  });
+};
