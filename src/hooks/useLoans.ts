@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -6,11 +5,11 @@ import { toast } from 'sonner';
 export interface Loan {
   id: string;
   name: string;
-  type: 'personal' | 'mortgage' | 'car' | 'student' | 'business' | 'other';
+  type: 'Personal' | 'Mortgage' | 'Car' | 'Student' | 'Business' | 'Other';
   amount: number;
   remaining_amount: number;
   status: 'active' | 'paid_off' | 'defaulted';
-  due_date?: string;
+  person?: string;
   description?: string;
   user_id: string;
   created_at: string;
@@ -23,7 +22,7 @@ export interface CreateLoanData {
   amount: number;
   remaining_amount: number;
   status?: string;
-  due_date?: string;
+  person?: string;
   description?: string;
 }
 
