@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { Play, Eye, Filter, Clock, CheckCircle, RefreshCw } from 'lucide-react';
 import { useUniverseEpisodes, UniverseEpisode } from '@/hooks/useUniverseEpisodes';
 import { useNavigate } from 'react-router-dom';
@@ -17,17 +16,14 @@ interface UniverseEpisodesProps {
 export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }) => {
   const [filter, setFilter] = useState<'all' | 'watched' | 'not-watched'>('all');
   const [showFilter, setShowFilter] = useState<string>('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 50;
   const navigate = useNavigate();
 
-  const { episodes, totalCount, hasMore, isLoading, refetch } = useUniverseEpisodes(universeId, currentPage, pageSize);
+  const { episodes, isLoading, refetch } = useUniverseEpisodes(universeId);
 
   // Refresh episodes when universe changes
   React.useEffect(() => {
     console.log('Universe changed, refreshing episodes');
     refetch();
-    setCurrentPage(1);
   }, [universeId, refetch]);
 
   const uniqueShows = useMemo(() => {
@@ -57,16 +53,10 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
     return filtered;
   }, [episodes, filter, showFilter]);
 
-  const totalPages = Math.ceil(totalCount / pageSize);
-
   const handleShowClick = (episode: UniverseEpisode) => {
     if (episode.show?.slug) {
       navigate(`/tv-shows/show/${episode.show.slug}`);
     }
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
   };
 
   const handleRefresh = () => {
@@ -218,47 +208,10 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
             </Table>
           </Card>
 
-          {totalPages > 1 && (
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious 
-                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                    className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                  />
-                </PaginationItem>
-                
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  const pageNumber = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
-                  if (pageNumber > totalPages) return null;
-                  
-                  return (
-                    <PaginationItem key={pageNumber}>
-                      <PaginationLink
-                        onClick={() => handlePageChange(pageNumber)}
-                        isActive={currentPage === pageNumber}
-                        className="cursor-pointer"
-                      >
-                        {pageNumber}
-                      </PaginationLink>
-                    </PaginationItem>
-                  );
-                })}
-                
-                <PaginationItem>
-                  <PaginationNext 
-                    onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          )}
-
           <div className="text-center text-sm text-muted-foreground">
-            Showing {Math.min(filteredEpisodes.length, pageSize)} of {totalCount} episodes
+            Showing {filteredEpisodes.length} of {episodes.length} episodes
             {filteredEpisodes.length !== episodes.length && (
-              <span> (filtered from {episodes.length} on this page)</span>
+              <span> (filtered)</span>
             )}
           </div>
         </>

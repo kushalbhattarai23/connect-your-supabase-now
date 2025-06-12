@@ -19,16 +19,16 @@ export interface UniverseEpisode {
   };
 }
 
-export const useUniverseEpisodes = (universeId: string, page: number = 1, pageSize: number = 50) => {
+export const useUniverseEpisodes = (universeId: string) => {
   const { user } = useAuth();
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['universe-episodes', universeId, user?.id, page, pageSize],
+    queryKey: ['universe-episodes', universeId, user?.id],
     queryFn: async () => {
-      if (!universeId) return { episodes: [], totalCount: 0, hasMore: false };
+      if (!universeId) return { episodes: [] };
 
       try {
-        console.log('Fetching episodes for universe:', universeId, 'page:', page);
+        console.log('Fetching all episodes for universe:', universeId);
         
         // Step 1: Get show IDs in the universe
         const { data: showUniverses, error: showUniverseError } = await supabase
@@ -38,53 +38,37 @@ export const useUniverseEpisodes = (universeId: string, page: number = 1, pageSi
 
         if (showUniverseError) {
           console.error('Error fetching show universes:', showUniverseError);
-          return { episodes: [], totalCount: 0, hasMore: false };
+          return { episodes: [] };
         }
 
         if (!showUniverses || showUniverses.length === 0) {
           console.log('No shows found in universe');
-          return { episodes: [], totalCount: 0, hasMore: false };
+          return { episodes: [] };
         }
 
         const showIds = showUniverses.map(su => su.show_id);
         console.log('Found shows in universe:', showIds.length);
 
-        // Step 2: Get episodes count for pagination
-        const { count, error: countError } = await supabase
-          .from('episodes')
-          .select('*', { count: 'exact', head: true })
-          .in('show_id', showIds);
-
-        if (countError) {
-          console.error('Error counting episodes:', countError);
-          return { episodes: [], totalCount: 0, hasMore: false };
-        }
-
-        const totalCount = count || 0;
-        console.log('Total episodes in universe:', totalCount);
-
-        // Step 3: Get paginated episodes
-        const offset = (page - 1) * pageSize;
+        // Step 2: Get all episodes
         const { data: episodesData, error: episodesError } = await supabase
           .from('episodes')
           .select('*')
           .in('show_id', showIds)
-          .order('air_date', { ascending: true })
-          .range(offset, offset + pageSize - 1);
+          .order('air_date', { ascending: true });
 
         if (episodesError) {
           console.error('Error fetching episodes:', episodesError);
-          return { episodes: [], totalCount: 0, hasMore: false };
+          return { episodes: [] };
         }
 
         if (!episodesData || episodesData.length === 0) {
           console.log('No episodes found');
-          return { episodes: [], totalCount: 0, hasMore: false };
+          return { episodes: [] };
         }
 
         console.log('Fetched episodes:', episodesData.length);
 
-        // Step 4: Get show details
+        // Step 3: Get show details
         const { data: showsData, error: showsError } = await supabase
           .from('shows')
           .select('id, title, slug')
@@ -92,12 +76,12 @@ export const useUniverseEpisodes = (universeId: string, page: number = 1, pageSi
 
         if (showsError) {
           console.error('Error fetching shows:', showsError);
-          return { episodes: [], totalCount: 0, hasMore: false };
+          return { episodes: [] };
         }
 
         const showsMap = new Map(showsData?.map(show => [show.id, show]) || []);
 
-        // Step 5: Get watch status if user is logged in
+        // Step 4: Get watch status if user is logged in
         let watchedEpisodeIds = new Set<string>();
         let watchStatusMap = new Map<string, string>();
 
@@ -122,7 +106,7 @@ export const useUniverseEpisodes = (universeId: string, page: number = 1, pageSi
           }
         }
 
-        // Step 6: Combine all data
+        // Step 5: Combine all data
         const episodes: UniverseEpisode[] = episodesData.map(episode => ({
           id: episode.id,
           title: episode.title,
@@ -135,7 +119,7 @@ export const useUniverseEpisodes = (universeId: string, page: number = 1, pageSi
           show: showsMap.get(episode.show_id)
         }));
 
-        // Step 7: Sort episodes (unwatched first, then watched)
+        // Step 6: Sort episodes (unwatched first, then watched)
         const sortedEpisodes = episodes.sort((a, b) => {
           if (a.watched !== b.watched) {
             return a.watched ? 1 : -1;
@@ -148,18 +132,14 @@ export const useUniverseEpisodes = (universeId: string, page: number = 1, pageSi
           return 0;
         });
 
-        const hasMore = offset + pageSize < totalCount;
-
-        console.log('Returning episodes:', sortedEpisodes.length, 'hasMore:', hasMore);
+        console.log('Returning episodes:', sortedEpisodes.length);
 
         return {
-          episodes: sortedEpisodes,
-          totalCount,
-          hasMore
+          episodes: sortedEpisodes
         };
       } catch (error) {
         console.error('Error in useUniverseEpisodes:', error);
-        return { episodes: [], totalCount: 0, hasMore: false };
+        return { episodes: [] };
       }
     },
     enabled: !!universeId,
@@ -169,8 +149,6 @@ export const useUniverseEpisodes = (universeId: string, page: number = 1, pageSi
 
   return {
     episodes: data?.episodes || [],
-    totalCount: data?.totalCount || 0,
-    hasMore: data?.hasMore || false,
     isLoading,
     refetch
   };
