@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
-import { Play, Eye, Filter, Clock, CheckCircle } from 'lucide-react';
+import { Play, Eye, Filter, Clock, CheckCircle, RefreshCw } from 'lucide-react';
 import { useUniverseEpisodes, UniverseEpisode } from '@/hooks/useUniverseEpisodes';
 import { useNavigate } from 'react-router-dom';
 
@@ -25,6 +25,7 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
 
   // Refresh episodes when universe changes
   React.useEffect(() => {
+    console.log('Universe changed, refreshing episodes');
     refetch();
     setCurrentPage(1);
   }, [universeId, refetch]);
@@ -68,6 +69,11 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
     setCurrentPage(page);
   };
 
+  const handleRefresh = () => {
+    console.log('Manual refresh triggered');
+    refetch();
+  };
+
   if (isLoading) {
     return (
       <Card className="border-blue-200">
@@ -81,46 +87,64 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-blue-600" />
-          <Select value={filter} onValueChange={(value: any) => setFilter(value)}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Filter by status" />
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-blue-600" />
+            <Select value={filter} onValueChange={(value: any) => setFilter(value)}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Episodes</SelectItem>
+                <SelectItem value="not-watched">Not Watched</SelectItem>
+                <SelectItem value="watched">Watched</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Select value={showFilter} onValueChange={setShowFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Filter by show" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Episodes</SelectItem>
-              <SelectItem value="not-watched">Not Watched</SelectItem>
-              <SelectItem value="watched">Watched</SelectItem>
+              <SelectItem value="all">All Shows</SelectItem>
+              {uniqueShows.map((show) => (
+                <SelectItem key={show?.id} value={show?.id || ''}>
+                  {show?.title}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
 
-        <Select value={showFilter} onValueChange={setShowFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Filter by show" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Shows</SelectItem>
-            {uniqueShows.map((show) => (
-              <SelectItem key={show?.id} value={show?.id || ''}>
-                {show?.title}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Button onClick={handleRefresh} variant="outline" size="sm">
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Refresh
+        </Button>
       </div>
 
-      {filteredEpisodes.length === 0 ? (
+      {episodes.length === 0 ? (
         <Card className="border-blue-200">
           <CardContent className="text-center py-12">
             <Play className="h-16 w-16 text-blue-500 mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">No Episodes Found</h3>
+            <p className="text-muted-foreground mb-4">
+              No episodes are available in this universe yet.
+            </p>
+            <Button onClick={handleRefresh} variant="outline">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      ) : filteredEpisodes.length === 0 ? (
+        <Card className="border-blue-200">
+          <CardContent className="text-center py-12">
+            <Play className="h-16 w-16 text-blue-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No Episodes Match Filters</h3>
             <p className="text-muted-foreground">
-              {episodes.length === 0 
-                ? "No episodes are available in this universe yet."
-                : "No episodes match your current filters."
-              }
+              No episodes match your current filters.
             </p>
           </CardContent>
         </Card>
@@ -146,7 +170,7 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
                       className="font-medium cursor-pointer text-blue-600 hover:underline"
                       onClick={() => handleShowClick(episode)}
                     >
-                      {episode.show?.title}
+                      {episode.show?.title || 'Unknown Show'}
                     </TableCell>
                     <TableCell>S{episode.season_number}</TableCell>
                     <TableCell>E{episode.episode_number}</TableCell>
@@ -232,9 +256,9 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
           )}
 
           <div className="text-center text-sm text-muted-foreground">
-            Showing {filteredEpisodes.length} episodes on page {currentPage} of {totalPages}
-            {episodes.length !== filteredEpisodes.length && (
-              <span> (filtered from {episodes.length} total on this page)</span>
+            Showing {Math.min(filteredEpisodes.length, pageSize)} of {totalCount} episodes
+            {filteredEpisodes.length !== episodes.length && (
+              <span> (filtered from {episodes.length} on this page)</span>
             )}
           </div>
         </>
