@@ -1,11 +1,12 @@
 
 import React, { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Play, Eye, Calendar, Filter, Clock, CheckCircle } from 'lucide-react';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
+import { Play, Eye, Filter, Clock, CheckCircle } from 'lucide-react';
 import { useUniverseEpisodes, UniverseEpisode } from '@/hooks/useUniverseEpisodes';
 import { useNavigate } from 'react-router-dom';
 
@@ -14,17 +15,18 @@ interface UniverseEpisodesProps {
 }
 
 export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }) => {
-  const { episodes, isLoading, refetch } = useUniverseEpisodes(universeId);
   const [filter, setFilter] = useState<'all' | 'watched' | 'not-watched'>('all');
   const [showFilter, setShowFilter] = useState<string>('all');
-  const [batchSize] = useState(50); // Increased batch size for better performance
-  const [displayedCount, setDisplayedCount] = useState(batchSize);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 50;
   const navigate = useNavigate();
+
+  const { episodes, totalCount, hasMore, isLoading, refetch } = useUniverseEpisodes(universeId, currentPage, pageSize);
 
   // Refresh episodes when universe changes
   React.useEffect(() => {
     refetch();
-    setDisplayedCount(batchSize);
+    setCurrentPage(1);
   }, [universeId, refetch]);
 
   const uniqueShows = useMemo(() => {
@@ -51,34 +53,19 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
       filtered = filtered.filter(ep => ep.show_id === showFilter);
     }
 
-    // Sort: not watched episodes by air date first, then watched episodes
-    return filtered.sort((a, b) => {
-      if (a.watched !== b.watched) {
-        return a.watched ? 1 : -1; // Not watched first
-      }
-      
-      if (a.air_date && b.air_date) {
-        return new Date(a.air_date).getTime() - new Date(b.air_date).getTime();
-      }
-      
-      if (a.air_date && !b.air_date) return -1;
-      if (!a.air_date && b.air_date) return 1;
-      
-      return 0;
-    });
+    return filtered;
   }, [episodes, filter, showFilter]);
 
-  const displayedEpisodes = filteredEpisodes.slice(0, displayedCount);
-  const hasMore = displayedCount < filteredEpisodes.length;
-
-  const loadMore = () => {
-    setDisplayedCount(prev => Math.min(prev + batchSize, filteredEpisodes.length));
-  };
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   const handleShowClick = (episode: UniverseEpisode) => {
     if (episode.show?.slug) {
       navigate(`/tv-shows/show/${episode.show.slug}`);
     }
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   if (isLoading) {
@@ -124,7 +111,7 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
         </Select>
       </div>
 
-      {displayedEpisodes.length === 0 ? (
+      {filteredEpisodes.length === 0 ? (
         <Card className="border-blue-200">
           <CardContent className="text-center py-12">
             <Play className="h-16 w-16 text-blue-500 mx-auto mb-4" />
@@ -153,7 +140,7 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {displayedEpisodes.map((episode) => (
+                {filteredEpisodes.map((episode) => (
                   <TableRow key={episode.id} className={episode.watched ? 'bg-green-50' : ''}>
                     <TableCell 
                       className="font-medium cursor-pointer text-blue-600 hover:underline"
@@ -207,18 +194,47 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
             </Table>
           </Card>
 
-          {hasMore && (
-            <div className="text-center">
-              <Button onClick={loadMore} variant="outline">
-                Load More Episodes ({filteredEpisodes.length - displayedCount} remaining)
-              </Button>
-            </div>
+          {totalPages > 1 && (
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                    className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  />
+                </PaginationItem>
+                
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  const pageNumber = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+                  if (pageNumber > totalPages) return null;
+                  
+                  return (
+                    <PaginationItem key={pageNumber}>
+                      <PaginationLink
+                        onClick={() => handlePageChange(pageNumber)}
+                        isActive={currentPage === pageNumber}
+                        className="cursor-pointer"
+                      >
+                        {pageNumber}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                })}
+                
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           )}
 
           <div className="text-center text-sm text-muted-foreground">
-            Showing {displayedEpisodes.length} of {filteredEpisodes.length} episodes
+            Showing {filteredEpisodes.length} episodes on page {currentPage} of {totalPages}
             {episodes.length !== filteredEpisodes.length && (
-              <span> (filtered from {episodes.length} total)</span>
+              <span> (filtered from {episodes.length} total on this page)</span>
             )}
           </div>
         </>
