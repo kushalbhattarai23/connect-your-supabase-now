@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +22,7 @@ const colorOptions = [
 ];
 
 export const FinanceCategories: React.FC = () => {
+  const navigate = useNavigate();
   const { categories, isLoading, createCategory, updateCategory, deleteCategory } = useCategories();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
@@ -58,22 +60,26 @@ export const FinanceCategories: React.FC = () => {
     }
   };
 
+  const handleCategoryClick = (categoryId: string) => {
+    navigate(`/finance/category/${categoryId}`);
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-green-700">Categories</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-green-700">Categories</h1>
           <p className="text-muted-foreground">Organize your transactions by category</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-green-600 hover:bg-green-700">
+            <Button className="bg-green-600 hover:bg-green-700 w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
               Add Category
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>{editingCategory ? 'Edit Category' : 'Create New Category'}</DialogTitle>
             </DialogHeader>
@@ -108,11 +114,11 @@ export const FinanceCategories: React.FC = () => {
                 </Select>
               </div>
               
-              <div className="flex gap-4">
-                <Button type="submit" className="bg-green-600 hover:bg-green-700">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button type="submit" className="bg-green-600 hover:bg-green-700 flex-1">
                   {editingCategory ? 'Update' : 'Create'} Category
                 </Button>
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">
                   Cancel
                 </Button>
               </div>
@@ -132,22 +138,40 @@ export const FinanceCategories: React.FC = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {categories.map((category) => (
-            <Card key={category.id} className="border-green-200">
+            <Card 
+              key={category.id} 
+              className="border-green-200 cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => handleCategoryClick(category.id)}
+            >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <div className="flex items-center space-x-2">
                   <div 
                     className="w-4 h-4 rounded-full" 
                     style={{ backgroundColor: category.color }}
                   />
-                  <CardTitle className="text-green-700">{category.name}</CardTitle>
+                  <CardTitle className="text-green-700 text-sm sm:text-base">{category.name}</CardTitle>
                 </div>
                 <div className="flex space-x-1">
-                  <Button size="sm" variant="ghost" onClick={() => handleEdit(category)}>
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEdit(category);
+                    }}
+                  >
                     <Edit className="h-4 w-4" />
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => handleDelete(category.id)}>
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(category.id);
+                    }}
+                  >
                     <Trash2 className="h-4 w-4 text-red-500" />
                   </Button>
                 </div>

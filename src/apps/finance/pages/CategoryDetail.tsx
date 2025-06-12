@@ -1,19 +1,28 @@
 
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tag, TrendingUp, TrendingDown, Calendar, ArrowUp, ArrowDown } from 'lucide-react';
+import { Tag, TrendingUp, TrendingDown, Calendar, ArrowUp, ArrowDown, ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useCategories } from '@/hooks/useCategories';
 import { useTransactions } from '@/hooks/useTransactions';
+import { useWallets } from '@/hooks/useWallets';
 
 export const CategoryDetail: React.FC = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
+  const navigate = useNavigate();
   const { categories } = useCategories();
   const { transactions } = useTransactions();
+  const { wallets } = useWallets();
 
   const category = categories.find(c => c.id === categoryId);
   const categoryTransactions = transactions.filter(t => t.category_id === categoryId);
+
+  const getWalletName = (walletId: string) => {
+    const wallet = wallets.find(w => w.id === walletId);
+    return wallet ? wallet.name : 'Unknown Wallet';
+  };
 
   if (!category) {
     return (
@@ -32,6 +41,12 @@ export const CategoryDetail: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
+      {/* Back Button */}
+      <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Back
+      </Button>
+
       {/* Category Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-2">
@@ -109,6 +124,7 @@ export const CategoryDetail: React.FC = () => {
                     <div>
                       <p className="font-medium">{transaction.reason}</p>
                       <p className="text-sm text-muted-foreground">{new Date(transaction.date).toLocaleDateString()}</p>
+                      <p className="text-xs text-muted-foreground">{getWalletName(transaction.wallet_id)}</p>
                     </div>
                   </div>
                   <div className="text-right">
