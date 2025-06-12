@@ -49,12 +49,14 @@ export const useUniverseEpisodes = (universeId: string) => {
         const showIds = showUniverses.map(su => su.show_id);
         console.log('Found shows in universe:', showIds.length);
 
-        // Step 2: Get all episodes
+        // Step 2: Batch fetch episodes with proper ordering
         const { data: episodesData, error: episodesError } = await supabase
           .from('episodes')
           .select('*')
           .in('show_id', showIds)
-          .order('air_date', { ascending: true });
+          .order('air_date', { ascending: true, nullsFirst: false })
+          .order('season_number', { ascending: true })
+          .order('episode_number', { ascending: true });
 
         if (episodesError) {
           console.error('Error fetching episodes:', episodesError);
@@ -68,7 +70,7 @@ export const useUniverseEpisodes = (universeId: string) => {
 
         console.log('Fetched episodes:', episodesData.length);
 
-        // Step 3: Get show details
+        // Step 3: Batch fetch show details
         const { data: showsData, error: showsError } = await supabase
           .from('shows')
           .select('id, title, slug')
@@ -81,32 +83,42 @@ export const useUniverseEpisodes = (universeId: string) => {
 
         const showsMap = new Map(showsData?.map(show => [show.id, show]) || []);
 
-        // Step 4: Get watch status if user is logged in
+        // Step 4: Batch fetch watch status if user is logged in
         let watchedEpisodeIds = new Set<string>();
         let watchStatusMap = new Map<string, string>();
 
-        if (user) {
+        if (user && episodesData.length > 0) {
+          // Process episodes in batches of 1000 to avoid query limits
+          const batchSize = 1000;
           const episodeIds = episodesData.map(ep => ep.id);
-          const { data: watchStatus, error: watchError } = await supabase
-            .from('user_episode_status')
-            .select('episode_id, status, watched_at')
-            .eq('user_id', user.id)
-            .in('episode_id', episodeIds);
+          
+          for (let i = 0; i < episodeIds.length; i += batchSize) {
+            const batch = episodeIds.slice(i, i + batchSize);
+            
+            const { data: watchStatus, error: watchError } = await supabase
+              .from('user_episode_status')
+              .select('episode_id, status, watched_at')
+              .eq('user_id', user.id)
+              .in('episode_id', batch);
 
-          if (watchError) {
-            console.error('Error fetching watch status:', watchError);
-          } else if (watchStatus) {
-            watchStatus.forEach(ws => {
-              if (ws.status === 'watched') {
-                watchedEpisodeIds.add(ws.episode_id);
-                watchStatusMap.set(ws.episode_id, ws.watched_at);
-              }
-            });
-            console.log('Found watched episodes:', watchedEpisodeIds.size);
+            if (watchError) {
+              console.error('Error fetching watch status for batch:', watchError);
+            } else if (watchStatus) {
+              watchStatus.forEach(ws => {
+                if (ws.status === 'watched') {
+                  watchedEpisodeIds.add(ws.episode_id);
+                  if (ws.watched_at) {
+                    watchStatusMap.set(ws.episode_id, ws.watched_at);
+                  }
+                }
+              });
+            }
           }
+          
+          console.log('Found watched episodes:', watchedEpisodeIds.size);
         }
 
-        // Step 5: Combine all data
+        // Step 5: Combine all data and create episodes array
         const episodes: UniverseEpisode[] = episodesData.map(episode => ({
           id: episode.id,
           title: episode.title,
@@ -119,20 +131,37 @@ export const useUniverseEpisodes = (universeId: string) => {
           show: showsMap.get(episode.show_id)
         }));
 
-        // Step 6: Sort episodes (unwatched first, then watched)
+        // Step 6: Sort episodes properly - unwatched first by air date, then watched by air date
         const sortedEpisodes = episodes.sort((a, b) => {
+          // Primary sort: unwatched episodes first
           if (a.watched !== b.watched) {
             return a.watched ? 1 : -1;
           }
           
+          // Secondary sort: by air date (ascending)
           if (a.air_date && b.air_date) {
-            return new Date(a.air_date).getTime() - new Date(b.air_date).getTime();
+            const dateA = new Date(a.air_date).getTime();
+            const dateB = new Date(b.air_date).getTime();
+            if (dateA !== dateB) {
+              return dateA - dateB;
+            }
           }
           
-          return 0;
+          // Handle null air dates (put them at the end)
+          if (a.air_date && !b.air_date) return -1;
+          if (!a.air_date && b.air_date) return 1;
+          
+          // Tertiary sort: by season and episode number
+          if (a.season_number !== b.season_number) {
+            return a.season_number - b.season_number;
+          }
+          
+          return a.episode_number - b.episode_number;
         });
 
-        console.log('Returning episodes:', sortedEpisodes.length);
+        console.log('Returning sorted episodes:', sortedEpisodes.length);
+        console.log('Unwatched episodes:', sortedEpisodes.filter(e => !e.watched).length);
+        console.log('Watched episodes:', sortedEpisodes.filter(e => e.watched).length);
 
         return {
           episodes: sortedEpisodes

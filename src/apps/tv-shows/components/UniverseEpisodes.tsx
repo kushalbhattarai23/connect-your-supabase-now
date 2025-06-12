@@ -13,9 +13,12 @@ interface UniverseEpisodesProps {
   universeId: string;
 }
 
+const BATCH_SIZE = 50; // Number of episodes to render initially and per batch
+
 export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }) => {
   const [filter, setFilter] = useState<'all' | 'watched' | 'not-watched'>('all');
   const [showFilter, setShowFilter] = useState<string>('all');
+  const [displayCount, setDisplayCount] = useState(BATCH_SIZE);
   const navigate = useNavigate();
 
   const { episodes, isLoading, refetch } = useUniverseEpisodes(universeId);
@@ -23,6 +26,7 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
   // Refresh episodes when universe changes
   React.useEffect(() => {
     console.log('Universe changed, refreshing episodes');
+    setDisplayCount(BATCH_SIZE); // Reset display count
     refetch();
   }, [universeId, refetch]);
 
@@ -53,6 +57,10 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
     return filtered;
   }, [episodes, filter, showFilter]);
 
+  const displayedEpisodes = useMemo(() => {
+    return filteredEpisodes.slice(0, displayCount);
+  }, [filteredEpisodes, displayCount]);
+
   const handleShowClick = (episode: UniverseEpisode) => {
     if (episode.show?.slug) {
       navigate(`/tv-shows/show/${episode.show.slug}`);
@@ -61,7 +69,30 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
 
   const handleRefresh = () => {
     console.log('Manual refresh triggered');
+    setDisplayCount(BATCH_SIZE);
     refetch();
+  };
+
+  const handleLoadMore = () => {
+    setDisplayCount(prev => Math.min(prev + BATCH_SIZE, filteredEpisodes.length));
+  };
+
+  const getStatusBadge = (episode: UniverseEpisode) => {
+    if (episode.watched) {
+      return (
+        <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
+          <CheckCircle className="w-3 h-3 mr-1" />
+          Watched
+        </Badge>
+      );
+    } else {
+      return (
+        <Badge variant="outline" className="border-gray-300 text-gray-600">
+          <Clock className="w-3 h-3 mr-1" />
+          Unwatched
+        </Badge>
+      );
+    }
   };
 
   if (isLoading) {
@@ -87,7 +118,7 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Episodes</SelectItem>
-                <SelectItem value="not-watched">Not Watched</SelectItem>
+                <SelectItem value="not-watched">Unwatched</SelectItem>
                 <SelectItem value="watched">Watched</SelectItem>
               </SelectContent>
             </Select>
@@ -113,6 +144,34 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
           Refresh
         </Button>
       </div>
+
+      {/* Episode Statistics */}
+      {filteredEpisodes.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Card className="border-blue-200">
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-blue-700">{filteredEpisodes.length}</div>
+              <p className="text-sm text-muted-foreground">Total Episodes</p>
+            </CardContent>
+          </Card>
+          <Card className="border-green-200">
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-green-700">
+                {filteredEpisodes.filter(ep => ep.watched).length}
+              </div>
+              <p className="text-sm text-muted-foreground">Watched</p>
+            </CardContent>
+          </Card>
+          <Card className="border-gray-200">
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-gray-700">
+                {filteredEpisodes.filter(ep => !ep.watched).length}
+              </div>
+              <p className="text-sm text-muted-foreground">Unwatched</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {episodes.length === 0 ? (
         <Card className="border-blue-200">
@@ -154,8 +213,11 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredEpisodes.map((episode) => (
-                  <TableRow key={episode.id} className={episode.watched ? 'bg-green-50' : ''}>
+                {displayedEpisodes.map((episode) => (
+                  <TableRow 
+                    key={episode.id} 
+                    className={episode.watched ? 'bg-green-50/50' : 'bg-gray-50/30'}
+                  >
                     <TableCell 
                       className="font-medium cursor-pointer text-blue-600 hover:underline"
                       onClick={() => handleShowClick(episode)}
@@ -164,24 +226,12 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
                     </TableCell>
                     <TableCell>S{episode.season_number}</TableCell>
                     <TableCell>E{episode.episode_number}</TableCell>
-                    <TableCell>{episode.title}</TableCell>
+                    <TableCell className="max-w-xs truncate">{episode.title}</TableCell>
                     <TableCell>
                       {episode.air_date ? new Date(episode.air_date).toLocaleDateString() : 'TBA'}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={episode.watched ? "default" : "outline"}>
-                        {episode.watched ? (
-                          <>
-                            <Eye className="w-3 h-3 mr-1" />
-                            Watched
-                          </>
-                        ) : (
-                          <>
-                            <Clock className="w-3 h-3 mr-1" />
-                            Unwatched
-                          </>
-                        )}
-                      </Badge>
+                      {getStatusBadge(episode)}
                     </TableCell>
                     <TableCell>
                       <Button
@@ -191,13 +241,13 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
                       >
                         {episode.watched ? (
                           <>
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            Watched
+                            <Eye className="w-3 h-3 mr-1" />
+                            View
                           </>
                         ) : (
                           <>
-                            <Clock className="w-3 h-3 mr-1" />
-                            Mark Watched
+                            <Play className="w-3 h-3 mr-1" />
+                            Watch
                           </>
                         )}
                       </Button>
@@ -208,10 +258,19 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
             </Table>
           </Card>
 
+          {/* Load More Button */}
+          {displayedEpisodes.length < filteredEpisodes.length && (
+            <div className="text-center">
+              <Button onClick={handleLoadMore} variant="outline">
+                Load More Episodes ({filteredEpisodes.length - displayedEpisodes.length} remaining)
+              </Button>
+            </div>
+          )}
+
           <div className="text-center text-sm text-muted-foreground">
-            Showing {filteredEpisodes.length} of {episodes.length} episodes
+            Showing {displayedEpisodes.length} of {filteredEpisodes.length} episodes
             {filteredEpisodes.length !== episodes.length && (
-              <span> (filtered)</span>
+              <span> (filtered from {episodes.length} total)</span>
             )}
           </div>
         </>
