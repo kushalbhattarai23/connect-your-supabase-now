@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,10 +13,12 @@ import Landing from "@/pages/Landing";
 import SettingsPage from '@/pages/Settings';
 import WalletDetail from '@/apps/finance/pages/WalletDetail';
 import CategoryDetail from '@/apps/finance/pages/CategoryDetail';
+import Loans from '@/apps/finance/pages/Loans';
 import UniverseDashboard from '@/apps/tv-shows/pages/UniverseDashboard';
 import UniverseDetail from '@/apps/tv-shows/pages/UniverseDetail';
 import Universes from '@/apps/tv-shows/pages/Universes';
 import NotFound from '@/pages/NotFound';
+import Profile from '@/pages/Profile';
 
 const queryClient = new QueryClient();
 
@@ -59,9 +60,11 @@ const AppRoutes = () => {
         )}
         <Route path="/finance/wallet/:walletId" element={<WalletDetail />} />
         <Route path="/finance/category/:categoryId" element={<CategoryDetail />} />
+        <Route path="/finance/loans" element={<Loans />} />
         <Route path="/tv-shows/universes" element={<Universes />} />
         <Route path="/tv-shows/universe/:universeId/dashboard" element={<UniverseDashboard />} />
         <Route path="/tv-shows/universe/:universeId" element={<UniverseDetail />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

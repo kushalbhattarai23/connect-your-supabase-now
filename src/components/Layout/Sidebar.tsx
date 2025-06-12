@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { getEnabledApps } from '@/config/apps';
@@ -22,7 +21,8 @@ import {
   Menu,
   X,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  User
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -43,7 +43,8 @@ const iconMap = {
   Settings: SettingsIcon,
   Home,
   Menu,
-  X
+  X,
+  User
 };
 
 interface SidebarContentProps {
@@ -67,10 +68,10 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
         <div className="flex items-center justify-between">
           <Link to="/" className={cn("flex items-center space-x-2", isCollapsed && "lg:justify-center")}>
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold">M</span>
+              <span className="text-primary-foreground font-bold">T</span>
             </div>
             {!isCollapsed && (
-              <span className="font-semibold text-lg">ModularApp</span>
+              <span className="font-semibold text-lg">TrackerHub</span>
             )}
           </Link>
           
@@ -140,11 +141,58 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
                   </Link>
                 );
               })}
+
+            {/* Add special routes for TV Shows */}
+            {app.id === 'tv-shows' && (
+              <Link
+                to="/tv-shows/universes"
+                title={isCollapsed ? "Universes" : undefined}
+                className={cn(
+                  "flex items-center space-x-3 px-3 lg:px-6 py-2 rounded-lg transition-colors text-sm",
+                  location.pathname === '/tv-shows/universes'
+                    ? `bg-${app.color}-100 text-${app.color}-700 dark:bg-${app.color}-900 dark:text-${app.color}-300`
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent",
+                  isCollapsed && "lg:justify-center lg:space-x-0 lg:px-3"
+                )}
+              >
+                <Globe className="w-4 h-4 flex-shrink-0" />
+                {!isCollapsed && <span>Universes</span>}
+              </Link>
+            )}
+
+            {/* Add loans route for Finance */}
+            {app.id === 'finance' && (
+              <Link
+                to="/finance/loans"
+                title={isCollapsed ? "Loans" : undefined}
+                className={cn(
+                  "flex items-center space-x-3 px-3 lg:px-6 py-2 rounded-lg transition-colors text-sm",
+                  location.pathname === '/finance/loans'
+                    ? `bg-${app.color}-100 text-${app.color}-700 dark:bg-${app.color}-900 dark:text-${app.color}-300`
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent",
+                  isCollapsed && "lg:justify-center lg:space-x-0 lg:px-3"
+                )}
+              >
+                <DollarSign className="w-4 h-4 flex-shrink-0" />
+                {!isCollapsed && <span>Loans</span>}
+              </Link>
+            )}
           </div>
         ))}
       </nav>
 
-      <div className="p-3 lg:p-4 border-t border-border">
+      <div className="p-3 lg:p-4 border-t border-border space-y-1">
+        <Link
+          to="/profile"
+          title={isCollapsed ? "Profile" : undefined}
+          className={cn(
+            "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors",
+            isCollapsed && "lg:justify-center lg:space-x-0"
+          )}
+        >
+          <User className="w-4 h-4 flex-shrink-0" />
+          {!isCollapsed && <span>Profile</span>}
+        </Link>
         <Link
           to="/settings"
           title={isCollapsed ? "Settings" : undefined}
