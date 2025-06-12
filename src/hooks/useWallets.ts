@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -9,8 +8,6 @@ export interface Wallet {
   name: string;
   balance: number;
   currency: string;
-  color?: string;
-  icon?: string;
   user_id: string;
   created_at: string;
 }
