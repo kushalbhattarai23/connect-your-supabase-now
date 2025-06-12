@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { LoginForm } from "@/components/Auth/LoginForm";
+import { SignUpForm } from "@/components/Auth/SignUpForm";
 import { AppLayout } from "@/components/Layout/AppLayout";
 import { getEnabledApps } from "@/config/apps";
 import { useAppSettings } from "@/hooks/useAppSettings";
@@ -14,6 +16,8 @@ import WalletDetail from '@/apps/finance/pages/WalletDetail';
 import CategoryDetail from '@/apps/finance/pages/CategoryDetail';
 import UniverseDashboard from '@/apps/tv-shows/pages/UniverseDashboard';
 import UniverseDetail from '@/apps/tv-shows/pages/UniverseDetail';
+import PrivateUniverses from '@/apps/tv-shows/pages/PrivateUniverses';
+import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient();
 
@@ -31,7 +35,13 @@ const AppRoutes = () => {
   }
 
   if (!user) {
-    return <LoginForm />;
+    return (
+      <Routes>
+        <Route path="/login" element={<LoginForm />} />
+        <Route path="/signup" element={<SignUpForm />} />
+        <Route path="*" element={<LoginForm />} />
+      </Routes>
+    );
   }
 
   return (
@@ -49,10 +59,11 @@ const AppRoutes = () => {
         )}
         <Route path="/finance/wallet/:walletId" element={<WalletDetail />} />
         <Route path="/finance/category/:categoryId" element={<CategoryDetail />} />
+        <Route path="/tv-shows/universes" element={<PrivateUniverses />} />
         <Route path="/tv-shows/universe/:universeId/dashboard" element={<UniverseDashboard />} />
         <Route path="/tv-shows/universe/:universeId" element={<UniverseDetail />} />
         <Route path="/settings" element={<SettingsPage />} />
-        <Route path="*" element={<div>Page not found</div>} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </AppLayout>
   );

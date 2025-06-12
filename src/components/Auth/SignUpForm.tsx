@@ -6,23 +6,34 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { LogIn, Mail, Tv, DollarSign, BarChart3, Users, ArrowRight } from 'lucide-react';
+import { LogIn, Mail, Tv, DollarSign, UserPlus, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
 
-export const LoginForm: React.FC = () => {
+export const SignUpForm: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signUp, signInWithGoogle } = useAuth();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (password !== confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     
     try {
-      const { user, error } = await signIn(email, password);
+      const { user, error } = await signUp(email, password);
       if (error) {
         toast({
           title: "Error",
@@ -31,14 +42,14 @@ export const LoginForm: React.FC = () => {
         });
       } else if (user) {
         toast({
-          title: "Welcome back!",
-          description: "You have been successfully logged in.",
+          title: "Account created!",
+          description: "Please check your email to confirm your account.",
         });
       }
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Login failed. Please try again.",
+        description: error.message || "Sign up failed. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -46,14 +57,14 @@ export const LoginForm: React.FC = () => {
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleSignUp = async () => {
     setIsLoading(true);
     try {
       await signInWithGoogle();
     } catch (error: any) {
       toast({
         title: "Error",
-        description: "Google login failed. Please try again.",
+        description: "Google sign up failed. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -75,9 +86,9 @@ export const LoginForm: React.FC = () => {
           
           <div className="space-y-8">
             <div>
-              <h1 className="text-4xl font-bold mb-4">Welcome to Your Digital Life</h1>
+              <h1 className="text-4xl font-bold mb-4">Join ModularApp</h1>
               <p className="text-xl text-white/90 leading-relaxed">
-                Track your favorite TV shows and manage your finances all in one powerful, modular platform.
+                Start tracking your favorite TV shows and managing your finances in one powerful platform.
               </p>
             </div>
 
@@ -88,7 +99,7 @@ export const LoginForm: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg">TV Show Tracker</h3>
-                  <p className="text-white/80">Track episodes, create universes, and never miss your favorite shows</p>
+                  <p className="text-white/80">Organize episodes, create universes, and discover new shows</p>
                 </div>
               </div>
 
@@ -98,25 +109,10 @@ export const LoginForm: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg">Finance Manager</h3>
-                  <p className="text-white/80">Manage wallets, track expenses, and gain insights into your spending</p>
+                  <p className="text-white/80">Track expenses, manage budgets, and achieve financial goals</p>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-3 gap-6 text-center">
-          <div>
-            <BarChart3 className="h-8 w-8 mx-auto mb-2 text-white/80" />
-            <p className="text-sm text-white/70">Analytics</p>
-          </div>
-          <div>
-            <Users className="h-8 w-8 mx-auto mb-2 text-white/80" />
-            <p className="text-sm text-white/70">Collaboration</p>
-          </div>
-          <div>
-            <ArrowRight className="h-8 w-8 mx-auto mb-2 text-white/80" />
-            <p className="text-sm text-white/70">Modular</p>
           </div>
         </div>
       </div>
@@ -133,21 +129,21 @@ export const LoginForm: React.FC = () => {
                 <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">ModularApp</span>
               </div>
               <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                Welcome back
+                Create your account
               </CardTitle>
               <CardDescription className="text-base">
-                Sign in to your account to continue
+                Sign up to get started with ModularApp
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <Button
                 variant="outline"
                 className="w-full border-2 hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 transition-all duration-200"
-                onClick={handleGoogleLogin}
+                onClick={handleGoogleSignUp}
                 disabled={isLoading}
               >
                 <Mail className="mr-2 h-4 w-4" />
-                Continue with Google
+                Sign up with Google
               </Button>
               
               <div className="relative">
@@ -156,7 +152,7 @@ export const LoginForm: React.FC = () => {
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
                   <span className="bg-white px-2 text-muted-foreground">
-                    Or continue with
+                    Or sign up with email
                   </span>
                 </div>
               </div>
@@ -179,11 +175,25 @@ export const LoginForm: React.FC = () => {
                   <Input
                     id="password"
                     type="password"
-                    placeholder="Enter your password"
+                    placeholder="Create a password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="border-2 focus:border-purple-500 transition-colors"
                     required
+                    minLength={6}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="Confirm your password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="border-2 focus:border-purple-500 transition-colors"
+                    required
+                    minLength={6}
                   />
                 </div>
                 <Button 
@@ -191,16 +201,16 @@ export const LoginForm: React.FC = () => {
                   className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-2 transition-all duration-200" 
                   disabled={isLoading}
                 >
-                  <LogIn className="mr-2 h-4 w-4" />
-                  {isLoading ? 'Signing in...' : 'Sign in'}
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  {isLoading ? 'Creating account...' : 'Create account'}
                 </Button>
               </form>
 
               <div className="text-center text-sm text-muted-foreground">
                 <p>
-                  New to ModularApp?{' '}
-                  <Link to="/signup" className="text-purple-600 hover:text-purple-700 font-medium">
-                    Create an account
+                  Already have an account?{' '}
+                  <Link to="/login" className="text-purple-600 hover:text-purple-700 font-medium">
+                    Sign in
                   </Link>
                 </p>
               </div>
@@ -209,7 +219,7 @@ export const LoginForm: React.FC = () => {
 
           {/* Quick Links */}
           <div className="mt-6 text-center space-y-2">
-            <p className="text-sm text-muted-foreground">Quick access:</p>
+            <p className="text-sm text-muted-foreground">Get started with:</p>
             <div className="flex justify-center space-x-4">
               <Button variant="ghost" size="sm" className="text-purple-600 hover:text-purple-700">
                 <Tv className="h-4 w-4 mr-1" />
@@ -227,4 +237,4 @@ export const LoginForm: React.FC = () => {
   );
 };
 
-export default LoginForm;
+export default SignUpForm;
