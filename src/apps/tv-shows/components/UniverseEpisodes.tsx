@@ -1,32 +1,28 @@
-
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Play, Eye, Filter, Clock, CheckCircle, RefreshCw } from 'lucide-react';
-import { useUniverseEpisodes, UniverseEpisode } from '@/hooks/useUniverseEpisodes';
-import { useNavigate } from 'react-router-dom';
+import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Play, Filter, RefreshCw } from 'lucide-react';
+import { useUniverseEpisodes } from '@/hooks/useUniverseEpisodes';
+import { EpisodeTableRow } from './EpisodeTableRow';
 
 interface UniverseEpisodesProps {
   universeId: string;
 }
 
-const BATCH_SIZE = 50; // Number of episodes to render initially and per batch
+const BATCH_SIZE = 50;
 
 export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }) => {
   const [filter, setFilter] = useState<'all' | 'watched' | 'not-watched'>('all');
   const [showFilter, setShowFilter] = useState<string>('all');
   const [displayCount, setDisplayCount] = useState(BATCH_SIZE);
-  const navigate = useNavigate();
 
   const { episodes, isLoading, refetch } = useUniverseEpisodes(universeId);
 
-  // Refresh episodes when universe changes
   React.useEffect(() => {
     console.log('Universe changed, refreshing episodes');
-    setDisplayCount(BATCH_SIZE); // Reset display count
+    setDisplayCount(BATCH_SIZE);
     refetch();
   }, [universeId, refetch]);
 
@@ -42,14 +38,12 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
   const filteredEpisodes = useMemo(() => {
     let filtered = episodes;
 
-    // Filter by watch status
     if (filter === 'watched') {
       filtered = filtered.filter(ep => ep.watched);
     } else if (filter === 'not-watched') {
       filtered = filtered.filter(ep => !ep.watched);
     }
 
-    // Filter by show
     if (showFilter !== 'all') {
       filtered = filtered.filter(ep => ep.show_id === showFilter);
     }
@@ -61,12 +55,6 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
     return filteredEpisodes.slice(0, displayCount);
   }, [filteredEpisodes, displayCount]);
 
-  const handleShowClick = (episode: UniverseEpisode) => {
-    if (episode.show?.slug) {
-      navigate(`/tv-shows/show/${episode.show.slug}`);
-    }
-  };
-
   const handleRefresh = () => {
     console.log('Manual refresh triggered');
     setDisplayCount(BATCH_SIZE);
@@ -75,24 +63,6 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
 
   const handleLoadMore = () => {
     setDisplayCount(prev => Math.min(prev + BATCH_SIZE, filteredEpisodes.length));
-  };
-
-  const getStatusBadge = (episode: UniverseEpisode) => {
-    if (episode.watched) {
-      return (
-        <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
-          <CheckCircle className="w-3 h-3 mr-1" />
-          Watched
-        </Badge>
-      );
-    } else {
-      return (
-        <Badge variant="outline" className="border-gray-300 text-gray-600">
-          <Clock className="w-3 h-3 mr-1" />
-          Unwatched
-        </Badge>
-      );
-    }
   };
 
   if (isLoading) {
@@ -108,6 +78,7 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
 
   return (
     <div className="space-y-4">
+      {/* Filter Controls */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex items-center gap-2">
@@ -173,6 +144,7 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
         </div>
       )}
 
+      {/* Episodes Table */}
       {episodes.length === 0 ? (
         <Card className="border-blue-200">
           <CardContent className="text-center py-12">
@@ -203,56 +175,18 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Show</TableHead>
-                  <TableHead>Season</TableHead>
-                  <TableHead>Episode</TableHead>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Air Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Action</TableHead>
+                  <TableHead className="text-left font-semibold text-blue-600">Show</TableHead>
+                  <TableHead className="text-center font-semibold text-blue-600">Season</TableHead>
+                  <TableHead className="text-center font-semibold text-blue-600">Episode</TableHead>
+                  <TableHead className="text-left font-semibold text-blue-600">Title</TableHead>
+                  <TableHead className="text-center font-semibold text-blue-600">Air Date</TableHead>
+                  <TableHead className="text-center font-semibold text-blue-600">Watched</TableHead>
+                  <TableHead className="text-center font-semibold text-blue-600">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {displayedEpisodes.map((episode) => (
-                  <TableRow 
-                    key={episode.id} 
-                    className={episode.watched ? 'bg-green-50/50' : 'bg-gray-50/30'}
-                  >
-                    <TableCell 
-                      className="font-medium cursor-pointer text-blue-600 hover:underline"
-                      onClick={() => handleShowClick(episode)}
-                    >
-                      {episode.show?.title || 'Unknown Show'}
-                    </TableCell>
-                    <TableCell>S{episode.season_number}</TableCell>
-                    <TableCell>E{episode.episode_number}</TableCell>
-                    <TableCell className="max-w-xs truncate">{episode.title}</TableCell>
-                    <TableCell>
-                      {episode.air_date ? new Date(episode.air_date).toLocaleDateString() : 'TBA'}
-                    </TableCell>
-                    <TableCell>
-                      {getStatusBadge(episode)}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        size="sm"
-                        variant={episode.watched ? "outline" : "default"}
-                        onClick={() => handleShowClick(episode)}
-                      >
-                        {episode.watched ? (
-                          <>
-                            <Eye className="w-3 h-3 mr-1" />
-                            View
-                          </>
-                        ) : (
-                          <>
-                            <Play className="w-3 h-3 mr-1" />
-                            Watch
-                          </>
-                        )}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                  <EpisodeTableRow key={episode.id} episode={episode} />
                 ))}
               </TableBody>
             </Table>
