@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,10 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Play, Eye, Globe, Lock } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Trash2, Play, Eye, Globe, Lock, Calendar } from 'lucide-react';
 import { useUniverses } from '@/hooks/useUniverses';
 import { useUniverseShows } from '@/hooks/useUniverseShows';
 import { useAuth } from '@/hooks/useAuth';
+import { UniverseEpisodes } from '@/apps/tv-shows/components/UniverseEpisodes';
 
 export const UniverseDetail: React.FC = () => {
   const { universeId } = useParams<{ universeId: string }>();
@@ -150,75 +151,91 @@ export const UniverseDetail: React.FC = () => {
         </Card>
       </div>
 
-      {/* Shows in Universe */}
-      <div>
-        <h2 className="text-xl font-semibold text-blue-700 mb-4">Shows in this Universe</h2>
+      {/* Main Content Tabs */}
+      <Tabs defaultValue="shows" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="shows">Shows</TabsTrigger>
+          <TabsTrigger value="episodes">Episodes</TabsTrigger>
+        </TabsList>
         
-        {universeShows.length === 0 ? (
-          <Card className="border-blue-200">
-            <CardContent className="text-center py-12">
-              <Play className="h-16 w-16 text-blue-500 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Shows Yet</h3>
-              <p className="text-muted-foreground">
-                {isOwner ? 'Add some shows to get started!' : 'No shows have been added to this universe yet.'}
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {universeShows.map((universeShow) => (
-              <Card key={universeShow.id} className="border-blue-200 hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="text-blue-700 text-lg line-clamp-2">
-                      {universeShow.show?.title || 'Unknown Show'}
-                    </CardTitle>
-                    {isOwner && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleRemoveShow(universeShow.id)}
-                        className="text-red-500 hover:text-red-700 flex-shrink-0"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </CardHeader>
-                
-                <CardContent className="space-y-3">
-                  {universeShow.show?.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-3">
-                      {universeShow.show.description}
-                    </p>
-                  )}
-                  
-                  <div className="flex items-center justify-between">
-                    <Badge variant="outline" className={universeShow.show?.is_public ? "border-green-200 text-green-700" : "border-yellow-200 text-yellow-700"}>
-                      {universeShow.show?.is_public ? (
-                        <>
-                          <Eye className="w-3 h-3 mr-1" />
-                          Public
-                        </>
-                      ) : (
-                        <>
-                          <Lock className="w-3 h-3 mr-1" />
-                          Private
-                        </>
-                      )}
-                    </Badge>
-                    
-                    <Button size="sm" variant="outline">
-                      <Play className="w-3 h-3 mr-1" />
-                      View
-                    </Button>
-                  </div>
+        <TabsContent value="shows" className="space-y-4">
+          <div>
+            <h2 className="text-xl font-semibold text-blue-700 mb-4">Shows in this Universe</h2>
+            
+            {universeShows.length === 0 ? (
+              <Card className="border-blue-200">
+                <CardContent className="text-center py-12">
+                  <Play className="h-16 w-16 text-blue-500 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Shows Yet</h3>
+                  <p className="text-muted-foreground">
+                    {isOwner ? 'Add some shows to get started!' : 'No shows have been added to this universe yet.'}
+                  </p>
                 </CardContent>
               </Card>
-            ))}
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                {universeShows.map((universeShow) => (
+                  <Card key={universeShow.id} className="border-blue-200 hover:shadow-lg transition-shadow">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <CardTitle className="text-blue-700 text-lg line-clamp-2">
+                          {universeShow.show?.title || 'Unknown Show'}
+                        </CardTitle>
+                        {isOwner && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleRemoveShow(universeShow.id)}
+                            className="text-red-500 hover:text-red-700 flex-shrink-0"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </CardHeader>
+                    
+                    <CardContent className="space-y-3">
+                      {universeShow.show?.description && (
+                        <p className="text-sm text-muted-foreground line-clamp-3">
+                          {universeShow.show.description}
+                        </p>
+                      )}
+                      
+                      <div className="flex items-center justify-between">
+                        <Badge variant="outline" className={universeShow.show?.is_public ? "border-green-200 text-green-700" : "border-yellow-200 text-yellow-700"}>
+                          {universeShow.show?.is_public ? (
+                            <>
+                              <Eye className="w-3 h-3 mr-1" />
+                              Public
+                            </>
+                          ) : (
+                            <>
+                              <Lock className="w-3 h-3 mr-1" />
+                              Private
+                            </>
+                          )}
+                        </Badge>
+                        
+                        <Button size="sm" variant="outline">
+                          <Play className="w-3 h-3 mr-1" />
+                          View
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </TabsContent>
+        
+        <TabsContent value="episodes" className="space-y-4">
+          <div>
+            <h2 className="text-xl font-semibold text-blue-700 mb-4">Episodes in this Universe</h2>
+            <UniverseEpisodes universeId={universeId || ''} />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
