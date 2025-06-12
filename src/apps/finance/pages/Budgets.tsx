@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
-import { Plus, Edit, Trash2, TrendingUp, TrendingDown } from 'lucide-react';
+import { Plus, Edit, Trash2, TrendingUp, TrendingDown, Target } from 'lucide-react';
 import { useBudgets, CreateBudgetData } from '@/hooks/useBudgets';
 import { useCategories } from '@/hooks/useCategories';
 import { useTransactions } from '@/hooks/useTransactions';
@@ -18,6 +18,7 @@ export const Budgets: React.FC = () => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<any>(null);
+  const [budgetType, setBudgetType] = useState<'monthly' | 'category'>('monthly');
 
   const { budgets, isLoading, createBudget, updateBudget, deleteBudget } = useBudgets(selectedMonth, selectedYear);
   const { categories } = useCategories();
@@ -37,15 +38,26 @@ export const Budgets: React.FC = () => {
 
   const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i - 5);
 
-  const getSpentAmount = (categoryId: string) => {
-    return transactions
-      .filter(t => 
-        t.category_id === categoryId && 
-        t.type === 'expense' &&
-        new Date(t.date).getMonth() + 1 === selectedMonth &&
-        new Date(t.date).getFullYear() === selectedYear
-      )
-      .reduce((sum, t) => sum + (t.expense || 0), 0);
+  const getSpentAmount = (categoryId?: string) => {
+    if (categoryId) {
+      return transactions
+        .filter(t => 
+          t.category_id === categoryId && 
+          t.type === 'expense' &&
+          new Date(t.date).getMonth() + 1 === selectedMonth &&
+          new Date(t.date).getFullYear() === selectedYear
+        )
+        .reduce((sum, t) => sum + (t.expense || 0), 0);
+    } else {
+      // Total monthly spending
+      return transactions
+        .filter(t => 
+          t.type === 'expense' &&
+          new Date(t.date).getMonth() + 1 === selectedMonth &&
+          new Date(t.date).getFullYear() === selectedYear
+        )
+        .reduce((sum, t) => sum + (t.expense || 0), 0);
+    }
   };
 
   const resetForm = () => {
@@ -80,7 +92,7 @@ export const Budgets: React.FC = () => {
   const handleEdit = (budget: any) => {
     setEditingBudget(budget);
     setFormData({
-      category_id: budget.category_id,
+      category_id: budget.category_id || '',
       amount: budget.amount,
       month: budget.month,
       year: budget.year
@@ -100,6 +112,12 @@ export const Budgets: React.FC = () => {
     setFormData(prev => ({ ...prev, month, year }));
   };
 
+  // Calculate total monthly budget and spending
+  const totalMonthlyBudget = budgets.reduce((sum, budget) => sum + budget.amount, 0);
+  const totalMonthlySpent = getSpentAmount();
+  const monthlyBudgetRemaining = totalMonthlyBudget - totalMonthlySpent;
+  const monthlyProgressPercentage = totalMonthlyBudget > 0 ? (totalMonthlySpent / totalMonthlyBudget) * 100 : 0;
+
   if (isLoading) {
     return <div className="flex justify-center items-center h-64">Loading budgets...</div>;
   }
@@ -109,7 +127,7 @@ export const Budgets: React.FC = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-green-700">Budgets</h1>
-          <p className="text-muted-foreground">Set and track monthly spending limits by category</p>
+          <p className="text-muted-foreground">Set and track monthly spending limits</p>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
@@ -124,26 +142,42 @@ export const Budgets: React.FC = () => {
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="category">Category</Label>
-                <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
+                <Label htmlFor="budget-type">Budget Type</Label>
+                <Select value={budgetType} onValueChange={(value: 'monthly' | 'category') => setBudgetType(value)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
+                    <SelectValue placeholder="Select budget type" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        <div className="flex items-center">
-                          <div 
-                            className="w-3 h-3 rounded-full mr-2" 
-                            style={{ backgroundColor: category.color }}
-                          />
-                          {category.name}
-                        </div>
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="monthly">Monthly Total Budget</SelectItem>
+                    <SelectItem value="category">Category Budget</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+              
+              {budgetType === 'category' && (
+                <div>
+                  <Label htmlFor="category">Category</Label>
+                  <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          <div className="flex items-center">
+                            <div 
+                              className="w-3 h-3 rounded-full mr-2" 
+                              style={{ backgroundColor: category.color }}
+                            />
+                            {category.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              
               <div>
                 <Label htmlFor="amount">Budget Amount</Label>
                 <Input
@@ -229,6 +263,44 @@ export const Budgets: React.FC = () => {
         </Select>
       </div>
 
+      {/* Monthly Budget Overview */}
+      <Card className="border-green-200">
+        <CardHeader>
+          <CardTitle className="text-green-700 flex items-center">
+            <Target className="h-5 w-5 mr-2" />
+            Monthly Budget Overview
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">Total Budget</p>
+              <p className="text-2xl font-bold text-green-700">{formatCurrency(totalMonthlyBudget)}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">Total Spent</p>
+              <p className="text-2xl font-bold text-red-600">{formatCurrency(totalMonthlySpent)}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">Remaining</p>
+              <p className={`text-2xl font-bold ${monthlyBudgetRemaining >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {formatCurrency(monthlyBudgetRemaining)}
+              </p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>Monthly Progress</span>
+              <span>{monthlyProgressPercentage.toFixed(1)}%</span>
+            </div>
+            <Progress 
+              value={Math.min(monthlyProgressPercentage, 100)} 
+              className={`h-3 ${monthlyProgressPercentage > 100 ? 'bg-red-100' : 'bg-green-100'}`}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {budgets.map((budget) => {
           const spent = getSpentAmount(budget.category_id);
@@ -245,7 +317,9 @@ export const Budgets: React.FC = () => {
                       className="w-4 h-4 rounded-full mr-2" 
                       style={{ backgroundColor: budget.categories?.color || '#3B82F6' }}
                     />
-                    <CardTitle className="text-green-700">{budget.categories?.name}</CardTitle>
+                    <CardTitle className="text-green-700">
+                      {budget.categories?.name || 'Monthly Total'}
+                    </CardTitle>
                   </div>
                   <div className="flex gap-2">
                     <Button
