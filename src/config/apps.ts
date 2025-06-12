@@ -1,3 +1,4 @@
+
 import { AppModule } from '@/types';
 import { Tv, DollarSign } from 'lucide-react';
 
@@ -17,6 +18,7 @@ import FinanceCategories from '@/apps/finance/pages/Categories';
 import FinanceReports from '@/apps/finance/pages/Reports';
 import FinanceSettings from '@/apps/finance/pages/Settings';
 import Loans from '@/apps/finance/pages/Loans';
+import Budgets from '@/apps/finance/pages/Budgets';
 
 export const appModules: AppModule[] = [
   {
@@ -51,6 +53,7 @@ export const appModules: AppModule[] = [
       { path: '/finance/transfers', name: 'Transfers', component: FinanceTransfers, icon: 'ArrowLeftRight' },
       { path: '/finance/categories', name: 'Categories', component: FinanceCategories, icon: 'Tag' },
       { path: '/finance/loans', name: 'Loans', component: Loans, icon: 'DollarSign' },
+      { path: '/finance/budgets', name: 'Budgets', component: Budgets, icon: 'Target' },
       { path: '/finance/reports', name: 'Reports', component: FinanceReports, icon: 'FileBarChart' },
       { path: '/finance/settings', name: 'Settings', component: FinanceSettings, icon: 'Settings' },
     ]

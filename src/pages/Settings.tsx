@@ -5,22 +5,32 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Download, Upload, BadgeIndianRupee } from 'lucide-react';
+import { Download, Upload, BadgeIndianRupee, FileText } from 'lucide-react';
 import { currencies, defaultCurrency } from '@/config/currencies';
 import { useWallets } from '@/hooks/useWallets';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useCategories } from '@/hooks/useCategories';
 import { useTransfers } from '@/hooks/useTransfers';
+import { useLoans } from '@/hooks/useLoans';
 import { useAppSettings } from '@/hooks/useAppSettings';
 
 export const FinanceSettings: React.FC = () => {
   const [selectedCurrency, setSelectedCurrency] = useState(defaultCurrency.code);
+  const [exportOptions, setExportOptions] = useState({
+    wallets: true,
+    transactions: true,
+    categories: true,
+    transfers: true,
+    loans: true
+  });
   const { toast } = useToast();
   const { wallets } = useWallets();
   const { transactions } = useTransactions();
   const { categories } = useCategories();
   const { transfers } = useTransfers();
+  const { loans } = useLoans();
   const { settings, toggleApp } = useAppSettings();
 
   const handleCurrencyChange = (value: string) => {
@@ -42,13 +52,21 @@ export const FinanceSettings: React.FC = () => {
     });
     
     setTimeout(() => {
-      const exportData = {
-        wallets: wallets.map(w => ({
+      const exportData: any = {
+        exportDate: new Date().toISOString(),
+        exportOptions: exportOptions
+      };
+
+      if (exportOptions.wallets) {
+        exportData.wallets = wallets.map(w => ({
           name: w.name,
           balance: w.balance,
           currency: w.currency
-        })),
-        transactions: transactions.map(t => ({
+        }));
+      }
+
+      if (exportOptions.transactions) {
+        exportData.transactions = transactions.map(t => ({
           reason: t.reason,
           type: t.type,
           income: t.income,
@@ -56,21 +74,38 @@ export const FinanceSettings: React.FC = () => {
           date: t.date,
           wallet_id: t.wallet_id,
           category_id: t.category_id
-        })),
-        categories: categories.map(c => ({
+        }));
+      }
+
+      if (exportOptions.categories) {
+        exportData.categories = categories.map(c => ({
           name: c.name,
           color: c.color
-        })),
-        transfers: transfers.map(t => ({
+        }));
+      }
+
+      if (exportOptions.transfers) {
+        exportData.transfers = transfers.map(t => ({
           from_wallet_id: t.from_wallet_id,
           to_wallet_id: t.to_wallet_id,
           amount: t.amount,
           date: t.date,
           description: t.description,
           status: t.status
-        })),
-        exportDate: new Date().toISOString()
-      };
+        }));
+      }
+
+      if (exportOptions.loans) {
+        exportData.loans = loans.map(l => ({
+          name: l.name,
+          type: l.type,
+          amount: l.amount,
+          remaining_amount: l.remaining_amount,
+          status: l.status,
+          due_date: l.due_date,
+          description: l.description
+        }));
+      }
       
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
       const downloadAnchorNode = document.createElement('a');
@@ -102,8 +137,12 @@ export const FinanceSettings: React.FC = () => {
           try {
             const jsonData = JSON.parse(event.target?.result as string);
             
-            if (!jsonData.wallets || !jsonData.transactions || !jsonData.categories || !jsonData.transfers) {
-              throw new Error('Invalid file format');
+            // Validate basic structure
+            const validSections = ['wallets', 'transactions', 'categories', 'transfers', 'loans'];
+            const hasValidSection = validSections.some(section => jsonData[section]);
+            
+            if (!hasValidSection) {
+              throw new Error('Invalid file format - no recognized data sections found');
             }
             
             console.log('Imported data:', jsonData);
@@ -130,8 +169,8 @@ export const FinanceSettings: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-green-700">Finance Settings</h1>
-        <p className="text-muted-foreground text-sm sm:text-base">Configure your finance preferences</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-green-700">TrackerHub Settings</h1>
+        <p className="text-muted-foreground text-sm sm:text-base">Configure your application preferences</p>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -217,32 +256,54 @@ export const FinanceSettings: React.FC = () => {
           </CardContent>
         </Card>
         
-        <Card className="border-green-200">
+        <Card className="border-green-200 lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-green-700">Data Management</CardTitle>
-            <CardDescription>Export or import your financial data</CardDescription>
+            <CardDescription>Export or import your financial data with customizable options</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-2">
-              <Label>Export Data</Label>
-              <p className="text-sm text-muted-foreground mb-2">
-                Download all your financial data including wallets, transactions, transfers, and categories
-              </p>
-              <Button onClick={handleExportData} className="w-full bg-green-600 hover:bg-green-700">
-                <Download className="h-4 w-4 mr-2" />
-                Export Financial Data
-              </Button>
-            </div>
-            
-            <div className="grid gap-2">
-              <Label>Import Data</Label>
-              <p className="text-sm text-muted-foreground mb-2">
-                Import previously exported financial data
-              </p>
-              <Button onClick={handleImportData} variant="outline" className="w-full border-green-200 text-green-700 hover:bg-green-50">
-                <Upload className="h-4 w-4 mr-2" />
-                Import Data
-              </Button>
+          <CardContent className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <Label>Export Data</Label>
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Select data to export:</Label>
+                  <div className="space-y-2">
+                    {Object.entries(exportOptions).map(([key, value]) => (
+                      <div key={key} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={key}
+                          checked={value}
+                          onCheckedChange={(checked) => 
+                            setExportOptions(prev => ({ ...prev, [key]: checked as boolean }))
+                          }
+                        />
+                        <Label htmlFor={key} className="text-sm capitalize">
+                          {key}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <Button onClick={handleExportData} className="w-full bg-green-600 hover:bg-green-700">
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Selected Data
+                </Button>
+              </div>
+              
+              <div className="space-y-4">
+                <Label>Import Data</Label>
+                <p className="text-sm text-muted-foreground">
+                  Import previously exported financial data. The system will automatically detect and import available data types.
+                </p>
+                <Button onClick={handleImportData} variant="outline" className="w-full border-green-200 text-green-700 hover:bg-green-50">
+                  <Upload className="h-4 w-4 mr-2" />
+                  Import Data
+                </Button>
+                <div className="flex items-start space-x-2 text-xs text-muted-foreground">
+                  <FileText className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <span>Supports JSON files exported from TrackerHub</span>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
