@@ -83,28 +83,25 @@ export const useUniverseEpisodes = (universeId: string) => {
 
         const showsMap = new Map(showsData?.map(show => [show.id, show]) || []);
 
-        // Step 4: Batch fetch watch status if user is logged in
+        // Step 4: Batch fetch watch status using RPC function to avoid URL length limits
         let watchedEpisodeIds = new Set<string>();
         let watchStatusMap = new Map<string, string>();
 
         if (user && episodesData.length > 0) {
-          // Process episodes in batches of 1000 to avoid query limits
-          const batchSize = 1000;
           const episodeIds = episodesData.map(ep => ep.id);
           
-          for (let i = 0; i < episodeIds.length; i += batchSize) {
-            const batch = episodeIds.slice(i, i + batchSize);
-            
+          try {
+            // Use RPC function to fetch watch status to avoid URL length limits
             const { data: watchStatus, error: watchError } = await supabase
-              .from('user_episode_status')
-              .select('episode_id, status, watched_at')
-              .eq('user_id', user.id)
-              .in('episode_id', batch);
+              .rpc('get_user_episode_status_batch', {
+                p_user_id: user.id,
+                p_episode_ids: episodeIds
+              });
 
             if (watchError) {
-              console.error('Error fetching watch status for batch:', watchError);
+              console.error('Error fetching watch status:', watchError);
             } else if (watchStatus) {
-              watchStatus.forEach(ws => {
+              watchStatus.forEach((ws: any) => {
                 if (ws.status === 'watched') {
                   watchedEpisodeIds.add(ws.episode_id);
                   if (ws.watched_at) {
@@ -112,10 +109,39 @@ export const useUniverseEpisodes = (universeId: string) => {
                   }
                 }
               });
+              console.log('Found watched episodes:', watchedEpisodeIds.size);
             }
+          } catch (rpcError) {
+            console.error('RPC function not available, falling back to smaller batches:', rpcError);
+            
+            // Fallback: Use smaller batch sizes to avoid URL length limits
+            const batchSize = 100; // Reduced from 1000 to avoid URL length issues
+            
+            for (let i = 0; i < episodeIds.length; i += batchSize) {
+              const batch = episodeIds.slice(i, i + batchSize);
+              
+              const { data: watchStatus, error: watchError } = await supabase
+                .from('user_episode_status')
+                .select('episode_id, status, watched_at')
+                .eq('user_id', user.id)
+                .in('episode_id', batch);
+
+              if (watchError) {
+                console.error('Error fetching watch status for batch:', watchError);
+              } else if (watchStatus) {
+                watchStatus.forEach(ws => {
+                  if (ws.status === 'watched') {
+                    watchedEpisodeIds.add(ws.episode_id);
+                    if (ws.watched_at) {
+                      watchStatusMap.set(ws.episode_id, ws.watched_at);
+                    }
+                  }
+                });
+              }
+            }
+            
+            console.log('Found watched episodes (fallback):', watchedEpisodeIds.size);
           }
-          
-          console.log('Found watched episodes:', watchedEpisodeIds.size);
         }
 
         // Step 5: Combine all data and create episodes array
