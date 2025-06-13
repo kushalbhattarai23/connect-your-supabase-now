@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -47,7 +48,8 @@ export const Loans: React.FC = () => {
         await updateLoan.mutateAsync({
           id: editingLoan.id,
           ...formData,
-          type: formData.type as 'Personal' | 'Mortgage' | 'Car' | 'Student' | 'Business' | 'Other'
+          type: formData.type as 'Personal' | 'Mortgage' | 'Car' | 'Student' | 'Business' | 'Other',
+          status: formData.status as 'active' | 'paid_off' | 'defaulted'
         });
         setIsEditOpen(false);
       } else {
