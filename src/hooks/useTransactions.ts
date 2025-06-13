@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -36,14 +37,17 @@ export const useTransactions = () => {
       `);
       
       if (isPersonalMode) {
-        query = query.is('organization_id', null);
+        query = query.eq('user_id', user.id).is('organization_id', null);
       } else if (currentOrganization) {
         query = query.eq('organization_id', currentOrganization.id);
       }
       
       const { data, error } = await query.order('date', { ascending: false });
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching transactions:', error);
+        throw error;
+      }
       return data as Transaction[];
     },
     enabled: !!user
@@ -53,17 +57,24 @@ export const useTransactions = () => {
     mutationFn: async (transaction: Omit<Transaction, 'id' | 'created_at' | 'user_id' | 'organization_id'>) => {
       if (!user) throw new Error('User not authenticated');
       
+      const transactionData = {
+        ...transaction,
+        user_id: user.id,
+        organization_id: isPersonalMode ? null : currentOrganization?.id || null
+      };
+      
+      console.log('Creating transaction with data:', transactionData);
+      
       const { data, error } = await supabase
         .from('transactions')
-        .insert({
-          ...transaction,
-          user_id: user.id,
-          organization_id: isPersonalMode ? null : currentOrganization?.id
-        })
+        .insert(transactionData)
         .select()
         .single();
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating transaction:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -72,6 +83,7 @@ export const useTransactions = () => {
       toast({ title: 'Transaction created successfully' });
     },
     onError: (error: Error) => {
+      console.error('Transaction creation error:', error);
       toast({ title: 'Error creating transaction', description: error.message, variant: 'destructive' });
     }
   });

@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -28,14 +29,17 @@ export const useWallets = () => {
       let query = supabase.from('wallets').select('*');
       
       if (isPersonalMode) {
-        query = query.is('organization_id', null);
+        query = query.eq('user_id', user.id).is('organization_id', null);
       } else if (currentOrganization) {
         query = query.eq('organization_id', currentOrganization.id);
       }
       
       const { data, error } = await query.order('created_at', { ascending: false });
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching wallets:', error);
+        throw error;
+      }
       return data as Wallet[];
     },
     enabled: !!user
@@ -45,17 +49,24 @@ export const useWallets = () => {
     mutationFn: async (wallet: Omit<Wallet, 'id' | 'created_at' | 'user_id' | 'organization_id'>) => {
       if (!user) throw new Error('User not authenticated');
       
+      const walletData = {
+        ...wallet,
+        user_id: user.id,
+        organization_id: isPersonalMode ? null : currentOrganization?.id || null
+      };
+      
+      console.log('Creating wallet with data:', walletData);
+      
       const { data, error } = await supabase
         .from('wallets')
-        .insert({
-          ...wallet,
-          user_id: user.id,
-          organization_id: isPersonalMode ? null : currentOrganization?.id
-        })
+        .insert(walletData)
         .select()
         .single();
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating wallet:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -63,6 +74,7 @@ export const useWallets = () => {
       toast({ title: 'Wallet created successfully' });
     },
     onError: (error: Error) => {
+      console.error('Wallet creation error:', error);
       toast({ title: 'Error creating wallet', description: error.message, variant: 'destructive' });
     }
   });
