@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,9 +12,15 @@ import { useTransactions } from '@/hooks/useTransactions';
 import { useCategories } from '@/hooks/useCategories';
 import { useTransfers } from '@/hooks/useTransfers';
 import { useAppSettings } from '@/hooks/useAppSettings';
+import { DateRangeFilter } from '@/components/DateRangeFilter';
+import { convertToCSV, downloadCSV, parseCSV } from '@/utils/csvUtils';
+import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
 
 export const FinanceSettings: React.FC = () => {
   const [selectedCurrency, setSelectedCurrency] = useState(defaultCurrency.code);
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
   const { toast } = useToast();
   const { wallets } = useWallets();
   const { transactions } = useTransactions();
@@ -35,93 +40,212 @@ export const FinanceSettings: React.FC = () => {
     });
   };
 
-  const handleExportData = () => {
+  const handleDateRangeChange = (start: Date | null, end: Date | null) => {
+    setStartDate(start);
+    setEndDate(end);
+  };
+
+  const getFilteredData = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { wallets: [], transactions: [], transfers: [], categories: [] };
+
+    let query = supabase.from('transactions').select('*').eq('user_id', user.id);
+    
+    if (startDate) {
+      query = query.gte('date', format(startDate, 'yyyy-MM-dd'));
+    }
+    if (endDate) {
+      query = query.lte('date', format(endDate, 'yyyy-MM-dd'));
+    }
+
+    const { data: filteredTransactions } = await query;
+
+    let transferQuery = supabase.from('transfers').select('*').eq('user_id', user.id);
+    
+    if (startDate) {
+      transferQuery = transferQuery.gte('date', format(startDate, 'yyyy-MM-dd'));
+    }
+    if (endDate) {
+      transferQuery = transferQuery.lte('date', format(endDate, 'yyyy-MM-dd'));
+    }
+
+    const { data: filteredTransfers } = await transferQuery;
+
+    return {
+      wallets,
+      transactions: filteredTransactions || [],
+      transfers: filteredTransfers || [],
+      categories
+    };
+  };
+
+  const handleExportData = async () => {
     toast({
       title: 'Data Export Started',
       description: 'Your data is being prepared for download.',
     });
     
-    setTimeout(() => {
-      const exportData = {
-        wallets: wallets.map(w => ({
+    try {
+      const data = await getFilteredData();
+      
+      // Export wallets
+      const walletsCSV = convertToCSV(
+        data.wallets.map(w => ({
           name: w.name,
           balance: w.balance,
-          currency: w.currency
+          currency: w.currency,
+          created_at: w.created_at
         })),
-        transactions: transactions.map(t => ({
-          reason: t.reason,
-          type: t.type,
-          income: t.income,
-          expense: t.expense,
-          date: t.date,
-          wallet_id: t.wallet_id,
-          category_id: t.category_id
-        })),
-        categories: categories.map(c => ({
+        ['name', 'balance', 'currency', 'created_at']
+      );
+      downloadCSV(walletsCSV, 'wallets');
+
+      // Export transactions
+      if (data.transactions.length > 0) {
+        const transactionsCSV = convertToCSV(
+          data.transactions.map(t => ({
+            reason: t.reason,
+            type: t.type,
+            income: t.income || '',
+            expense: t.expense || '',
+            date: t.date,
+            wallet_id: t.wallet_id,
+            category_id: t.category_id || ''
+          })),
+          ['reason', 'type', 'income', 'expense', 'date', 'wallet_id', 'category_id']
+        );
+        downloadCSV(transactionsCSV, 'transactions');
+      }
+
+      // Export transfers
+      if (data.transfers.length > 0) {
+        const transfersCSV = convertToCSV(
+          data.transfers.map(t => ({
+            from_wallet_id: t.from_wallet_id,
+            to_wallet_id: t.to_wallet_id,
+            amount: t.amount,
+            date: t.date,
+            description: t.description || '',
+            status: t.status
+          })),
+          ['from_wallet_id', 'to_wallet_id', 'amount', 'date', 'description', 'status']
+        );
+        downloadCSV(transfersCSV, 'transfers');
+      }
+
+      // Export categories
+      const categoriesCSV = convertToCSV(
+        data.categories.map(c => ({
           name: c.name,
           color: c.color
         })),
-        transfers: transfers.map(t => ({
-          from_wallet_id: t.from_wallet_id,
-          to_wallet_id: t.to_wallet_id,
-          amount: t.amount,
-          date: t.date,
-          description: t.description,
-          status: t.status
-        })),
-        exportDate: new Date().toISOString()
-      };
-      
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
-      const downloadAnchorNode = document.createElement('a');
-      downloadAnchorNode.setAttribute("href", dataStr);
-      downloadAnchorNode.setAttribute("download", `finance_data_${new Date().toISOString().split('T')[0]}.json`);
-      document.body.appendChild(downloadAnchorNode);
-      downloadAnchorNode.click();
-      downloadAnchorNode.remove();
+        ['name', 'color']
+      );
+      downloadCSV(categoriesCSV, 'categories');
       
       toast({
         title: 'Data Exported Successfully',
-        description: 'Your financial data has been downloaded as a JSON file.',
-        variant: 'default',
+        description: 'Your financial data has been downloaded as CSV files.',
       });
-    }, 1500);
+    } catch (error) {
+      toast({
+        title: 'Export Error',
+        description: 'Failed to export data. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleImportData = () => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.json';
-    input.onchange = (e: Event) => {
+    input.accept = '.csv';
+    input.multiple = true;
+    input.onchange = async (e: Event) => {
       const target = e.target as HTMLInputElement;
-      const file = target.files?.[0];
+      const files = Array.from(target.files || []);
       
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          try {
-            const jsonData = JSON.parse(event.target?.result as string);
-            
-            if (!jsonData.wallets || !jsonData.transactions || !jsonData.categories || !jsonData.transfers) {
-              throw new Error('Invalid file format');
+      if (files.length === 0) return;
+
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          toast({
+            title: 'Authentication Error',
+            description: 'You must be logged in to import data.',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        for (const file of files) {
+          const text = await file.text();
+          const data = parseCSV(text);
+          
+          if (data.length === 0) continue;
+
+          const fileName = file.name.toLowerCase();
+          
+          if (fileName.includes('wallet')) {
+            // Import wallets
+            for (const row of data) {
+              await supabase.from('wallets').insert({
+                name: row.name,
+                balance: parseFloat(row.balance) || 0,
+                currency: row.currency || 'USD',
+                user_id: user.id
+              });
             }
-            
-            console.log('Imported data:', jsonData);
-            
-            toast({
-              title: 'Data Import Successful',
-              description: 'Your data has been imported. Please refresh the page to see changes.',
-              variant: 'default',
-            });
-          } catch (error) {
-            toast({
-              title: 'Import Error',
-              description: 'Failed to parse the imported file. Please check the file format.',
-              variant: 'destructive',
-            });
+          } else if (fileName.includes('transaction')) {
+            // Import transactions
+            for (const row of data) {
+              await supabase.from('transactions').insert({
+                reason: row.reason,
+                type: row.type,
+                income: row.income ? parseFloat(row.income) : null,
+                expense: row.expense ? parseFloat(row.expense) : null,
+                date: row.date,
+                wallet_id: row.wallet_id,
+                category_id: row.category_id || null,
+                user_id: user.id
+              });
+            }
+          } else if (fileName.includes('transfer')) {
+            // Import transfers
+            for (const row of data) {
+              await supabase.from('transfers').insert({
+                from_wallet_id: row.from_wallet_id,
+                to_wallet_id: row.to_wallet_id,
+                amount: parseFloat(row.amount) || 0,
+                date: row.date,
+                description: row.description || null,
+                status: row.status || 'completed',
+                user_id: user.id
+              });
+            }
+          } else if (fileName.includes('categor')) {
+            // Import categories
+            for (const row of data) {
+              await supabase.from('categories').insert({
+                name: row.name,
+                color: row.color || '#3B82F6',
+                user_id: user.id
+              });
+            }
           }
-        };
-        reader.readAsText(file);
+        }
+        
+        toast({
+          title: 'Data Import Successful',
+          description: 'Your data has been imported successfully.',
+        });
+      } catch (error) {
+        console.error('Import error:', error);
+        toast({
+          title: 'Import Error',
+          description: 'Failed to import data. Please check the file format.',
+          variant: 'destructive',
+        });
       }
     };
     input.click();
@@ -215,32 +339,46 @@ export const FinanceSettings: React.FC = () => {
           </CardContent>
         </Card>
         
-        <Card className="border-green-200">
+        <Card className="border-green-200 md:col-span-2">
           <CardHeader>
             <CardTitle className="text-green-700">Data Management</CardTitle>
-            <CardDescription>Export or import your financial data</CardDescription>
+            <CardDescription>Export or import your financial data with date filtering</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-2">
-              <Label>Export Data</Label>
-              <p className="text-sm text-muted-foreground mb-2">
-                Download all your financial data including wallets, transactions, transfers, and categories
+          <CardContent className="space-y-6">
+            <div>
+              <Label>Date Range Filter (for Export)</Label>
+              <p className="text-sm text-muted-foreground mb-3">
+                Select a date range to filter transactions and transfers for export
               </p>
-              <Button onClick={handleExportData} className="w-full bg-green-600 hover:bg-green-700">
-                <Download className="h-4 w-4 mr-2" />
-                Export Financial Data
-              </Button>
+              <DateRangeFilter
+                startDate={startDate}
+                endDate={endDate}
+                onDateRangeChange={handleDateRangeChange}
+              />
             </div>
             
-            <div className="grid gap-2">
-              <Label>Import Data</Label>
-              <p className="text-sm text-muted-foreground mb-2">
-                Import previously exported financial data
-              </p>
-              <Button onClick={handleImportData} variant="outline" className="w-full border-green-200 text-green-700 hover:bg-green-50">
-                <Upload className="h-4 w-4 mr-2" />
-                Import Data
-              </Button>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label>Export Data</Label>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Download your financial data as CSV files
+                </p>
+                <Button onClick={handleExportData} className="w-full bg-green-600 hover:bg-green-700">
+                  <Download className="h-4 w-4 mr-2" />
+                  Export as CSV
+                </Button>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label>Import Data</Label>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Import CSV files (multiple files supported)
+                </p>
+                <Button onClick={handleImportData} variant="outline" className="w-full border-green-200 text-green-700 hover:bg-green-50">
+                  <Upload className="h-4 w-4 mr-2" />
+                  Import CSV Files
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

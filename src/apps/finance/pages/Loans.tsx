@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Edit, Trash2, DollarSign, User } from 'lucide-react';
+import { Plus, Edit, Trash2, DollarSign } from 'lucide-react';
 import { useLoans, CreateLoanData } from '@/hooks/useLoans';
 import { formatCurrency } from '@/lib/utils';
 
@@ -26,7 +27,6 @@ export const Loans: React.FC = () => {
     amount: 0,
     remaining_amount: 0,
     status: 'active',
-    person: '',
     description: ''
   });
 
@@ -37,7 +37,6 @@ export const Loans: React.FC = () => {
       amount: 0,
       remaining_amount: 0,
       status: 'active',
-      person: '',
       description: ''
     });
   };
@@ -70,7 +69,6 @@ export const Loans: React.FC = () => {
       amount: loan.amount,
       remaining_amount: loan.remaining_amount,
       status: loan.status,
-      person: loan.person || '',
       description: loan.description || ''
     });
     setIsEditOpen(true);
@@ -161,16 +159,6 @@ export const Loans: React.FC = () => {
                 </div>
               </div>
               <div>
-                <Label htmlFor="person">Person (Who took the loan)</Label>
-                <Input
-                  id="person"
-                  value={formData.person}
-                  onChange={(e) => setFormData({ ...formData, person: e.target.value })}
-                  placeholder="Enter person's name"
-                  required
-                />
-              </div>
-              <div>
                 <Label htmlFor="description">Description</Label>
                 <Textarea
                   id="description"
@@ -222,12 +210,6 @@ export const Loans: React.FC = () => {
                   {formatCurrency(loan.remaining_amount)} / {formatCurrency(loan.amount)}
                 </span>
               </div>
-              {loan.person && (
-                <div className="flex items-center">
-                  <User className="h-4 w-4 mr-2 text-green-600" />
-                  <span className="text-sm">{loan.person}</span>
-                </div>
-              )}
               <div className="text-xs text-muted-foreground">
                 {loan.type} loan
               </div>
@@ -305,16 +287,6 @@ export const Loans: React.FC = () => {
                   required
                 />
               </div>
-            </div>
-            <div>
-              <Label htmlFor="edit-person">Person (Who took the loan)</Label>
-              <Input
-                id="edit-person"
-                value={formData.person}
-                onChange={(e) => setFormData({ ...formData, person: e.target.value })}
-                placeholder="Enter person's name"
-                required
-              />
             </div>
             <div>
               <Label htmlFor="edit-description">Description</Label>
