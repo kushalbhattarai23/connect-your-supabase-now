@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getEnabledApps } from '@/config/apps';
-import { Tv, DollarSign, ArrowRight, BarChart3, Users } from 'lucide-react';
+import { Tv, DollarSign, ArrowRight, BarChart3, Users, LogIn } from 'lucide-react';
 
 const iconMap = {
   Tv,
@@ -28,10 +28,20 @@ export const Landing: React.FC = () => {
               Your all-in-one platform for tracking TV shows and managing finances. 
               Modular, powerful, and designed for modern life.
             </p>
-            <Button size="lg" className="text-lg px-8 py-3">
-              Get Started
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+            <div className="flex gap-4 justify-center">
+              <Link to="/login">
+                <Button size="lg" className="text-lg px-8 py-3">
+                  <LogIn className="mr-2 h-5 w-5" />
+                  Sign In
+                </Button>
+              </Link>
+              <Link to="/tv-shows/public-shows">
+                <Button size="lg" variant="outline" className="text-lg px-8 py-3">
+                  <Tv className="mr-2 h-5 w-5" />
+                  Browse TV Shows
+                </Button>
+              </Link>
+            </div>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 mt-16 max-w-4xl mx-auto">
@@ -53,13 +63,40 @@ export const Landing: React.FC = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {app.routes.slice(0, 3).map((route) => (
-                        <div key={route.path} className="flex items-center text-sm text-muted-foreground">
-                          <div className="w-2 h-2 bg-current rounded-full mr-3 opacity-60" />
-                          {route.name}
-                        </div>
-                      ))}
+                      {app.id === 'tv-shows' ? (
+                        <>
+                          <div className="flex items-center text-sm text-muted-foreground">
+                            <div className="w-2 h-2 bg-current rounded-full mr-3 opacity-60" />
+                            Browse Public Shows
+                          </div>
+                          <div className="flex items-center text-sm text-muted-foreground">
+                            <div className="w-2 h-2 bg-current rounded-full mr-3 opacity-60" />
+                            Explore Public Universes
+                          </div>
+                          <div className="flex items-center text-sm text-muted-foreground">
+                            <div className="w-2 h-2 bg-current rounded-full mr-3 opacity-60" />
+                            Track Your Favorites
+                          </div>
+                        </>
+                      ) : (
+                        app.routes.slice(0, 3).map((route) => (
+                          <div key={route.path} className="flex items-center text-sm text-muted-foreground">
+                            <div className="w-2 h-2 bg-current rounded-full mr-3 opacity-60" />
+                            {route.name}
+                          </div>
+                        ))
+                      )}
                     </div>
+                    {app.id === 'tv-shows' && (
+                      <Link to="/tv-shows/public-shows">
+                        <Button 
+                          className={`w-full mt-4 bg-${app.color}-500 hover:bg-${app.color}-600`}
+                        >
+                          Explore Shows
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      </Link>
+                    )}
                   </CardContent>
                 </Card>
               );

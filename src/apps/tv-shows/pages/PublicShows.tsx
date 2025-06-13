@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Loader2, Search, Tv as TvIcon, Globe, Heart, HeartOff } from 'lucide-react';
+import { Loader2, Search, Tv as TvIcon, Globe, Heart, HeartOff, LogIn } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Show } from '@/types';
 import { adaptDbShowToShow } from '@/utils/type-adapters';
@@ -52,7 +52,7 @@ export const TVShowPublicShows: React.FC = () => {
     queryFn: fetchPublicShows
   });
 
-  // Fetch user's tracked shows
+  // Fetch user's tracked shows only if user is authenticated
   const { data: trackedShows = [] } = useQuery({
     queryKey: ['trackedShows', user?.id],
     queryFn: async () => {
@@ -123,6 +123,13 @@ export const TVShowPublicShows: React.FC = () => {
         <div>
           <h1 className="text-3xl font-bold text-purple-700">Public Shows</h1>
           <p className="text-muted-foreground">Discover popular shows from the community</p>
+          {!user && (
+            <p className="text-sm text-muted-foreground mt-2">
+              <Link to="/login" className="text-purple-700 hover:underline">
+                Sign in
+              </Link> to track shows and access more features
+            </p>
+          )}
         </div>
 
         <form onSubmit={handleSearch} className="flex w-full max-w-sm items-center space-x-2">
@@ -183,7 +190,7 @@ export const TVShowPublicShows: React.FC = () => {
                       {show.genres?.length ? show.genres.join(', ') : 'No genres'}
                     </div>
                     <div className="flex gap-2">
-                      {user && (
+                      {user ? (
                         <Button 
                           size="sm" 
                           variant={isTracked ? "default" : "outline"}
@@ -205,6 +212,13 @@ export const TVShowPublicShows: React.FC = () => {
                             </>
                           )}
                         </Button>
+                      ) : (
+                        <Link to="/login">
+                          <Button size="sm" variant="outline" className="border-purple-200 text-purple-700 hover:bg-purple-50">
+                            <LogIn className="h-3 w-3 mr-1" />
+                            Sign in to Track
+                          </Button>
+                        </Link>
                       )}
                       <Link to={`/tv-shows/show/${show.slug || show.id}`}>
                         <Button size="sm" variant="secondary" className="border-purple-200">

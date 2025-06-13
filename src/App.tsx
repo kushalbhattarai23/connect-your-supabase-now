@@ -20,6 +20,9 @@ import Budgets from '@/apps/finance/pages/Budgets';
 import UniverseDashboard from '@/apps/tv-shows/pages/UniverseDashboard';
 import UniverseDetail from '@/apps/tv-shows/pages/UniverseDetail';
 import Universes from '@/apps/tv-shows/pages/Universes';
+import PublicShows from '@/apps/tv-shows/pages/PublicShows';
+import PublicUniverses from '@/apps/tv-shows/pages/PublicUniverses';
+import MyShows from '@/apps/tv-shows/pages/MyShows';
 import NotFound from '@/pages/NotFound';
 import Profile from '@/pages/Profile';
 
@@ -38,11 +41,23 @@ const AppRoutes = () => {
     );
   }
 
+  // Public TV Shows routes that don't require authentication
+  const publicTVShowsRoutes = (
+    <>
+      <Route path="/tv-shows/public-shows" element={<PublicShows />} />
+      <Route path="/tv-shows/public-universes" element={<PublicUniverses />} />
+      <Route path="/tv-shows/universe/:universeId" element={<UniverseDetail />} />
+    </>
+  );
+
   if (!user) {
     return (
       <Routes>
         <Route path="/login" element={<LoginForm />} />
         <Route path="/signup" element={<SignUpForm />} />
+        {/* Allow public access to TV shows */}
+        <Route path="/" element={<AppLayout><Landing /></AppLayout>} />
+        {publicTVShowsRoutes}
         <Route path="*" element={<LoginForm />} />
       </Routes>
     );
@@ -69,6 +84,9 @@ const AppRoutes = () => {
           <Route path="/tv-shows/universes" element={<Universes />} />
           <Route path="/tv-shows/universe/:universeId/dashboard" element={<UniverseDashboard />} />
           <Route path="/tv-shows/universe/:universeId" element={<UniverseDetail />} />
+          <Route path="/tv-shows/my-shows" element={<MyShows />} />
+          {/* Public TV shows routes available to authenticated users too */}
+          {publicTVShowsRoutes}
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="*" element={<NotFound />} />

@@ -1,14 +1,17 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Globe, Calendar, User } from 'lucide-react';
+import { Globe, Calendar, User, LogIn } from 'lucide-react';
 import { usePublicUniverses } from '@/hooks/usePublicUniverses';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 export const PublicUniverses: React.FC = () => {
   const { publicUniverses, isLoading } = usePublicUniverses();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   if (isLoading) {
     return (
@@ -31,6 +34,13 @@ export const PublicUniverses: React.FC = () => {
           <p className="text-muted-foreground text-sm sm:text-base">
             Discover and explore TV show universes created by the community
           </p>
+          {!user && (
+            <p className="text-sm text-muted-foreground mt-2">
+              <Link to="/login" className="text-blue-700 hover:underline">
+                Sign in
+              </Link> to create and manage your own universes
+            </p>
+          )}
         </div>
       </div>
 
@@ -39,9 +49,17 @@ export const PublicUniverses: React.FC = () => {
           <CardContent className="text-center py-12">
             <Globe className="h-16 w-16 text-blue-500 mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">No Public Universes Yet</h3>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground mb-4">
               Be the first to create a public universe for others to discover!
             </p>
+            {!user && (
+              <Link to="/login">
+                <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 inline-flex items-center gap-2">
+                  <LogIn className="h-4 w-4" />
+                  Sign in to Create
+                </button>
+              </Link>
+            )}
           </CardContent>
         </Card>
       ) : (

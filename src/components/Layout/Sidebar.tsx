@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { getEnabledApps } from '@/config/apps';
@@ -27,6 +28,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useAuth } from '@/hooks/useAuth';
 
 const iconMap = {
   Tv,
@@ -57,6 +59,7 @@ interface SidebarContentProps {
 const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, onToggleCollapse }) => {
   const location = useLocation();
   const { settings } = useAppSettings();
+  const { user } = useAuth();
   const enabledApps = getEnabledApps(settings);
 
   const getIcon = (iconName: string) => {
@@ -125,6 +128,12 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
               .filter(route => route.path !== '/tv-shows/show/:slug')
               .map((route) => {
                 const Icon = getIcon(route.icon || 'Home');
+                
+                // Show TV Shows routes to everyone, but finance routes only to authenticated users
+                if (app.id === 'finance' && !user) {
+                  return null;
+                }
+                
                 return (
                   <Link
                     key={route.path}
@@ -144,26 +153,46 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
                 );
               })}
 
-            {/* Add special routes for TV Shows */}
+            {/* Add special routes for TV Shows - available to everyone */}
             {app.id === 'tv-shows' && (
-              <Link
-                to="/tv-shows/universes"
-                title={isCollapsed ? "Universes" : undefined}
-                className={cn(
-                  "flex items-center space-x-3 px-3 lg:px-6 py-2 rounded-lg transition-colors text-sm",
-                  location.pathname === '/tv-shows/universes'
-                    ? `bg-${app.color}-100 text-${app.color}-700 dark:bg-${app.color}-900 dark:text-${app.color}-300`
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent",
-                  isCollapsed && "lg:justify-center lg:space-x-0 lg:px-3"
+              <>
+                <Link
+                  to="/tv-shows/public-universes"
+                  title={isCollapsed ? "Public Universes" : undefined}
+                  className={cn(
+                    "flex items-center space-x-3 px-3 lg:px-6 py-2 rounded-lg transition-colors text-sm",
+                    location.pathname === '/tv-shows/public-universes'
+                      ? `bg-${app.color}-100 text-${app.color}-700 dark:bg-${app.color}-900 dark:text-${app.color}-300`
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent",
+                    isCollapsed && "lg:justify-center lg:space-x-0 lg:px-3"
+                  )}
+                >
+                  <Globe className="w-4 h-4 flex-shrink-0" />
+                  {!isCollapsed && <span>Public Universes</span>}
+                </Link>
+                
+                {/* Show user-specific TV shows routes only to authenticated users */}
+                {user && (
+                  <Link
+                    to="/tv-shows/universes"
+                    title={isCollapsed ? "My Universes" : undefined}
+                    className={cn(
+                      "flex items-center space-x-3 px-3 lg:px-6 py-2 rounded-lg transition-colors text-sm",
+                      location.pathname === '/tv-shows/universes'
+                        ? `bg-${app.color}-100 text-${app.color}-700 dark:bg-${app.color}-900 dark:text-${app.color}-300`
+                        : "text-muted-foreground hover:text-foreground hover:bg-accent",
+                      isCollapsed && "lg:justify-center lg:space-x-0 lg:px-3"
+                    )}
+                  >
+                    <Users className="w-4 h-4 flex-shrink-0" />
+                    {!isCollapsed && <span>My Universes</span>}
+                  </Link>
                 )}
-              >
-                <Globe className="w-4 h-4 flex-shrink-0" />
-                {!isCollapsed && <span>Universes</span>}
-              </Link>
+              </>
             )}
 
-            {/* Add budgets route for Finance */}
-            {app.id === 'finance' && (
+            {/* Add budgets route for Finance - only for authenticated users */}
+            {app.id === 'finance' && user && (
               <Link
                 to="/finance/budgets"
                 title={isCollapsed ? "Budgets" : undefined}
@@ -183,30 +212,33 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
         ))}
       </nav>
 
-      <div className="p-3 lg:p-4 border-t border-border space-y-1">
-        <Link
-          to="/profile"
-          title={isCollapsed ? "Profile" : undefined}
-          className={cn(
-            "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors",
-            isCollapsed && "lg:justify-center lg:space-x-0"
-          )}
-        >
-          <User className="w-4 h-4 flex-shrink-0" />
-          {!isCollapsed && <span>Profile</span>}
-        </Link>
-        <Link
-          to="/settings"
-          title={isCollapsed ? "Settings" : undefined}
-          className={cn(
-            "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors",
-            isCollapsed && "lg:justify-center lg:space-x-0"
-          )}
-        >
-          <SettingsIcon className="w-4 h-4 flex-shrink-0" />
-          {!isCollapsed && <span>Settings</span>}
-        </Link>
-      </div>
+      {/* Show profile and settings only to authenticated users */}
+      {user && (
+        <div className="p-3 lg:p-4 border-t border-border space-y-1">
+          <Link
+            to="/profile"
+            title={isCollapsed ? "Profile" : undefined}
+            className={cn(
+              "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors",
+              isCollapsed && "lg:justify-center lg:space-x-0"
+            )}
+          >
+            <User className="w-4 h-4 flex-shrink-0" />
+            {!isCollapsed && <span>Profile</span>}
+          </Link>
+          <Link
+            to="/settings"
+            title={isCollapsed ? "Settings" : undefined}
+            className={cn(
+              "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors",
+              isCollapsed && "lg:justify-center lg:space-x-0"
+            )}
+          >
+            <SettingsIcon className="w-4 h-4 flex-shrink-0" />
+            {!isCollapsed && <span>Settings</span>}
+          </Link>
+        </div>
+      )}
     </div>
   );
 };
