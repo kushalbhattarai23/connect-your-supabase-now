@@ -1,8 +1,8 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 export interface Transaction {
   id: string;
@@ -14,6 +14,7 @@ export interface Transaction {
   category_id?: string;
   date: string;
   user_id: string;
+  organization_id?: string;
   created_at: string;
 }
 
@@ -21,20 +22,26 @@ export const useTransactions = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentOrganization, isPersonalMode } = useOrganizationContext();
 
   const { data: transactions = [], isLoading } = useQuery({
-    queryKey: ['transactions', user?.id],
+    queryKey: ['transactions', user?.id, currentOrganization?.id],
     queryFn: async () => {
       if (!user) return [];
       
-      const { data, error } = await supabase
-        .from('transactions')
-        .select(`
-          *,
-          wallets(name),
-          categories(name, color)
-        `)
-        .order('date', { ascending: false });
+      let query = supabase.from('transactions').select(`
+        *,
+        wallets(name),
+        categories(name, color)
+      `);
+      
+      if (isPersonalMode) {
+        query = query.is('organization_id', null);
+      } else if (currentOrganization) {
+        query = query.eq('organization_id', currentOrganization.id);
+      }
+      
+      const { data, error } = await query.order('date', { ascending: false });
         
       if (error) throw error;
       return data as Transaction[];
@@ -43,14 +50,15 @@ export const useTransactions = () => {
   });
 
   const createTransaction = useMutation({
-    mutationFn: async (transaction: Omit<Transaction, 'id' | 'created_at' | 'user_id'>) => {
+    mutationFn: async (transaction: Omit<Transaction, 'id' | 'created_at' | 'user_id' | 'organization_id'>) => {
       if (!user) throw new Error('User not authenticated');
       
       const { data, error } = await supabase
         .from('transactions')
         .insert({
           ...transaction,
-          user_id: user.id
+          user_id: user.id,
+          organization_id: isPersonalMode ? null : currentOrganization?.id
         })
         .select()
         .single();

@@ -1,33 +1,39 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 export interface Category {
   id: string;
   name: string;
   color: string;
   user_id: string;
+  organization_id?: string;
   created_at: string;
   updated_at: string;
-  organization_id?: string;
 }
 
 export const useCategories = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentOrganization, isPersonalMode } = useOrganizationContext();
 
   const { data: categories = [], isLoading } = useQuery({
-    queryKey: ['categories', user?.id],
+    queryKey: ['categories', user?.id, currentOrganization?.id],
     queryFn: async () => {
       if (!user) return [];
       
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .order('name', { ascending: true });
+      let query = supabase.from('categories').select('*');
+      
+      if (isPersonalMode) {
+        query = query.is('organization_id', null);
+      } else if (currentOrganization) {
+        query = query.eq('organization_id', currentOrganization.id);
+      }
+      
+      const { data, error } = await query.order('name', { ascending: true });
         
       if (error) throw error;
       return data as Category[];
@@ -36,14 +42,15 @@ export const useCategories = () => {
   });
 
   const createCategory = useMutation({
-    mutationFn: async (category: Omit<Category, 'id' | 'created_at' | 'updated_at' | 'user_id'>) => {
+    mutationFn: async (category: Omit<Category, 'id' | 'created_at' | 'updated_at' | 'user_id' | 'organization_id'>) => {
       if (!user) throw new Error('User not authenticated');
       
       const { data, error } = await supabase
         .from('categories')
         .insert({
           ...category,
-          user_id: user.id
+          user_id: user.id,
+          organization_id: isPersonalMode ? null : currentOrganization?.id
         })
         .select()
         .single();

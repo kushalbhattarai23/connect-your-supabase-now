@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { OrganizationProvider } from "@/contexts/OrganizationContext";
 import { LoginForm } from "@/components/Auth/LoginForm";
 import { SignUpForm } from "@/components/Auth/SignUpForm";
 import { AppLayout } from "@/components/Layout/AppLayout";
@@ -48,30 +49,32 @@ const AppRoutes = () => {
   }
 
   return (
-    <AppLayout>
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        {enabledApps.map((app) =>
-          app.routes.map((route) => (
-            <Route
-              key={route.path}
-              path={route.path}
-              element={<route.component />}
-            />
-          ))
-        )}
-        <Route path="/finance/wallet/:walletId" element={<WalletDetail />} />
-        <Route path="/finance/category/:categoryId" element={<CategoryDetail />} />
-        <Route path="/finance/loans" element={<Loans />} />
-        <Route path="/finance/budgets" element={<Budgets />} />
-        <Route path="/tv-shows/universes" element={<Universes />} />
-        <Route path="/tv-shows/universe/:universeId/dashboard" element={<UniverseDashboard />} />
-        <Route path="/tv-shows/universe/:universeId" element={<UniverseDetail />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/settings" element={<SettingsPage />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </AppLayout>
+    <OrganizationProvider>
+      <AppLayout>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          {enabledApps.map((app) =>
+            app.routes.map((route) => (
+              <Route
+                key={route.path}
+                path={route.path}
+                element={<route.component />}
+              />
+            ))
+          )}
+          <Route path="/finance/wallet/:walletId" element={<WalletDetail />} />
+          <Route path="/finance/category/:categoryId" element={<CategoryDetail />} />
+          <Route path="/finance/loans" element={<Loans />} />
+          <Route path="/finance/budgets" element={<Budgets />} />
+          <Route path="/tv-shows/universes" element={<Universes />} />
+          <Route path="/tv-shows/universe/:universeId/dashboard" element={<UniverseDashboard />} />
+          <Route path="/tv-shows/universe/:universeId" element={<UniverseDetail />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </AppLayout>
+    </OrganizationProvider>
   );
 };
 

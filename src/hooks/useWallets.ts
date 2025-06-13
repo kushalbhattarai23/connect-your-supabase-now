@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 export interface Wallet {
   id: string;
@@ -9,6 +10,7 @@ export interface Wallet {
   balance: number;
   currency: string;
   user_id: string;
+  organization_id?: string;
   created_at: string;
 }
 
@@ -16,16 +18,22 @@ export const useWallets = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentOrganization, isPersonalMode } = useOrganizationContext();
 
   const { data: wallets = [], isLoading } = useQuery({
-    queryKey: ['wallets', user?.id],
+    queryKey: ['wallets', user?.id, currentOrganization?.id],
     queryFn: async () => {
       if (!user) return [];
       
-      const { data, error } = await supabase
-        .from('wallets')
-        .select('*')
-        .order('created_at', { ascending: false });
+      let query = supabase.from('wallets').select('*');
+      
+      if (isPersonalMode) {
+        query = query.is('organization_id', null);
+      } else if (currentOrganization) {
+        query = query.eq('organization_id', currentOrganization.id);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
         
       if (error) throw error;
       return data as Wallet[];
@@ -34,14 +42,15 @@ export const useWallets = () => {
   });
 
   const createWallet = useMutation({
-    mutationFn: async (wallet: Omit<Wallet, 'id' | 'created_at' | 'user_id'>) => {
+    mutationFn: async (wallet: Omit<Wallet, 'id' | 'created_at' | 'user_id' | 'organization_id'>) => {
       if (!user) throw new Error('User not authenticated');
       
       const { data, error } = await supabase
         .from('wallets')
         .insert({
           ...wallet,
-          user_id: user.id
+          user_id: user.id,
+          organization_id: isPersonalMode ? null : currentOrganization?.id
         })
         .select()
         .single();
