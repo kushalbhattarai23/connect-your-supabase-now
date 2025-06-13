@@ -187,9 +187,9 @@ export type Database = {
           amount: number
           created_at: string
           description: string | null
-          due_date: string | null
           id: string
           name: string
+          person: string | null
           remaining_amount: number
           status: string
           type: string
@@ -200,9 +200,9 @@ export type Database = {
           amount: number
           created_at?: string
           description?: string | null
-          due_date?: string | null
           id?: string
           name: string
+          person?: string | null
           remaining_amount: number
           status?: string
           type: string
@@ -213,9 +213,9 @@ export type Database = {
           amount?: number
           created_at?: string
           description?: string | null
-          due_date?: string | null
           id?: string
           name?: string
+          person?: string | null
           remaining_amount?: number
           status?: string
           type?: string
