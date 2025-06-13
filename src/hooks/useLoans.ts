@@ -10,8 +10,8 @@ export interface Loan {
   amount: number;
   remaining_amount: number;
   status: 'active' | 'paid_off' | 'defaulted';
-  person: string;
-  description?: string;
+  person: string | null;
+  description?: string | null;
   user_id: string;
   created_at: string;
   updated_at: string;
@@ -39,7 +39,7 @@ export const useLoans = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('loans')
-        .select('id, name, type, amount, remaining_amount, status, person, description, user_id, created_at, updated_at')
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { useTransfers } from '@/hooks/useTransfers';
 import { useLoans } from '@/hooks/useLoans';
 import { useAppSettings } from '@/hooks/useAppSettings';
+import { convertToCSV, downloadCSV, parseCSV } from '@/utils/csvUtils';
 
 export const FinanceSettings: React.FC = () => {
   const [selectedCurrency, setSelectedCurrency] = useState(defaultCurrency.code);
@@ -51,71 +53,80 @@ export const FinanceSettings: React.FC = () => {
     });
     
     setTimeout(() => {
-      const exportData: any = {
-        exportDate: new Date().toISOString(),
-        exportOptions: exportOptions
-      };
-
-      if (exportOptions.wallets) {
-        exportData.wallets = wallets.map(w => ({
-          name: w.name,
-          balance: w.balance,
-          currency: w.currency
-        }));
+      if (exportOptions.wallets && wallets.length > 0) {
+        const walletsCSV = convertToCSV(
+          wallets.map(w => ({
+            name: w.name,
+            balance: w.balance,
+            currency: w.currency,
+            created_at: w.created_at
+          })),
+          ['name', 'balance', 'currency', 'created_at']
+        );
+        downloadCSV(walletsCSV, 'wallets');
       }
 
-      if (exportOptions.transactions) {
-        exportData.transactions = transactions.map(t => ({
-          reason: t.reason,
-          type: t.type,
-          income: t.income,
-          expense: t.expense,
-          date: t.date,
-          wallet_id: t.wallet_id,
-          category_id: t.category_id
-        }));
+      if (exportOptions.transactions && transactions.length > 0) {
+        const transactionsCSV = convertToCSV(
+          transactions.map(t => ({
+            reason: t.reason,
+            type: t.type,
+            income: t.income || '',
+            expense: t.expense || '',
+            date: t.date,
+            wallet_id: t.wallet_id,
+            category_id: t.category_id || ''
+          })),
+          ['reason', 'type', 'income', 'expense', 'date', 'wallet_id', 'category_id']
+        );
+        downloadCSV(transactionsCSV, 'transactions');
       }
 
-      if (exportOptions.categories) {
-        exportData.categories = categories.map(c => ({
-          name: c.name,
-          color: c.color
-        }));
+      if (exportOptions.categories && categories.length > 0) {
+        const categoriesCSV = convertToCSV(
+          categories.map(c => ({
+            name: c.name,
+            color: c.color
+          })),
+          ['name', 'color']
+        );
+        downloadCSV(categoriesCSV, 'categories');
       }
 
-      if (exportOptions.transfers) {
-        exportData.transfers = transfers.map(t => ({
-          from_wallet_id: t.from_wallet_id,
-          to_wallet_id: t.to_wallet_id,
-          amount: t.amount,
-          date: t.date,
-          description: t.description,
-          status: t.status
-        }));
+      if (exportOptions.transfers && transfers.length > 0) {
+        const transfersCSV = convertToCSV(
+          transfers.map(t => ({
+            from_wallet_id: t.from_wallet_id,
+            to_wallet_id: t.to_wallet_id,
+            amount: t.amount,
+            date: t.date,
+            description: t.description || '',
+            status: t.status
+          })),
+          ['from_wallet_id', 'to_wallet_id', 'amount', 'date', 'description', 'status']
+        );
+        downloadCSV(transfersCSV, 'transfers');
       }
 
-      if (exportOptions.loans) {
-        exportData.loans = loans.map(l => ({
-          name: l.name,
-          type: l.type,
-          amount: l.amount,
-          remaining_amount: l.remaining_amount,
-          status: l.status,
-          description: l.description
-        }));
+      if (exportOptions.loans && loans.length > 0) {
+        const loansCSV = convertToCSV(
+          loans.map(l => ({
+            name: l.name,
+            type: l.type,
+            amount: l.amount,
+            remaining_amount: l.remaining_amount,
+            status: l.status,
+            person: l.person || '',
+            description: l.description || ''
+          })),
+          ['name', 'type', 'amount', 'remaining_amount', 'status', 'person', 'description']
+        );
+        downloadCSV(loansCSV, 'loans');
       }
-      
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
-      const downloadAnchorNode = document.createElement('a');
-      downloadAnchorNode.setAttribute("href", dataStr);
-      downloadAnchorNode.setAttribute("download", `finance_data_${new Date().toISOString().split('T')[0]}.json`);
-      document.body.appendChild(downloadAnchorNode);
-      downloadAnchorNode.click();
-      downloadAnchorNode.remove();
       
       toast({
         title: 'Data Exported Successfully',
-        description: 'Your financial data has been downloaded as a JSON file.',
+        description: 'Your financial data has been downloaded as CSV files.',
         variant: 'default',
       });
     }, 1500);
@@ -124,42 +135,50 @@ export const FinanceSettings: React.FC = () => {
   const handleImportData = () => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.json';
+    input.accept = '.csv';
+    input.multiple = true;
     input.onchange = (e: Event) => {
       const target = e.target as HTMLInputElement;
-      const file = target.files?.[0];
+      const files = Array.from(target.files || []);
       
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          try {
-            const jsonData = JSON.parse(event.target?.result as string);
-            
-            // Validate basic structure
-            const validSections = ['wallets', 'transactions', 'categories', 'transfers', 'loans'];
-            const hasValidSection = validSections.some(section => jsonData[section]);
-            
-            if (!hasValidSection) {
-              throw new Error('Invalid file format - no recognized data sections found');
-            }
-            
-            console.log('Imported data:', jsonData);
-            
-            toast({
-              title: 'Data Import Successful',
-              description: 'Your data has been imported. Please refresh the page to see changes.',
-              variant: 'default',
-            });
-          } catch (error) {
-            toast({
-              title: 'Import Error',
-              description: 'Failed to parse the imported file. Please check the file format.',
-              variant: 'destructive',
-            });
-          }
-        };
-        reader.readAsText(file);
-      }
+      if (files.length === 0) return;
+
+      Promise.all(
+        files.map(file => {
+          return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              try {
+                const csvText = event.target?.result as string;
+                const data = parseCSV(csvText);
+                resolve({ filename: file.name, data });
+              } catch (error) {
+                console.error('Error parsing file:', file.name, error);
+                resolve({ filename: file.name, data: [] });
+              }
+            };
+            reader.readAsText(file);
+          });
+        })
+      ).then((results: any[]) => {
+        const importedCount = results.reduce((total, result) => total + result.data.length, 0);
+        
+        if (importedCount > 0) {
+          console.log('Imported data from files:', results);
+          
+          toast({
+            title: 'Data Import Successful',
+            description: `Imported ${importedCount} records from ${results.length} files. Please refresh the page to see changes.`,
+            variant: 'default',
+          });
+        } else {
+          toast({
+            title: 'Import Warning',
+            description: 'No valid data found in the selected files.',
+            variant: 'destructive',
+          });
+        }
+      });
     };
     input.click();
   };
@@ -257,12 +276,12 @@ export const FinanceSettings: React.FC = () => {
         <Card className="border-green-200 lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-green-700">Data Management</CardTitle>
-            <CardDescription>Export or import your financial data with customizable options</CardDescription>
+            <CardDescription>Export or import your financial data in CSV format with customizable options</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-4">
-                <Label>Export Data</Label>
+                <Label>Export Data as CSV</Label>
                 <div className="space-y-3">
                   <Label className="text-sm font-medium">Select data to export:</Label>
                   <div className="space-y-2">
@@ -289,17 +308,17 @@ export const FinanceSettings: React.FC = () => {
               </div>
               
               <div className="space-y-4">
-                <Label>Import Data</Label>
+                <Label>Import CSV Data</Label>
                 <p className="text-sm text-muted-foreground">
-                  Import previously exported financial data. The system will automatically detect and import available data types.
+                  Import CSV files with your financial data. You can select multiple files to import different data types at once.
                 </p>
                 <Button onClick={handleImportData} variant="outline" className="w-full border-green-200 text-green-700 hover:bg-green-50">
                   <Upload className="h-4 w-4 mr-2" />
-                  Import Data
+                  Import CSV Files
                 </Button>
                 <div className="flex items-start space-x-2 text-xs text-muted-foreground">
                   <FileText className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                  <span>Supports JSON files exported from TrackerHub</span>
+                  <span>Supports CSV files exported from TrackerHub. Select multiple files for bulk import.</span>
                 </div>
               </div>
             </div>
