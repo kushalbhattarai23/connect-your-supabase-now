@@ -7,6 +7,7 @@ import { useWallets } from '@/hooks/useWallets';
 import { useCategories } from '@/hooks/useCategories';
 import { useTransfers } from '@/hooks/useTransfers';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import { DateRangeFilter } from '@/components/DateRangeFilter';
 
 const COLORS = ['#22C55E', '#3B82F6', '#EF4444', '#F59E0B', '#8B5CF6', '#EC4899'];
 
@@ -16,11 +17,46 @@ export const FinanceReports: React.FC = () => {
   const { categories } = useCategories();
   const { transfers } = useTransfers();
   const [selectedReport, setSelectedReport] = useState('categories');
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+
+  const handleDateRangeChange = (start: Date | null, end: Date | null) => {
+    setStartDate(start);
+    setEndDate(end);
+  };
+
+  // Filter data based on selected date range
+  const getFilteredTransactions = () => {
+    let filtered = transactions;
+    
+    if (startDate) {
+      filtered = filtered.filter(t => new Date(t.date) >= startDate);
+    }
+    if (endDate) {
+      filtered = filtered.filter(t => new Date(t.date) <= endDate);
+    }
+    
+    return filtered;
+  };
+
+  const getFilteredTransfers = () => {
+    let filtered = transfers;
+    
+    if (startDate) {
+      filtered = filtered.filter(t => new Date(t.date) >= startDate);
+    }
+    if (endDate) {
+      filtered = filtered.filter(t => new Date(t.date) <= endDate);
+    }
+    
+    return filtered;
+  };
 
   // Categories Report
   const getCategoriesData = () => {
+    const filteredTransactions = getFilteredTransactions();
     const categorySpending = categories.map(category => {
-      const categoryTransactions = transactions.filter(t => t.category_id === category.id && t.type === 'expense');
+      const categoryTransactions = filteredTransactions.filter(t => t.category_id === category.id && t.type === 'expense');
       const total = categoryTransactions.reduce((sum, t) => sum + (t.expense || 0), 0);
       return {
         name: category.name,
@@ -34,19 +70,21 @@ export const FinanceReports: React.FC = () => {
 
   // Wallets Report
   const getWalletsData = () => {
+    const filteredTransactions = getFilteredTransactions();
     return wallets.map(wallet => ({
       name: wallet.name,
       balance: wallet.balance,
-      transactions: transactions.filter(t => t.wallet_id === wallet.id).length
+      transactions: filteredTransactions.filter(t => t.wallet_id === wallet.id).length
     }));
   };
 
   // Income vs Expense
   const getIncomeExpenseData = () => {
-    const months = [...new Set(transactions.map(t => new Date(t.date).toISOString().slice(0, 7)))].sort();
+    const filteredTransactions = getFilteredTransactions();
+    const months = [...new Set(filteredTransactions.map(t => new Date(t.date).toISOString().slice(0, 7)))].sort();
     
     return months.map(month => {
-      const monthTransactions = transactions.filter(t => t.date.startsWith(month));
+      const monthTransactions = filteredTransactions.filter(t => t.date.startsWith(month));
       const income = monthTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + (t.income || 0), 0);
       const expense = monthTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + (t.expense || 0), 0);
       
@@ -68,7 +106,8 @@ export const FinanceReports: React.FC = () => {
 
   // Transfers Report
   const getTransfersData = () => {
-    return transfers.map(transfer => {
+    const filteredTransfers = getFilteredTransfers();
+    return filteredTransfers.map(transfer => {
       const fromWallet = wallets.find(w => w.id === transfer.from_wallet_id);
       const toWallet = wallets.find(w => w.id === transfer.to_wallet_id);
       return {
@@ -81,6 +120,8 @@ export const FinanceReports: React.FC = () => {
   };
 
   const renderReport = () => {
+    const filteredTransactions = getFilteredTransactions();
+    
     switch (selectedReport) {
       case 'categories':
         const categoriesData = getCategoriesData();
@@ -172,7 +213,7 @@ export const FinanceReports: React.FC = () => {
                   <CardTitle className="text-green-700">Total Transactions</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold text-green-700">{transactions.length}</p>
+                  <p className="text-3xl font-bold text-green-700">{filteredTransactions.length}</p>
                 </CardContent>
               </Card>
               <Card className="border-green-200">
@@ -181,7 +222,7 @@ export const FinanceReports: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   <p className="text-3xl font-bold text-green-700">
-                    रु {transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + (t.income || 0), 0).toLocaleString()}
+                    रु {filteredTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + (t.income || 0), 0).toLocaleString()}
                   </p>
                 </CardContent>
               </Card>
@@ -191,7 +232,7 @@ export const FinanceReports: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   <p className="text-3xl font-bold text-red-600">
-                    रु {transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + (t.expense || 0), 0).toLocaleString()}
+                    रु {filteredTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + (t.expense || 0), 0).toLocaleString()}
                   </p>
                 </CardContent>
               </Card>
@@ -281,7 +322,7 @@ export const FinanceReports: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-green-700">Reports</h1>
           <p className="text-muted-foreground">Analyze your financial data</p>
@@ -301,6 +342,19 @@ export const FinanceReports: React.FC = () => {
           </SelectContent>
         </Select>
       </div>
+
+      <Card className="border-green-200">
+        <CardHeader>
+          <CardTitle className="text-green-700">Date Range Filter</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <DateRangeFilter
+            startDate={startDate}
+            endDate={endDate}
+            onDateRangeChange={handleDateRangeChange}
+          />
+        </CardContent>
+      </Card>
       
       {renderReport()}
     </div>

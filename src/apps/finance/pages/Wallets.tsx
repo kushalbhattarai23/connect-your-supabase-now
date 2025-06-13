@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,7 +20,6 @@ export const FinanceWallets: React.FC = () => {
     name: '',
     balance: 0,
     currency: 'NPR',
-
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -42,7 +42,6 @@ export const FinanceWallets: React.FC = () => {
       name: wallet.name,
       balance: wallet.balance,
       currency: wallet.currency,
-
     });
     setIsDialogOpen(true);
   };
@@ -142,25 +141,28 @@ export const FinanceWallets: React.FC = () => {
                   <Wallet className="h-5 w-5 text-green-600 flex-shrink-0" />
                   <CardTitle className="text-green-700 truncate">{wallet.name}</CardTitle>
                 </div>
-                <div className="flex space-x-1 flex-shrink-0">
-                  <Button size="sm" variant="ghost" onClick={() => navigate(`/finance/wallet/${wallet.id}`)}>
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => handleEdit(wallet)}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => handleDelete(wallet.id)}>
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
-                </div>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-700 mb-2">
+              <CardContent className="space-y-3">
+                <div className="text-2xl font-bold text-green-700">
                   रु {wallet.balance.toLocaleString()}
                 </div>
                 <Badge variant="outline" className="border-green-200 text-green-700">
                   {wallet.currency}
                 </Badge>
+                <div className="flex space-x-2">
+                  <Button size="sm" variant="outline" onClick={() => navigate(`/finance/wallet/${wallet.id}`)} className="flex-1">
+                    <Eye className="h-4 w-4 mr-1" />
+                    View
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => handleEdit(wallet)} className="flex-1">
+                    <Edit className="h-4 w-4 mr-1" />
+                    Edit
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => handleDelete(wallet.id)} className="flex-1">
+                    <Trash2 className="h-4 w-4 mr-1 text-red-500" />
+                    Delete
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
