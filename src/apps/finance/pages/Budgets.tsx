@@ -249,7 +249,7 @@ export const Budgets: React.FC = () => {
         </Select>
         <Select value={selectedYear.toString()} onValueChange={(value) => 
           handleMonthYearChange(selectedMonth, parseInt(value))
-        }>
+        }> 
           <SelectTrigger className="w-32">
             <SelectValue />
           </SelectTrigger>
