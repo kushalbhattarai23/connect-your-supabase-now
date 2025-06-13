@@ -178,72 +178,135 @@ export const FinanceSettings: React.FC = () => {
           return;
         }
 
-        for (const file of files) {
-          const text = await file.text();
-          const data = parseCSV(text);
-          
-          if (data.length === 0) continue;
+        let totalImported = 0;
+        let totalErrors = 0;
 
-          const fileName = file.name.toLowerCase();
-          
-          if (fileName.includes('wallet')) {
-            // Import wallets
-            for (const row of data) {
-              await supabase.from('wallets').insert({
-                name: row.name,
-                balance: parseFloat(row.balance) || 0,
-                currency: row.currency || 'USD',
-                user_id: user.id
-              });
+        for (const file of files) {
+          try {
+            const text = await file.text();
+            const data = parseCSV(text);
+            
+            if (data.length === 0) {
+              console.log(`No data found in file: ${file.name}`);
+              continue;
             }
-          } else if (fileName.includes('transaction')) {
-            // Import transactions
-            for (const row of data) {
-              await supabase.from('transactions').insert({
-                reason: row.reason,
-                type: row.type,
-                income: row.income ? parseFloat(row.income) : null,
-                expense: row.expense ? parseFloat(row.expense) : null,
-                date: row.date,
-                wallet_id: row.wallet_id,
-                category_id: row.category_id || null,
-                user_id: user.id
-              });
+
+            const fileName = file.name.toLowerCase();
+            
+            if (fileName.includes('wallet')) {
+              // Import wallets
+              for (const row of data) {
+                try {
+                  const { error } = await supabase.from('wallets').insert({
+                    name: row.name || 'Imported Wallet',
+                    balance: parseFloat(row.balance) || 0,
+                    currency: row.currency || 'USD',
+                    user_id: user.id
+                  });
+                  if (error) {
+                    console.error('Error importing wallet:', error);
+                    totalErrors++;
+                  } else {
+                    totalImported++;
+                  }
+                } catch (err) {
+                  console.error('Error processing wallet row:', err);
+                  totalErrors++;
+                }
+              }
+            } else if (fileName.includes('transaction')) {
+              // Import transactions
+              for (const row of data) {
+                try {
+                  const { error } = await supabase.from('transactions').insert({
+                    reason: row.reason || 'Imported Transaction',
+                    type: row.type || 'expense',
+                    income: row.income ? parseFloat(row.income) : null,
+                    expense: row.expense ? parseFloat(row.expense) : null,
+                    date: row.date || new Date().toISOString().split('T')[0],
+                    wallet_id: row.wallet_id,
+                    category_id: row.category_id || null,
+                    user_id: user.id
+                  });
+                  if (error) {
+                    console.error('Error importing transaction:', error);
+                    totalErrors++;
+                  } else {
+                    totalImported++;
+                  }
+                } catch (err) {
+                  console.error('Error processing transaction row:', err);
+                  totalErrors++;
+                }
+              }
+            } else if (fileName.includes('transfer')) {
+              // Import transfers
+              for (const row of data) {
+                try {
+                  const { error } = await supabase.from('transfers').insert({
+                    from_wallet_id: row.from_wallet_id,
+                    to_wallet_id: row.to_wallet_id,
+                    amount: parseFloat(row.amount) || 0,
+                    date: row.date || new Date().toISOString().split('T')[0],
+                    description: row.description || null,
+                    status: row.status || 'completed',
+                    user_id: user.id
+                  });
+                  if (error) {
+                    console.error('Error importing transfer:', error);
+                    totalErrors++;
+                  } else {
+                    totalImported++;
+                  }
+                } catch (err) {
+                  console.error('Error processing transfer row:', err);
+                  totalErrors++;
+                }
+              }
+            } else if (fileName.includes('categor')) {
+              // Import categories
+              for (const row of data) {
+                try {
+                  const { error } = await supabase.from('categories').insert({
+                    name: row.name || 'Imported Category',
+                    color: row.color || '#3B82F6',
+                    user_id: user.id
+                  });
+                  if (error) {
+                    console.error('Error importing category:', error);
+                    totalErrors++;
+                  } else {
+                    totalImported++;
+                  }
+                } catch (err) {
+                  console.error('Error processing category row:', err);
+                  totalErrors++;
+                }
+              }
             }
-          } else if (fileName.includes('transfer')) {
-            // Import transfers
-            for (const row of data) {
-              await supabase.from('transfers').insert({
-                from_wallet_id: row.from_wallet_id,
-                to_wallet_id: row.to_wallet_id,
-                amount: parseFloat(row.amount) || 0,
-                date: row.date,
-                description: row.description || null,
-                status: row.status || 'completed',
-                user_id: user.id
-              });
-            }
-          } else if (fileName.includes('categor')) {
-            // Import categories
-            for (const row of data) {
-              await supabase.from('categories').insert({
-                name: row.name,
-                color: row.color || '#3B82F6',
-                user_id: user.id
-              });
-            }
+          } catch (fileError) {
+            console.error(`Error processing file ${file.name}:`, fileError);
+            totalErrors++;
           }
         }
         
-        toast({
-          title: 'Data Import Successful',
-          description: 'Your data has been imported successfully.',
-        });
+        if (totalImported > 0) {
+          toast({
+            title: 'Data Import Successful',
+            description: `Successfully imported ${totalImported} records. ${totalErrors > 0 ? `${totalErrors} errors occurred.` : ''} Please refresh the page to see changes.`,
+          });
+        } else {
+          toast({
+            title: 'Import Warning', 
+            description: 'No valid data was imported. Please check your CSV files format.',
+            variant: 'destructive',
+          });
+        }
       } catch (error) {
         console.error('Import error:', error);
         toast({
           title: 'Import Error',
-          description: 'Failed to import data. Please check the file format.',
+          description: 'Failed to import data. Please check the file format and try again.',
           variant: 'destructive',
         });
       }
@@ -378,6 +441,9 @@ export const FinanceSettings: React.FC = () => {
                   <Upload className="h-4 w-4 mr-2" />
                   Import CSV Files
                 </Button>
+                <p className="text-xs text-muted-foreground mt-1">
+                  File names should contain keywords like 'wallet', 'transaction', 'category', or 'transfer' to auto-detect data type.
+                </p>
               </div>
             </div>
           </CardContent>

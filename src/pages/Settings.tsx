@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +15,7 @@ import { useTransfers } from '@/hooks/useTransfers';
 import { useLoans } from '@/hooks/useLoans';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { convertToCSV, downloadCSV, parseCSV } from '@/utils/csvUtils';
+import { supabase } from '@/integrations/supabase/client';
 
 export const FinanceSettings: React.FC = () => {
   const [selectedCurrency, setSelectedCurrency] = useState(defaultCurrency.code);
@@ -137,48 +137,180 @@ export const FinanceSettings: React.FC = () => {
     input.type = 'file';
     input.accept = '.csv';
     input.multiple = true;
-    input.onchange = (e: Event) => {
+    input.onchange = async (e: Event) => {
       const target = e.target as HTMLInputElement;
       const files = Array.from(target.files || []);
       
       if (files.length === 0) return;
 
-      Promise.all(
-        files.map(file => {
-          return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-              try {
-                const csvText = event.target?.result as string;
-                const data = parseCSV(csvText);
-                resolve({ filename: file.name, data });
-              } catch (error) {
-                console.error('Error parsing file:', file.name, error);
-                resolve({ filename: file.name, data: [] });
-              }
-            };
-            reader.readAsText(file);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          toast({
+            title: 'Authentication Error',
+            description: 'You must be logged in to import data.',
+            variant: 'destructive',
           });
-        })
-      ).then((results: any[]) => {
-        const importedCount = results.reduce((total, result) => total + result.data.length, 0);
+          return;
+        }
+
+        let totalImported = 0;
+        let totalErrors = 0;
+
+        for (const file of files) {
+          try {
+            const text = await file.text();
+            const data = parseCSV(text);
+            
+            if (data.length === 0) {
+              console.log(`No data found in file: ${file.name}`);
+              continue;
+            }
+
+            const fileName = file.name.toLowerCase();
+            
+            if (fileName.includes('wallet')) {
+              // Import wallets
+              for (const row of data) {
+                try {
+                  const { error } = await supabase.from('wallets').insert({
+                    name: row.name || 'Imported Wallet',
+                    balance: parseFloat(row.balance) || 0,
+                    currency: row.currency || 'USD',
+                    user_id: user.id
+                  });
+                  if (error) {
+                    console.error('Error importing wallet:', error);
+                    totalErrors++;
+                  } else {
+                    totalImported++;
+                  }
+                } catch (err) {
+                  console.error('Error processing wallet row:', err);
+                  totalErrors++;
+                }
+              }
+            } else if (fileName.includes('transaction')) {
+              // Import transactions
+              for (const row of data) {
+                try {
+                  const { error } = await supabase.from('transactions').insert({
+                    reason: row.reason || 'Imported Transaction',
+                    type: row.type || 'expense',
+                    income: row.income ? parseFloat(row.income) : null,
+                    expense: row.expense ? parseFloat(row.expense) : null,
+                    date: row.date || new Date().toISOString().split('T')[0],
+                    wallet_id: row.wallet_id,
+                    category_id: row.category_id || null,
+                    user_id: user.id
+                  });
+                  if (error) {
+                    console.error('Error importing transaction:', error);
+                    totalErrors++;
+                  } else {
+                    totalImported++;
+                  }
+                } catch (err) {
+                  console.error('Error processing transaction row:', err);
+                  totalErrors++;
+                }
+              }
+            } else if (fileName.includes('transfer')) {
+              // Import transfers
+              for (const row of data) {
+                try {
+                  const { error } = await supabase.from('transfers').insert({
+                    from_wallet_id: row.from_wallet_id,
+                    to_wallet_id: row.to_wallet_id,
+                    amount: parseFloat(row.amount) || 0,
+                    date: row.date || new Date().toISOString().split('T')[0],
+                    description: row.description || null,
+                    status: row.status || 'completed',
+                    user_id: user.id
+                  });
+                  if (error) {
+                    console.error('Error importing transfer:', error);
+                    totalErrors++;
+                  } else {
+                    totalImported++;
+                  }
+                } catch (err) {
+                  console.error('Error processing transfer row:', err);
+                  totalErrors++;
+                }
+              }
+            } else if (fileName.includes('categor')) {
+              // Import categories
+              for (const row of data) {
+                try {
+                  const { error } = await supabase.from('categories').insert({
+                    name: row.name || 'Imported Category',
+                    color: row.color || '#3B82F6',
+                    user_id: user.id
+                  });
+                  if (error) {
+                    console.error('Error importing category:', error);
+                    totalErrors++;
+                  } else {
+                    totalImported++;
+                  }
+                } catch (err) {
+                  console.error('Error processing category row:', err);
+                  totalErrors++;
+                }
+              }
+            } else if (fileName.includes('loan')) {
+              // Import loans
+              for (const row of data) {
+                try {
+                  const { error } = await supabase.from('loans').insert({
+                    name: row.name || 'Imported Loan',
+                    type: row.type || 'lent',
+                    amount: parseFloat(row.amount) || 0,
+                    remaining_amount: parseFloat(row.remaining_amount) || parseFloat(row.amount) || 0,
+                    status: row.status || 'active',
+                    person: row.person || null,
+                    description: row.description || null,
+                    user_id: user.id
+                  });
+                  if (error) {
+                    console.error('Error importing loan:', error);
+                    totalErrors++;
+                  } else {
+                    totalImported++;
+                  }
+                } catch (err) {
+                  console.error('Error processing loan row:', err);
+                  totalErrors++;
+                }
+              }
+            }
+          } catch (fileError) {
+            console.error(`Error processing file ${file.name}:`, fileError);
+            totalErrors++;
+          }
+        }
         
-        if (importedCount > 0) {
-          console.log('Imported data from files:', results);
-          
+        if (totalImported > 0) {
           toast({
             title: 'Data Import Successful',
-            description: `Imported ${importedCount} records from ${results.length} files. Please refresh the page to see changes.`,
-            variant: 'default',
+            description: `Successfully imported ${totalImported} records. ${totalErrors > 0 ? `${totalErrors} errors occurred.` : ''} Please refresh the page to see changes.`,
           });
         } else {
           toast({
             title: 'Import Warning',
-            description: 'No valid data found in the selected files.',
+            description: 'No valid data was imported. Please check your CSV files format.',
             variant: 'destructive',
           });
         }
-      });
+      } catch (error) {
+        console.error('Import error:', error);
+        toast({
+          title: 'Import Error',
+          description: 'Failed to import data. Please check the file format and try again.',
+          variant: 'destructive',
+        });
+      }
     };
     input.click();
   };
@@ -318,7 +450,7 @@ export const FinanceSettings: React.FC = () => {
                 </Button>
                 <div className="flex items-start space-x-2 text-xs text-muted-foreground">
                   <FileText className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                  <span>Supports CSV files exported from TrackerHub. Select multiple files for bulk import.</span>
+                  <span>Supports CSV files with headers. File names should contain keywords like 'wallet', 'transaction', 'category', 'transfer', or 'loan' to auto-detect data type.</span>
                 </div>
               </div>
             </div>
