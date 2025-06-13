@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -102,7 +101,6 @@ export const FinanceSettings: React.FC = () => {
           amount: l.amount,
           remaining_amount: l.remaining_amount,
           status: l.status,
-          due_date: l.due_date,
           description: l.description
         }));
       }

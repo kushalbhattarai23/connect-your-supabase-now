@@ -47,23 +47,28 @@ export const useEpisodesOptimized = (showId?: string) => {
         
         // Get watched count if user is logged in
         if (user) {
-          const { count: watchedCount } = await supabase
-            .from('user_episode_status')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id)
-            .eq('status', 'watched')
-            .in('episode_id', 
-              supabase
-                .from('episodes')
-                .select('id')
-                .eq('show_id', showId)
-            );
+          // First get all episode IDs for this show
+          const { data: showEpisodes } = await supabase
+            .from('episodes')
+            .select('id')
+            .eq('show_id', showId);
           
-          setStats(prev => ({
-            ...prev,
-            watched: watchedCount || 0,
-            unwatched: (count || 0) - (watchedCount || 0)
-          }));
+          const episodeIds = showEpisodes?.map(ep => ep.id) || [];
+          
+          if (episodeIds.length > 0) {
+            const { count: watchedCount } = await supabase
+              .from('user_episode_status')
+              .select('*', { count: 'exact', head: true })
+              .eq('user_id', user.id)
+              .eq('status', 'watched')
+              .in('episode_id', episodeIds);
+            
+            setStats(prev => ({
+              ...prev,
+              watched: watchedCount || 0,
+              unwatched: (count || 0) - (watchedCount || 0)
+            }));
+          }
         }
       }
 
