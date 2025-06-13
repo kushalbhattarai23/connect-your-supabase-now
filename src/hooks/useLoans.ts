@@ -10,6 +10,7 @@ export interface Loan {
   amount: number;
   remaining_amount: number;
   status: 'active' | 'paid_off' | 'defaulted';
+  person: string;
   description?: string;
   user_id: string;
   created_at: string;
@@ -22,6 +23,7 @@ export interface CreateLoanData {
   amount: number;
   remaining_amount: number;
   status?: string;
+  person: string;
   description?: string;
 }
 
