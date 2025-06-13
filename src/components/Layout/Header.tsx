@@ -9,7 +9,18 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 export const Header: React.FC = () => {
   const { user, logout } = useAuth();
-  const { isPersonalMode, currentOrganization } = useOrganizationContext();
+  
+  // Safely check if we're within an OrganizationProvider
+  let isPersonalMode = true;
+  let currentOrganization = null;
+  
+  try {
+    const orgContext = useOrganizationContext();
+    isPersonalMode = orgContext.isPersonalMode;
+    currentOrganization = orgContext.currentOrganization;
+  } catch (error) {
+    // Not within OrganizationProvider, use defaults
+  }
 
   if (!user) return null;
 
@@ -37,7 +48,8 @@ export const Header: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-4">
-          <OrganizationSwitcher />
+          {/* Only show OrganizationSwitcher if we have the context */}
+          {currentOrganization !== undefined && <OrganizationSwitcher />}
           
           <div className="flex items-center space-x-2">
             <Avatar className="h-8 w-8">
