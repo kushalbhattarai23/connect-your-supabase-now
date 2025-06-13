@@ -52,14 +52,16 @@ const AppRoutes = () => {
 
   if (!user) {
     return (
-      <Routes>
-        <Route path="/login" element={<LoginForm />} />
-        <Route path="/signup" element={<SignUpForm />} />
-        {/* Allow public access to TV shows */}
-        <Route path="/" element={<AppLayout><Landing /></AppLayout>} />
-        {publicTVShowsRoutes}
-        <Route path="*" element={<LoginForm />} />
-      </Routes>
+      <AppLayout>
+        <Routes>
+          <Route path="/login" element={<LoginForm />} />
+          <Route path="/signup" element={<SignUpForm />} />
+          {/* Allow public access to TV shows and homepage */}
+          <Route path="/" element={<Landing />} />
+          {publicTVShowsRoutes}
+          <Route path="*" element={<LoginForm />} />
+        </Routes>
+      </AppLayout>
     );
   }
 

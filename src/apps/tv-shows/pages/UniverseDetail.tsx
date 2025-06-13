@@ -134,153 +134,140 @@ export const UniverseDetail: React.FC = () => {
             <p className="text-sm text-muted-foreground">
               <Link to="/login" className="text-blue-700 hover:underline">
                 Sign in
-              </Link> to view shows and manage universes
+              </Link> to view episodes and manage universes
             </p>
           )}
         </div>
 
-        {user && (
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex w-full max-w-sm items-center space-x-2">
-              <Input
-                type="text"
-                placeholder="Search shows..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="flex-1"
-              />
-              <Button type="button" variant="secondary" className="border-blue-200">
-                <Search className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {canManage && (
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Show
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add Show to Universe</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <Select value={selectedShowId} onValueChange={setSelectedShowId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a show" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableShows
-                          .filter(show => !universeShows.some(us => us.show_id === show.id))
-                          .map((show) => (
-                            <SelectItem key={show.id} value={show.id}>
-                              {show.title}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                        Cancel
-                      </Button>
-                      <Button onClick={handleAddShow}>Add Show</Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            )}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex w-full max-w-sm items-center space-x-2">
+            <Input
+              type="text"
+              placeholder="Search shows..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="flex-1"
+            />
+            <Button type="button" variant="secondary" className="border-blue-200">
+              <Search className="h-4 w-4" />
+            </Button>
           </div>
-        )}
+
+          {user && canManage && (
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Show
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add Show to Universe</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <Select value={selectedShowId} onValueChange={setSelectedShowId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a show" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableShows
+                        .filter(show => !universeShows.some(us => us.show_id === show.id))
+                        .map((show) => (
+                          <SelectItem key={show.id} value={show.id}>
+                            {show.title}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleAddShow}>Add Show</Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
       </div>
 
-      {/* Shows Grid - Only show for authenticated users */}
-      {user ? (
-        showsLoading ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          </div>
-        ) : filteredShows.length === 0 ? (
-          <Card className="border-blue-200">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Users className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-lg font-medium">No shows in this universe</p>
-              <p className="text-muted-foreground">
-                {canManage ? 'Add some shows to get started!' : 'This universe doesn\'t have any shows yet.'}
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredShows.map((universeShow) => (
-              <Card key={universeShow.id} className="h-full transition-all hover:shadow-md overflow-hidden border-blue-200">
-                {universeShow.show?.poster_url ? (
-                  <div className="aspect-video w-full overflow-hidden">
-                    <img 
-                      src={universeShow.show.poster_url} 
-                      alt={universeShow.show.title} 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="aspect-video w-full bg-muted flex items-center justify-center">
-                    <TvIcon className="h-12 w-12 text-muted-foreground" />
-                  </div>
-                )}
-                
-                <CardHeader className="pb-2">
-                  <CardTitle className="line-clamp-1 text-blue-700">
-                    {universeShow.show?.title || 'Unknown Show'}
-                  </CardTitle>
-                </CardHeader>
-                
-                <CardContent>
-                  <div className="flex justify-between items-center gap-2">
-                    <div className="text-sm text-muted-foreground flex-1">
-                      {universeShow.show?.description ? (
-                        <p className="line-clamp-2">{universeShow.show.description}</p>
-                      ) : (
-                        'No description available'
-                      )}
-                    </div>
-                    <div className="flex gap-2">
-                      {canManage && (
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleRemoveShow(universeShow.id)}
-                          className="border-red-200 text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      )}
-                      <Button size="sm" variant="secondary" className="border-blue-200">
-                        View
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )
-      ) : (
+      {/* Shows Grid */}
+      {showsLoading ? (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      ) : filteredShows.length === 0 ? (
         <Card className="border-blue-200">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <LogIn className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-lg font-medium">Sign in to view shows</p>
-            <p className="text-muted-foreground mb-4">
-              You need to be signed in to view the shows in this universe
+            <Users className="h-12 w-12 text-muted-foreground mb-4" />
+            <p className="text-lg font-medium">No shows in this universe</p>
+            <p className="text-muted-foreground">
+              {canManage ? 'Add some shows to get started!' : 'This universe doesn\'t have any shows yet.'}
             </p>
-            <Link to="/login">
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <LogIn className="mr-2 h-4 w-4" />
-                Sign In
-              </Button>
-            </Link>
           </CardContent>
         </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredShows.map((universeShow) => (
+            <Card key={universeShow.id} className="h-full transition-all hover:shadow-md overflow-hidden border-blue-200">
+              {universeShow.show?.poster_url ? (
+                <div className="aspect-video w-full overflow-hidden">
+                  <img 
+                    src={universeShow.show.poster_url} 
+                    alt={universeShow.show.title} 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="aspect-video w-full bg-muted flex items-center justify-center">
+                  <TvIcon className="h-12 w-12 text-muted-foreground" />
+                </div>
+              )}
+              
+              <CardHeader className="pb-2">
+                <CardTitle className="line-clamp-1 text-blue-700">
+                  {universeShow.show?.title || 'Unknown Show'}
+                </CardTitle>
+              </CardHeader>
+              
+              <CardContent>
+                <div className="flex justify-between items-center gap-2">
+                  <div className="text-sm text-muted-foreground flex-1">
+                    {universeShow.show?.description ? (
+                      <p className="line-clamp-2">{universeShow.show.description}</p>
+                    ) : (
+                      'No description available'
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    {user && canManage && (
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleRemoveShow(universeShow.id)}
+                        className="border-red-200 text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    )}
+                    {user ? (
+                      <Button size="sm" variant="secondary" className="border-blue-200">
+                        View Episodes
+                      </Button>
+                    ) : (
+                      <Button size="sm" variant="secondary" className="border-blue-200" disabled>
+                        <LogIn className="h-3 w-3 mr-1" />
+                        Sign in to view
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       )}
     </div>
   );
