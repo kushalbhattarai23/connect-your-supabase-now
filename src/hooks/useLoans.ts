@@ -39,7 +39,7 @@ export const useLoans = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('loans')
-        .select('*')
+        .select('id, name, type, amount, remaining_amount, status, person, description, user_id, created_at, updated_at')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
