@@ -29,6 +29,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/hooks/useAuth';
+import { OrganizationSwitcher } from '@/components/OrganizationSwitcher';
 
 const iconMap = {
   Tv,
@@ -62,6 +63,9 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
   const { settings } = useAppSettings();
   const { user } = useAuth();
   const enabledApps = getEnabledApps(settings);
+  
+  // Check if we're on a finance page
+  const isFinancePage = location.pathname.startsWith('/finance');
 
   const getIcon = (iconName: string) => {
     const IconComponent = iconMap[iconName as keyof typeof iconMap];
@@ -97,6 +101,13 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
           )}
         </div>
       </div>
+
+      {/* Organization Switcher - Show for authenticated users on finance pages */}
+      {user && isFinancePage && !isCollapsed && (
+        <div className="px-4 lg:px-6 pb-4">
+          <OrganizationSwitcher />
+        </div>
+      )}
 
       <nav className="flex-1 px-3 lg:px-4 space-y-2 overflow-y-auto">
         <Link
