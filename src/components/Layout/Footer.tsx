@@ -65,7 +65,7 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Features */}
+          {/* Features and Auth Links */}
           <div className="space-y-4">
             <h3 className="font-semibold">Features</h3>
             <ul className="space-y-2 text-sm">
@@ -82,6 +82,19 @@ export const Footer: React.FC = () => {
               <li>
                 <Link to="/finance/loans" className="text-muted-foreground hover:text-foreground transition-colors">
                   Loans
+                </Link>
+              </li>
+            </ul>
+            <Separator className="my-3" />
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link to="/login" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Sign In
+                </Link>
+              </li>
+              <li>
+                <Link to="/signup" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Sign Up
                 </Link>
               </li>
             </ul>
