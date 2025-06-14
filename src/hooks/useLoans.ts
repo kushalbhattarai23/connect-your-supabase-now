@@ -6,24 +6,21 @@ import { toast } from 'sonner';
 export interface Loan {
   id: string;
   name: string;
-  type: 'Personal' | 'Mortgage' | 'Car' | 'Student' | 'Business' | 'Other';
+  person: string;
+  type: string;
   amount: number;
   remaining_amount: number;
-  status: 'active' | 'paid_off' | 'defaulted';
-  person: string | null;
   description?: string | null;
   user_id: string;
   created_at: string;
-  updated_at: string;
 }
 
 export interface CreateLoanData {
   name: string;
+  person: string;
   type: string;
   amount: number;
   remaining_amount: number;
-  status?: string;
-  person: string;
   description?: string;
 }
 
@@ -66,8 +63,7 @@ export const useLoans = () => {
 
       const insertData = {
         ...loanData,
-        user_id: user.id,
-        status: loanData.status || 'active'
+        user_id: user.id
       };
       
       console.log('Insert data:', insertData);
