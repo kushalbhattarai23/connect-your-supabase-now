@@ -66,8 +66,13 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
   const location = useLocation();
   const { settings } = useAppSettings();
   const { user } = useAuth();
-  const { isAdmin, isLoading: rolesLoading } = useUserRoles();
+  const { isAdmin, isLoading: rolesLoading, roles } = useUserRoles();
   const enabledApps = getEnabledApps(settings);
+  
+  // Debug logging
+  React.useEffect(() => {
+    console.log('Sidebar - User:', user?.id, 'Roles:', roles, 'isAdmin:', isAdmin, 'rolesLoading:', rolesLoading);
+  }, [user, roles, isAdmin, rolesLoading]);
   
   // State for accordion sections
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
@@ -92,10 +97,14 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
   // Filter out the admin app if user is not admin
   const visibleApps = enabledApps.filter(app => {
     if (app.id === 'admin') {
-      return isAdmin;
+      const shouldShow = isAdmin;
+      console.log('Admin app visibility check - isAdmin:', isAdmin, 'shouldShow:', shouldShow);
+      return shouldShow;
     }
     return true;
   });
+
+  console.log('Visible apps:', visibleApps.map(app => app.id));
 
   return (
     <div className="flex flex-col h-full">
