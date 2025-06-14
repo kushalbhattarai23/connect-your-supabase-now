@@ -115,11 +115,10 @@ export const FinanceSettings: React.FC = () => {
             type: l.type,
             amount: l.amount,
             remaining_amount: l.remaining_amount,
-            status: l.status,
             person: l.person || '',
             description: l.description || ''
           })),
-          ['name', 'type', 'amount', 'remaining_amount', 'status', 'person', 'description']
+          ['name', 'type', 'amount', 'remaining_amount', 'person', 'description']
         );
         downloadCSV(loansCSV, 'loans');
       }
@@ -265,11 +264,10 @@ export const FinanceSettings: React.FC = () => {
                 try {
                   const { error } = await supabase.from('loans').insert({
                     name: row.name || 'Imported Loan',
-                    type: row.type || 'lent',
+                    type: row.type || 'Personal',
                     amount: parseFloat(row.amount) || 0,
                     remaining_amount: parseFloat(row.remaining_amount) || parseFloat(row.amount) || 0,
-                    status: row.status || 'active',
-                    person: row.person || null,
+                    person: row.person || '',
                     description: row.description || null,
                     user_id: user.id
                   });
