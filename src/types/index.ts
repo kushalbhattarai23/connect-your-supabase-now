@@ -17,6 +17,19 @@ export interface AppRoute {
   icon?: string;
 }
 
+export interface AppConfig {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+  routes: {
+    path: string;
+    name: string;
+    icon: string;
+  }[];
+}
+
 export interface User {
   id: string;
   email: string;

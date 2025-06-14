@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,7 +13,7 @@ const iconMap = {
 
 export const Landing: React.FC = () => {
   const { user } = useAuth();
-  const enabledApps = getEnabledApps();
+  const enabledApps = getEnabledApps({});
 
   if (!user) {
     return (
