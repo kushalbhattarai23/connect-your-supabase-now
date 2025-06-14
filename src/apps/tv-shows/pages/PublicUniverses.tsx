@@ -13,6 +13,12 @@ export const PublicUniverses: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  const handleUniverseClick = (universe: any) => {
+    navigate(`/tv-shows/universe/${universe.slug || universe.id}`, {
+      state: { from: 'public' }
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-6">
@@ -68,7 +74,7 @@ export const PublicUniverses: React.FC = () => {
             <Card 
               key={universe.id} 
               className="border-blue-200 hover:shadow-lg transition-shadow cursor-pointer group"
-              onClick={() => navigate(`/tv-shows/universe/${universe.slug || universe.id}`)}
+              onClick={() => handleUniverseClick(universe)}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-2">

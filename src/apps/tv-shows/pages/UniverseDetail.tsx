@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,13 +17,38 @@ import { useAuth } from '@/hooks/useAuth';
 
 export const UniverseDetail: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
+  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedShowId, setSelectedShowId] = useState<string>('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const { data: universe, isLoading: universeLoading } = useQuery({
+  // Determine back navigation based on current route context
+  const getBackPath = () => {
+    const pathname = location.pathname;
+    if (pathname.includes('/public-universes') || location.state?.from === 'public') {
+      return '/tv-shows/public-universes';
+    }
+    if (pathname.includes('/private-universes') || location.state?.from === 'private') {
+      return '/tv-shows/private-universes';
+    }
+    // Default fallback - check if user owns any universes to decide
+    return '/tv-shows/universes';
+  };
+
+  const getBackLabel = () => {
+    const pathname = location.pathname;
+    if (pathname.includes('/public-universes') || location.state?.from === 'public') {
+      return 'Back to Public Universes';
+    }
+    if (pathname.includes('/private-universes') || location.state?.from === 'private') {
+      return 'Back to My Universes';
+    }
+    return 'Back to Universes';
+  };
+
+  const { data: universe, isLoading: universeLoading, error: universeError } = useQuery({
     queryKey: ['universe', slug],
     queryFn: async () => {
       if (!slug) throw new Error('Universe slug is required');
@@ -31,10 +57,10 @@ export const UniverseDetail: React.FC = () => {
         .from('universes')
         .select('*')
         .or(`slug.eq.${slug},id.eq.${slug}`)
-        .single();
+        .maybeSingle();
         
       if (error) throw error;
-      return data as Universe;
+      return data as Universe | null;
     },
     enabled: !!slug
   });
@@ -85,12 +111,16 @@ export const UniverseDetail: React.FC = () => {
     );
   }
 
-  if (!universe) {
+  if (universeError || !universe) {
     return (
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold mb-4">Universe not found</h2>
-        <Link to="/tv-shows/public-universes">
-          <Button>Back to Public Universes</Button>
+        <p className="text-muted-foreground mb-4">The universe you're looking for doesn't exist or you don't have permission to view it.</p>
+        <Link to={getBackPath()}>
+          <Button className="bg-blue-600 hover:bg-blue-700">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {getBackLabel()}
+          </Button>
         </Link>
       </div>
     );
@@ -102,7 +132,7 @@ export const UniverseDetail: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
         <div className="space-y-2">
           <div className="flex items-center gap-4">
-            <Link to="/tv-shows/public-universes">
+            <Link to={getBackPath()}>
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back

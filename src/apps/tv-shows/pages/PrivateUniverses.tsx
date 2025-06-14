@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,12 @@ export const PrivateUniverses: React.FC = () => {
   });
 
   const myUniverses = universes.filter(universe => universe.creator_id === user?.id);
+
+  const handleUniverseClick = (universe: any) => {
+    navigate(`/tv-shows/universe/${universe.slug || universe.id}`, {
+      state: { from: 'private' }
+    });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,7 +127,7 @@ export const PrivateUniverses: React.FC = () => {
             <Card 
               key={universe.id} 
               className="border-blue-200 hover:shadow-lg transition-shadow cursor-pointer group"
-              onClick={() => navigate(`/tv-shows/universe/${universe.slug || universe.id}`)}
+              onClick={() => handleUniverseClick(universe)}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-2">
