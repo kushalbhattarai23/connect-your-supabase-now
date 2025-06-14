@@ -37,28 +37,53 @@ export const useLoans = () => {
   } = useQuery({
     queryKey: ['loans'],
     queryFn: async () => {
+      console.log('Fetching loans...');
       const { data, error } = await supabase
         .from('loans')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching loans:', error);
+        throw error;
+      }
+      console.log('Loans fetched:', data);
       return data as Loan[];
     }
   });
 
   const createLoan = useMutation({
     mutationFn: async (loanData: CreateLoanData) => {
+      console.log('Creating loan with data:', loanData);
+      
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      if (!user) {
+        console.error('User not authenticated');
+        throw new Error('User not authenticated');
+      }
+
+      console.log('Authenticated user:', user.id);
+
+      const insertData = {
+        ...loanData,
+        user_id: user.id,
+        status: loanData.status || 'active'
+      };
+      
+      console.log('Insert data:', insertData);
 
       const { data, error } = await supabase
         .from('loans')
-        .insert([{ ...loanData, user_id: user.id }])
+        .insert([insertData])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Create loan error:', error);
+        throw error;
+      }
+      
+      console.log('Loan created successfully:', data);
       return data;
     },
     onSuccess: () => {
@@ -67,12 +92,14 @@ export const useLoans = () => {
     },
     onError: (error) => {
       console.error('Create loan error:', error);
-      toast.error('Failed to create loan');
+      toast.error('Failed to create loan: ' + error.message);
     }
   });
 
   const updateLoan = useMutation({
     mutationFn: async ({ id, ...updateData }: Partial<Loan> & { id: string }) => {
+      console.log('Updating loan:', id, updateData);
+      
       const { data, error } = await supabase
         .from('loans')
         .update(updateData)
@@ -80,7 +107,12 @@ export const useLoans = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Update loan error:', error);
+        throw error;
+      }
+      
+      console.log('Loan updated successfully:', data);
       return data;
     },
     onSuccess: () => {
@@ -89,18 +121,25 @@ export const useLoans = () => {
     },
     onError: (error) => {
       console.error('Update loan error:', error);
-      toast.error('Failed to update loan');
+      toast.error('Failed to update loan: ' + error.message);
     }
   });
 
   const deleteLoan = useMutation({
     mutationFn: async (id: string) => {
+      console.log('Deleting loan:', id);
+      
       const { error } = await supabase
         .from('loans')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete loan error:', error);
+        throw error;
+      }
+      
+      console.log('Loan deleted successfully');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['loans'] });
@@ -108,7 +147,7 @@ export const useLoans = () => {
     },
     onError: (error) => {
       console.error('Delete loan error:', error);
-      toast.error('Failed to delete loan');
+      toast.error('Failed to delete loan: ' + error.message);
     }
   });
 
