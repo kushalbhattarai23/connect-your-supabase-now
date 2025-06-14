@@ -14,7 +14,7 @@ import Settings from '@/pages/Settings';
 import Login from '@/pages/Login';
 import SignUpForm from '@/components/Auth/SignUpForm';
 import AdminLogin from '@/pages/admin/AdminLogin';
-import AdminSignUp from '@/pages/admin/AdminSignUp';
+
 
 // Lazy load pages
 const TvShowsDashboard = lazy(() => import('@/apps/tv-shows/pages/Dashboard'));
@@ -67,7 +67,7 @@ function App() {
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<SignUpForm />} />
                   <Route path="/admin/login" element={<AdminLogin />} />
-                  <Route path="/admin/signup" element={<AdminSignUp />} />
+
                   <Route path="/" element={<AppLayout />}>
                     <Route index element={<Index />} />
                     <Route path="profile" element={<Profile />} />
