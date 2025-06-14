@@ -13,7 +13,6 @@ export interface Transfer {
   description?: string;
   status: string;
   user_id: string;
-  organization_id?: string;
   created_at: string;
   updated_at: string;
   from_wallet?: { name: string };
@@ -74,7 +73,7 @@ export const useTransfers = () => {
   });
 
   const createTransfer = useMutation({
-    mutationFn: async (transfer: Omit<Transfer, 'id' | 'created_at' | 'updated_at' | 'user_id' | 'status' | 'organization_id'>) => {
+    mutationFn: async (transfer: Omit<Transfer, 'id' | 'created_at' | 'updated_at' | 'user_id' | 'status'>) => {
       if (!user) throw new Error('User not authenticated');
       
       // Get wallet balances
@@ -98,12 +97,11 @@ export const useTransfers = () => {
       
       if (toWalletError) throw toWalletError;
       
-      // Create the transfer with organization context
+      // Create the transfer (without organization_id as it doesn't exist in the table)
       const transferData = {
         ...transfer,
         user_id: user.id,
-        status: 'completed',
-        organization_id: isPersonalMode ? null : currentOrganization?.id || null
+        status: 'completed'
       };
       
       const { data, error } = await supabase
