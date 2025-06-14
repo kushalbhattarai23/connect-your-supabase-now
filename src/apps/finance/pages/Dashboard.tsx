@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,10 +14,12 @@ import {
 } from 'lucide-react';
 import { useWallets } from '@/hooks/useWallets';
 import { useTransactions } from '@/hooks/useTransactions';
+import { useCurrency } from '@/hooks/useCurrency';
 
 export const FinanceDashboard: React.FC = () => {
   const { wallets } = useWallets();
   const { transactions } = useTransactions();
+  const { formatAmount } = useCurrency();
 
   // Calculate totals from real data
   const totalBalance = wallets.reduce((sum, wallet) => sum + wallet.balance, 0);
@@ -66,7 +67,7 @@ export const FinanceDashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-700">
-              रु {totalBalance.toLocaleString()}
+              {formatAmount(totalBalance)}
             </div>
           </CardContent>
         </Card>
@@ -78,7 +79,7 @@ export const FinanceDashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              रु {monthlyIncome.toLocaleString()}
+              {formatAmount(monthlyIncome)}
             </div>
           </CardContent>
         </Card>
@@ -90,7 +91,7 @@ export const FinanceDashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              रु {monthlyExpenses.toLocaleString()}
+              {formatAmount(monthlyExpenses)}
             </div>
           </CardContent>
         </Card>
@@ -102,7 +103,7 @@ export const FinanceDashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              रु {savings.toLocaleString()}
+              {formatAmount(savings)}
             </div>
             <p className="text-xs text-muted-foreground">
               {savingsRate}% savings rate
@@ -116,7 +117,7 @@ export const FinanceDashboard: React.FC = () => {
         <CardHeader>
           <CardTitle className="text-green-700">Monthly Savings Progress</CardTitle>
           <CardDescription>
-            Saved रु {savings.toLocaleString()} out of रु {monthlyIncome.toLocaleString()} income
+            Saved {formatAmount(savings)} out of {formatAmount(monthlyIncome)} income
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -146,7 +147,7 @@ export const FinanceDashboard: React.FC = () => {
                     <span className="font-medium">{wallet.name}</span>
                   </div>
                   <span className="font-semibold text-green-700">
-                    रु {wallet.balance.toLocaleString()}
+                    {formatAmount(wallet.balance)}
                   </span>
                 </div>
               ))
@@ -181,7 +182,7 @@ export const FinanceDashboard: React.FC = () => {
                       transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                     }`}>
                       {transaction.type === 'income' ? '+' : '-'}
-                      रु {((transaction.income || transaction.expense || 0)).toLocaleString()}
+                      {formatAmount(transaction.income || transaction.expense || 0)}
                     </span>
                   </div>
                 ))

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,17 +7,18 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Download, Upload, BadgeIndianRupee, FileText } from 'lucide-react';
-import { currencies, defaultCurrency } from '@/config/currencies';
+import { currencies } from '@/config/currencies';
 import { useWallets } from '@/hooks/useWallets';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useCategories } from '@/hooks/useCategories';
 import { useTransfers } from '@/hooks/useTransfers';
 import { useAppSettings } from '@/hooks/useAppSettings';
+import { useCurrency } from '@/hooks/useCurrency';
 import { convertToCSV, downloadCSV, parseCSV } from '@/utils/csvUtils';
 import { supabase } from '@/integrations/supabase/client';
 
 export const FinanceSettings: React.FC = () => {
-  const [selectedCurrency, setSelectedCurrency] = useState(defaultCurrency.code);
+  const { currency, updateCurrency } = useCurrency();
   const [exportOptions, setExportOptions] = useState({
     wallets: true,
     transactions: true,
@@ -33,8 +33,7 @@ export const FinanceSettings: React.FC = () => {
   const { settings, toggleApp } = useAppSettings();
 
   const handleCurrencyChange = (value: string) => {
-    setSelectedCurrency(value);
-    localStorage.setItem('preferredCurrency', value);
+    updateCurrency(value);
     
     const selectedCurrencyObj = currencies.find(c => c.code === value);
     
@@ -327,18 +326,18 @@ export const FinanceSettings: React.FC = () => {
             <div className="grid gap-2">
               <Label htmlFor="currency">Display Currency</Label>
               <Select 
-                value={selectedCurrency} 
+                value={currency.code} 
                 onValueChange={handleCurrencyChange}
               >
                 <SelectTrigger id="currency" className="w-full">
                   <SelectValue placeholder="Select currency" />
                 </SelectTrigger>
                 <SelectContent>
-                  {currencies.map((currency) => (
-                    <SelectItem key={currency.code} value={currency.code}>
+                  {currencies.map((currencyOption) => (
+                    <SelectItem key={currencyOption.code} value={currencyOption.code}>
                       <div className="flex items-center">
-                        <span className="mr-2">{currency.symbol}</span>
-                        <span>{currency.name} ({currency.code})</span>
+                        <span className="mr-2">{currencyOption.symbol}</span>
+                        <span>{currencyOption.name} ({currencyOption.code})</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -354,8 +353,7 @@ export const FinanceSettings: React.FC = () => {
               <div className="flex items-center p-2 border rounded-md bg-muted/30">
                 <BadgeIndianRupee className="h-5 w-5 mr-2" />
                 <span className="text-xl font-semibold">
-                  {selectedCurrency === 'NPR' ? 'रु' : 
-                   currencies.find(c => c.code === selectedCurrency)?.symbol} 1,000.00
+                  {currency.symbol} 1,000.00
                 </span>
               </div>
             </div>

@@ -7,10 +7,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Edit, Trash2, DollarSign, Phone, Mail, CreditCard } from 'lucide-react';
 import { useCredits, CreateCreditData } from '@/hooks/useCredits';
-import { formatCurrency } from '@/lib/utils';
+import { useCurrency } from '@/hooks/useCurrency';
 
 export const Credits: React.FC = () => {
   const { credits, isLoading, createCredit, updateCredit, deleteCredit } = useCredits();
+  const { formatAmount } = useCurrency();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingCredit, setEditingCredit] = useState<any>(null);
@@ -223,7 +224,7 @@ export const Credits: React.FC = () => {
               <div className="flex items-center">
                 <DollarSign className="h-4 w-4 mr-2 text-green-600" />
                 <span className="text-sm">
-                  {formatCurrency(credit.remaining_amount)} / {formatCurrency(credit.total_amount)}
+                  {formatAmount(credit.remaining_amount)} / {formatAmount(credit.total_amount)}
                 </span>
               </div>
               
