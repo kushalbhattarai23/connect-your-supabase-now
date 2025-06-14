@@ -1,3 +1,4 @@
+
 import { Suspense, lazy } from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -32,7 +33,6 @@ const Transfers = lazy(() => import('@/apps/finance/pages/Transfers'));
 const Reports = lazy(() => import('@/apps/finance/pages/Reports'));
 const FinanceSettings = lazy(() => import('@/apps/finance/pages/Settings'));
 const Budgets = lazy(() => import('@/apps/finance/pages/Budgets'));
-const Loans = lazy(() => import('@/apps/finance/pages/Loans'));
 const Credits = lazy(() => import('@/apps/finance/pages/Credits'));
 
 const queryClient = new QueryClient({
@@ -151,11 +151,6 @@ function App() {
                     <Route path="finance/budgets" element={
                       <Suspense fallback={<div>Loading...</div>}>
                         <Budgets />
-                      </Suspense>
-                    } />
-                    <Route path="finance/loans" element={
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <Loans />
                       </Suspense>
                     } />
                     <Route path="finance/credits" element={

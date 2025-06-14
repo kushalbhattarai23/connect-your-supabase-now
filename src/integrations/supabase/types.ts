@@ -259,42 +259,6 @@ export type Database = {
           },
         ]
       }
-      loans: {
-        Row: {
-          amount: number
-          created_at: string
-          description: string | null
-          id: string
-          name: string
-          person: string
-          remaining_amount: number
-          type: string
-          user_id: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
-          person?: string
-          remaining_amount: number
-          type: string
-          user_id: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-          person?: string
-          remaining_amount?: number
-          type?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       organization_members: {
         Row: {
           id: string
