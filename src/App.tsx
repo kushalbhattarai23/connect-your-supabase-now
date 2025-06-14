@@ -37,6 +37,11 @@ const FinanceSettings = lazy(() => import('@/apps/finance/pages/Settings'));
 const Budgets = lazy(() => import('@/apps/finance/pages/Budgets'));
 const Credits = lazy(() => import('@/apps/finance/pages/Credits'));
 
+// Admin pages
+const AdminDashboard = lazy(() => import('@/apps/admin/pages/Dashboard'));
+const AdminUsers = lazy(() => import('@/apps/admin/pages/Users'));
+const AdminContent = lazy(() => import('@/apps/admin/pages/Content'));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -165,6 +170,23 @@ function App() {
                     <Route path="finance/credits" element={
                       <Suspense fallback={<div>Loading...</div>}>
                         <Credits />
+                      </Suspense>
+                    } />
+
+                    {/* Admin Routes */}
+                    <Route path="admin" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <AdminDashboard />
+                      </Suspense>
+                    } />
+                    <Route path="admin/users" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <AdminUsers />
+                      </Suspense>
+                    } />
+                    <Route path="admin/content" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <AdminContent />
                       </Suspense>
                     } />
                   </Route>

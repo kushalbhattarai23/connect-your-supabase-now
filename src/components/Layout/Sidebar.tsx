@@ -70,7 +70,8 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
   // State for accordion sections
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     'tv-shows': true,
-    'finance': true
+    'finance': true,
+    'admin': true
   });
 
   const toggleSection = (sectionId: string) => {
@@ -176,8 +177,8 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
                   .map((route) => {
                     const Icon = getIcon(route.icon || 'Home');
                     
-                    // Show TV Shows routes to everyone, but finance routes only to authenticated users
-                    if (app.id === 'finance' && !user) {
+                    // Show TV Shows routes to everyone, but finance/admin routes only to authenticated users
+                    if ((app.id === 'finance' || app.id === 'admin') && !user) {
                       return null;
                     }
                     
