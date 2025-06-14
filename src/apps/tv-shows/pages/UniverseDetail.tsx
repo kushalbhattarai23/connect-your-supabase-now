@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -267,7 +266,7 @@ export const UniverseDetail: React.FC = () => {
       </div>
 
       {/* Main Content Tabs */}
-      <Tabs defaultValue="shows" className="w-full">
+      <Tabs defaultValue="episodes" className="w-full">
         <TabsList className="grid w-full grid-cols-2 h-9 sm:h-10">
           <TabsTrigger value="shows" className="text-xs sm:text-sm">Shows</TabsTrigger>
           <TabsTrigger value="episodes" className="text-xs sm:text-sm">Episodes</TabsTrigger>
