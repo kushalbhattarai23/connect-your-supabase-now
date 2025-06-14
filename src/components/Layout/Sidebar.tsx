@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { getEnabledApps } from '@/config/apps';
@@ -22,6 +23,8 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   User,
   Target,
   CreditCard
@@ -30,6 +33,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/hooks/useAuth';
 import { OrganizationSwitcher } from '@/components/OrganizationSwitcher';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const iconMap = {
   Tv,
@@ -64,8 +68,19 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
   const { user } = useAuth();
   const enabledApps = getEnabledApps(settings);
   
-  // Check if we're on a finance page
-  const isFinancePage = location.pathname.startsWith('/finance');
+  // State for accordion sections
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    'tv-shows': true,
+    'finance': true
+  });
+
+  const toggleSection = (sectionId: string) => {
+    if (isCollapsed) return; // Don't toggle when collapsed
+    setOpenSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }));
+  };
 
   const getIcon = (iconName: string) => {
     const IconComponent = iconMap[iconName as keyof typeof iconMap];
@@ -102,13 +117,6 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
         </div>
       </div>
 
-      {/* Organization Switcher - Show for authenticated users on finance pages */}
-      {user && isFinancePage && !isCollapsed && (
-        <div className="px-4 lg:px-6 pb-4">
-          <OrganizationSwitcher />
-        </div>
-      )}
-
       <nav className="flex-1 px-3 lg:px-4 space-y-2 overflow-y-auto">
         <Link
           to="/"
@@ -126,103 +134,133 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
         </Link>
 
         {enabledApps.map((app) => (
-          <div key={app.id} className="space-y-1">
-            <div className={cn("px-3 py-2", isCollapsed && "lg:hidden")}>
-              <div className="flex items-center space-x-2">
-                {React.createElement(getIcon(app.icon), { 
-                  className: `w-4 h-4 text-${app.color}-500` 
-                })}
-                <span className="font-medium text-sm">{app.name}</span>
-              </div>
-            </div>
-            
-            {app.routes
-              .filter(route => route.path !== '/tv-shows/show/:slug')
-              .map((route) => {
-                const Icon = getIcon(route.icon || 'Home');
-                
-                // Show TV Shows routes to everyone, but finance routes only to authenticated users
-                if (app.id === 'finance' && !user) {
-                  return null;
-                }
-                
-                return (
-                  <Link
-                    key={route.path}
-                    to={route.path}
-                    title={isCollapsed ? route.name : undefined}
-                    className={cn(
-                      "flex items-center space-x-3 px-3 lg:px-6 py-2 rounded-lg transition-colors text-sm",
-                      location.pathname === route.path
-                        ? `bg-${app.color}-100 text-${app.color}-700 dark:bg-${app.color}-900 dark:text-${app.color}-300`
-                        : "text-muted-foreground hover:text-foreground hover:bg-accent",
-                      isCollapsed && "lg:justify-center lg:space-x-0 lg:px-3"
-                    )}
-                  >
-                    <Icon className="w-4 h-4 flex-shrink-0" />
-                    {!isCollapsed && <span>{route.name}</span>}
-                  </Link>
-                );
-              })}
-
-            {/* Add special routes for TV Shows - available to everyone */}
-            {app.id === 'tv-shows' && (
-              <>
-                <Link
-                  to="/tv-shows/public-universes"
-                  title={isCollapsed ? "Public Universes" : undefined}
+          <Collapsible 
+            key={app.id} 
+            open={isCollapsed ? true : openSections[app.id]}
+            onOpenChange={() => toggleSection(app.id)}
+          >
+            <div className="space-y-1">
+              <CollapsibleTrigger asChild>
+                <button 
                   className={cn(
-                    "flex items-center space-x-3 px-3 lg:px-6 py-2 rounded-lg transition-colors text-sm",
-                    location.pathname === '/tv-shows/public-universes'
-                      ? `bg-${app.color}-100 text-${app.color}-700 dark:bg-${app.color}-900 dark:text-${app.color}-300`
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent",
-                    isCollapsed && "lg:justify-center lg:space-x-0 lg:px-3"
+                    "w-full flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-accent transition-colors",
+                    isCollapsed && "lg:justify-center lg:space-x-0"
                   )}
+                  disabled={isCollapsed}
                 >
-                  <Globe className="w-4 h-4 flex-shrink-0" />
-                  {!isCollapsed && <span>Public Universes</span>}
-                </Link>
-                
-                {/* Show user-specific TV shows routes only to authenticated users */}
-                {user && (
-                  <Link
-                    to="/tv-shows/universes"
-                    title={isCollapsed ? "My Universes" : undefined}
-                    className={cn(
-                      "flex items-center space-x-3 px-3 lg:px-6 py-2 rounded-lg transition-colors text-sm",
-                      location.pathname === '/tv-shows/universes'
-                        ? `bg-${app.color}-100 text-${app.color}-700 dark:bg-${app.color}-900 dark:text-${app.color}-300`
-                        : "text-muted-foreground hover:text-foreground hover:bg-accent",
-                      isCollapsed && "lg:justify-center lg:space-x-0 lg:px-3"
-                    )}
-                  >
-                    <Users className="w-4 h-4 flex-shrink-0" />
-                    {!isCollapsed && <span>My Universes</span>}
-                  </Link>
+                  {React.createElement(getIcon(app.icon), { 
+                    className: `w-5 h-5 text-${app.color}-500 flex-shrink-0` 
+                  })}
+                  {!isCollapsed && (
+                    <>
+                      <span className="font-medium text-sm flex-1 text-left">{app.name}</span>
+                      {openSections[app.id] ? (
+                        <ChevronUp className="w-4 h-4" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4" />
+                      )}
+                    </>
+                  )}
+                </button>
+              </CollapsibleTrigger>
+              
+              <CollapsibleContent className="space-y-1">
+                {/* Organization Switcher for Finance section */}
+                {app.id === 'finance' && user && !isCollapsed && (
+                  <div className="px-3 pb-2">
+                    <OrganizationSwitcher />
+                  </div>
                 )}
-              </>
-            )}
 
-            {/* Add additional routes for Finance - only for authenticated users (removed duplicate Budgets and Loans) */}
-            {app.id === 'finance' && user && (
-              <>
-                <Link
-                  to="/finance/credits"
-                  title={isCollapsed ? "Credits" : undefined}
-                  className={cn(
-                    "flex items-center space-x-3 px-3 lg:px-6 py-2 rounded-lg transition-colors text-sm",
-                    location.pathname === '/finance/credits'
-                      ? `bg-${app.color}-100 text-${app.color}-700 dark:bg-${app.color}-900 dark:text-${app.color}-300`
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent",
-                    isCollapsed && "lg:justify-center lg:space-x-0 lg:px-3"
-                  )}
-                >
-                  <CreditCard className="w-4 h-4 flex-shrink-0" />
-                  {!isCollapsed && <span>Credits</span>}
-                </Link>
-              </>
-            )}
-          </div>
+                {app.routes
+                  .filter(route => route.path !== '/tv-shows/show/:slug')
+                  .map((route) => {
+                    const Icon = getIcon(route.icon || 'Home');
+                    
+                    // Show TV Shows routes to everyone, but finance routes only to authenticated users
+                    if (app.id === 'finance' && !user) {
+                      return null;
+                    }
+                    
+                    return (
+                      <Link
+                        key={route.path}
+                        to={route.path}
+                        title={isCollapsed ? route.name : undefined}
+                        className={cn(
+                          "flex items-center space-x-3 px-3 lg:px-6 py-2 rounded-lg transition-colors text-sm",
+                          location.pathname === route.path
+                            ? `bg-${app.color}-100 text-${app.color}-700 dark:bg-${app.color}-900 dark:text-${app.color}-300`
+                            : "text-muted-foreground hover:text-foreground hover:bg-accent",
+                          isCollapsed && "lg:justify-center lg:space-x-0 lg:px-3"
+                        )}
+                      >
+                        <Icon className="w-4 h-4 flex-shrink-0" />
+                        {!isCollapsed && <span>{route.name}</span>}
+                      </Link>
+                    );
+                  })}
+
+                {/* Add special routes for TV Shows - available to everyone */}
+                {app.id === 'tv-shows' && (
+                  <>
+                    <Link
+                      to="/tv-shows/public-universes"
+                      title={isCollapsed ? "Public Universes" : undefined}
+                      className={cn(
+                        "flex items-center space-x-3 px-3 lg:px-6 py-2 rounded-lg transition-colors text-sm",
+                        location.pathname === '/tv-shows/public-universes'
+                          ? `bg-${app.color}-100 text-${app.color}-700 dark:bg-${app.color}-900 dark:text-${app.color}-300`
+                          : "text-muted-foreground hover:text-foreground hover:bg-accent",
+                        isCollapsed && "lg:justify-center lg:space-x-0 lg:px-3"
+                      )}
+                    >
+                      <Globe className="w-4 h-4 flex-shrink-0" />
+                      {!isCollapsed && <span>Public Universes</span>}
+                    </Link>
+                    
+                    {/* Show user-specific TV shows routes only to authenticated users */}
+                    {user && (
+                      <Link
+                        to="/tv-shows/universes"
+                        title={isCollapsed ? "My Universes" : undefined}
+                        className={cn(
+                          "flex items-center space-x-3 px-3 lg:px-6 py-2 rounded-lg transition-colors text-sm",
+                          location.pathname === '/tv-shows/universes'
+                            ? `bg-${app.color}-100 text-${app.color}-700 dark:bg-${app.color}-900 dark:text-${app.color}-300`
+                            : "text-muted-foreground hover:text-foreground hover:bg-accent",
+                          isCollapsed && "lg:justify-center lg:space-x-0 lg:px-3"
+                        )}
+                      >
+                        <Users className="w-4 h-4 flex-shrink-0" />
+                        {!isCollapsed && <span>My Universes</span>}
+                      </Link>
+                    )}
+                  </>
+                )}
+
+                {/* Add additional routes for Finance - only for authenticated users */}
+                {app.id === 'finance' && user && (
+                  <>
+                    <Link
+                      to="/finance/credits"
+                      title={isCollapsed ? "Credits" : undefined}
+                      className={cn(
+                        "flex items-center space-x-3 px-3 lg:px-6 py-2 rounded-lg transition-colors text-sm",
+                        location.pathname === '/finance/credits'
+                          ? `bg-${app.color}-100 text-${app.color}-700 dark:bg-${app.color}-900 dark:text-${app.color}-300`
+                          : "text-muted-foreground hover:text-foreground hover:bg-accent",
+                        isCollapsed && "lg:justify-center lg:space-x-0 lg:px-3"
+                      )}
+                    >
+                      <CreditCard className="w-4 h-4 flex-shrink-0" />
+                      {!isCollapsed && <span>Credits</span>}
+                    </Link>
+                  </>
+                )}
+              </CollapsibleContent>
+            </div>
+          </Collapsible>
         ))}
       </nav>
 
