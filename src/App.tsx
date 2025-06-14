@@ -19,6 +19,7 @@ const MyShows = lazy(() => import('@/apps/tv-shows/pages/MyShows'));
 const PublicShows = lazy(() => import('@/apps/tv-shows/pages/PublicShows'));
 const PublicUniverses = lazy(() => import('@/apps/tv-shows/pages/PublicUniverses'));
 const Universes = lazy(() => import('@/apps/tv-shows/pages/Universes'));
+const PrivateUniverses = lazy(() => import('@/apps/tv-shows/pages/PrivateUniverses'));
 const UniverseDetail = lazy(() => import('@/apps/tv-shows/pages/UniverseDetail'));
 const UniverseDashboard = lazy(() => import('@/apps/tv-shows/pages/UniverseDashboard'));
 const ShowDetail = lazy(() => import('@/apps/tv-shows/pages/ShowDetail'));
@@ -84,6 +85,11 @@ function App() {
                     <Route path="tv-shows/universes" element={
                       <Suspense fallback={<div>Loading...</div>}>
                         <Universes />
+                      </Suspense>
+                    } />
+                    <Route path="tv-shows/private-universes" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <PrivateUniverses />
                       </Suspense>
                     } />
                     <Route path="tv-shows/universe/:slug" element={
