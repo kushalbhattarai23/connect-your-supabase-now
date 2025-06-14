@@ -10,7 +10,7 @@ import { useTransactions } from '@/hooks/useTransactions';
 import { useWallets } from '@/hooks/useWallets';
 
 export const CategoryDetail: React.FC = () => {
-  const { categoryId } = useParams<{ categoryId: string }>();
+  const { id: categoryId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { categories } = useCategories();
   const { transactions } = useTransactions();
