@@ -117,6 +117,81 @@ export const TVShowPublicShows: React.FC = () => {
     refetch();
   };
 
+  // Separate shows into tracked and untracked
+  const untrackedShows = shows.filter(show => !trackedShows.includes(show.id));
+  const userTrackedShows = shows.filter(show => trackedShows.includes(show.id));
+
+  const renderShowCard = (show: Show) => {
+    const isTracked = trackedShows.includes(show.id);
+    
+    return (
+      <Card key={show.id} className="h-full transition-all hover:shadow-md overflow-hidden border-purple-200">
+        <Link to={`/tv-shows/show/${show.slug || show.id}`}>
+          {show.poster ? (
+            <div className="aspect-video w-full overflow-hidden">
+              <img 
+                src={show.poster} 
+                alt={show.name} 
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ) : (
+            <div className="aspect-video w-full bg-muted flex items-center justify-center">
+              <TvIcon className="h-12 w-12 text-muted-foreground" />
+            </div>
+          )}
+        </Link>
+        <CardHeader className="pb-2">
+          <CardTitle className="line-clamp-1 text-purple-700">{show.name}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-between items-center gap-2">
+            <div className="text-sm text-muted-foreground flex-1">
+              {show.genres?.length ? show.genres.join(', ') : 'No genres'}
+            </div>
+            <div className="flex gap-2">
+              {user ? (
+                <Button 
+                  size="sm" 
+                  variant={isTracked ? "default" : "outline"}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    toggleTracking(show.id);
+                  }}
+                  className={isTracked ? "bg-purple-600 hover:bg-purple-700" : "border-purple-200 text-purple-700 hover:bg-purple-50"}
+                >
+                  {isTracked ? (
+                    <>
+                      <HeartOff className="h-3 w-3 mr-1" />
+                      Untrack
+                    </>
+                  ) : (
+                    <>
+                      <Heart className="h-3 w-3 mr-1" />
+                      Track
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <Link to="/login">
+                  <Button size="sm" variant="outline" className="border-purple-200 text-purple-700 hover:bg-purple-50">
+                    <LogIn className="h-3 w-3 mr-1" />
+                    Sign in to Track
+                  </Button>
+                </Link>
+              )}
+              <Link to={`/tv-shows/show/${show.slug || show.id}`}>
+                <Button size="sm" variant="secondary" className="border-purple-200">
+                  View
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -160,77 +235,43 @@ export const TVShowPublicShows: React.FC = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {shows.map((show) => {
-            const isTracked = trackedShows.includes(show.id);
-            
-            return (
-              <Card key={show.id} className="h-full transition-all hover:shadow-md overflow-hidden border-purple-200">
-                <Link to={`/tv-shows/show/${show.slug || show.id}`}>
-                  {show.poster ? (
-                    <div className="aspect-video w-full overflow-hidden">
-                      <img 
-                        src={show.poster} 
-                        alt={show.name} 
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <div className="aspect-video w-full bg-muted flex items-center justify-center">
-                      <TvIcon className="h-12 w-12 text-muted-foreground" />
-                    </div>
-                  )}
-                </Link>
-                <CardHeader className="pb-2">
-                  <CardTitle className="line-clamp-1 text-purple-700">{show.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between items-center gap-2">
-                    <div className="text-sm text-muted-foreground flex-1">
-                      {show.genres?.length ? show.genres.join(', ') : 'No genres'}
-                    </div>
-                    <div className="flex gap-2">
-                      {user ? (
-                        <Button 
-                          size="sm" 
-                          variant={isTracked ? "default" : "outline"}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            toggleTracking(show.id);
-                          }}
-                          className={isTracked ? "bg-purple-600 hover:bg-purple-700" : "border-purple-200 text-purple-700 hover:bg-purple-50"}
-                        >
-                          {isTracked ? (
-                            <>
-                              <HeartOff className="h-3 w-3 mr-1" />
-                              Untrack
-                            </>
-                          ) : (
-                            <>
-                              <Heart className="h-3 w-3 mr-1" />
-                              Track
-                            </>
-                          )}
-                        </Button>
-                      ) : (
-                        <Link to="/login">
-                          <Button size="sm" variant="outline" className="border-purple-200 text-purple-700 hover:bg-purple-50">
-                            <LogIn className="h-3 w-3 mr-1" />
-                            Sign in to Track
-                          </Button>
-                        </Link>
-                      )}
-                      <Link to={`/tv-shows/show/${show.slug || show.id}`}>
-                        <Button size="sm" variant="secondary" className="border-purple-200">
-                          View
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+        <div className="space-y-8">
+          {/* Untracked Shows Section */}
+          {untrackedShows.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <h2 className="text-2xl font-semibold text-purple-700">Untracked Shows</h2>
+                <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-sm font-medium">
+                  {untrackedShows.length}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {untrackedShows.map(renderShowCard)}
+              </div>
+            </div>
+          )}
+
+          {/* Tracked Shows Section */}
+          {user && userTrackedShows.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <h2 className="text-2xl font-semibold text-purple-700">Your Tracked Shows</h2>
+                <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-sm font-medium">
+                  {userTrackedShows.length}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {userTrackedShows.map(renderShowCard)}
+              </div>
+            </div>
+          )}
+
+          {/* Show message when all shows are tracked */}
+          {user && untrackedShows.length === 0 && userTrackedShows.length > 0 && (
+            <div className="text-center py-8">
+              <p className="text-purple-600">🎉 You're tracking all available shows!</p>
+            </div>
+          )}
         </div>
       )}
     </div>
