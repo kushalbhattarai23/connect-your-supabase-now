@@ -1,352 +1,294 @@
 
 import React, { useState } from 'react';
-import { useParams, Link, useLocation } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
-import { Globe, Lock, Plus, Search, Tv as TvIcon, Trash2, ArrowLeft, Users, LogIn } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Trash2, Play, Eye, Globe, Lock, Calendar, ArrowLeft } from 'lucide-react';
+import { useUniverses } from '@/hooks/useUniverses';
 import { useUniverseShows } from '@/hooks/useUniverseShows';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Universe } from '@/hooks/useUniverses';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { UniverseEpisodes } from '@/apps/tv-shows/components/UniverseEpisodes';
+import { Link } from 'react-router-dom';
 
 export const UniverseDetail: React.FC = () => {
-  const { slug } = useParams<{ slug: string }>();
-  const location = useLocation();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedShowId, setSelectedShowId] = useState<string>('');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { toast } = useToast();
+  const { universeId } = useParams<{ universeId: string }>();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
+  const { universes } = useUniverses();
+  const { universeShows, availableShows, addShowToUniverse, removeShowFromUniverse } = useUniverseShows(universeId || '');
+  const [selectedShow, setSelectedShow] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [episodeKey, setEpisodeKey] = useState(0);
 
-  console.log('UniverseDetail - slug from params:', slug);
-  console.log('UniverseDetail - location state:', location.state);
+  const universe = universes.find(u => u.id === universeId);
+  const isOwner = user?.id === universe?.creator_id;
 
-  // Determine back navigation based on current route context
-  const getBackPath = () => {
-    if (location.state?.from === 'public') {
-      return '/tv-shows/public-universes';
-    }
-    if (location.state?.from === 'private') {
-      return '/tv-shows/private-universes';
-    }
-    // Default based on current path
-    if (location.pathname.includes('/public-universes/')) {
-      return '/tv-shows/public-universes';
-    }
-    if (location.pathname.includes('/private-universes/')) {
-      return '/tv-shows/private-universes';
-    }
-    return '/tv-shows/universes';
-  };
-
-  const getBackLabel = () => {
-    if (location.state?.from === 'public') {
-      return 'Back to Public Universes';
-    }
-    if (location.state?.from === 'private') {
-      return 'Back to My Universes';
-    }
-    if (location.pathname.includes('/public-universes/')) {
-      return 'Back to Public Universes';
-    }
-    if (location.pathname.includes('/private-universes/')) {
-      return 'Back to My Universes';
-    }
-    return 'Back to Universes';
-  };
-
-  const { data: universe, isLoading: universeLoading, error: universeError } = useQuery({
-    queryKey: ['universe', slug],
-    queryFn: async () => {
-      if (!slug) {
-        console.error('No slug provided');
-        throw new Error('Universe slug is required');
-      }
-      
-      console.log('Fetching universe with slug/id:', slug);
-      
-      // First try to find by slug
-      let { data, error } = await supabase
-        .from('universes')
-        .select('*')
-        .eq('slug', slug)
-        .maybeSingle();
-        
-      console.log('Query by slug result:', { data, error });
-      
-      // If not found by slug, try by ID
-      if (!data && !error) {
-        console.log('Not found by slug, trying by ID...');
-        const result = await supabase
-          .from('universes')
-          .select('*')
-          .eq('id', slug)
-          .maybeSingle();
-          
-        data = result.data;
-        error = result.error;
-        console.log('Query by ID result:', { data, error });
-      }
-        
-      if (error) {
-        console.error('Database error:', error);
-        throw error;
-      }
-      
-      console.log('Final universe data:', data);
-      return data as Universe | null;
-    },
-    enabled: !!slug
-  });
-
-  const {
-    universeShows,
-    availableShows,
-    isLoading: showsLoading,
-    addShowToUniverse,
-    removeShowFromUniverse
-  } = useUniverseShows(universe?.id || '');
-
-  // Check if current user is the creator
-  const isCreator = user?.id === universe?.creator_id;
-  const canManage = isCreator; // Can be extended for other permissions
-
-  const filteredShows = universeShows.filter(universeShow =>
-    !searchTerm || 
-    universeShow.show?.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  if (!universe) {
+    return (
+      <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 max-w-7xl">
+        <Card className="border-red-200">
+          <CardContent className="text-center py-8 sm:py-12">
+            <h3 className="text-base sm:text-lg font-semibold mb-2">Universe Not Found</h3>
+            <p className="text-sm sm:text-base text-muted-foreground px-4">
+              The universe you're looking for doesn't exist or you don't have access to it.
+            </p>
+            <Link to="/tv-shows/universes" className="mt-4 inline-block">
+              <Button variant="outline" size="sm">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Universes
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const handleAddShow = () => {
-    if (!selectedShowId) {
-      toast({
-        title: 'Please select a show',
-        variant: 'destructive',
+    if (selectedShow) {
+      addShowToUniverse.mutate(selectedShow, {
+        onSuccess: () => {
+          setEpisodeKey(prev => prev + 1);
+        }
       });
-      return;
+      setSelectedShow('');
+      setIsDialogOpen(false);
     }
-
-    addShowToUniverse.mutate(selectedShowId, {
-      onSuccess: () => {
-        setSelectedShowId('');
-        setIsDialogOpen(false);
-      }
-    });
   };
 
   const handleRemoveShow = (showUniverseId: string) => {
-    removeShowFromUniverse.mutate(showUniverseId);
+    if (confirm('Are you sure you want to remove this show from the universe?')) {
+      removeShowFromUniverse.mutate(showUniverseId, {
+        onSuccess: () => {
+          setEpisodeKey(prev => prev + 1);
+        }
+      });
+    }
   };
 
-  if (universeLoading) {
-    return (
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (universeError || !universe) {
-    console.error('Universe not found or error:', { universeError, universe });
-    return (
-      <div className="container mx-auto px-4 py-6">
-        <div className="text-center py-12">
-          <h2 className="text-2xl font-bold mb-4">Universe not found</h2>
-          <p className="text-muted-foreground mb-4">
-            The universe you're looking for doesn't exist or you don't have permission to view it.
-          </p>
-          <Link to={getBackPath()}>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              {getBackLabel()}
-            </Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  const availableShowsToAdd = availableShows.filter(
+    show => !universeShows.some(us => us.show_id === show.id)
+  );
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-        <div className="space-y-2">
-          <div className="flex items-center gap-4">
-            <Link to={getBackPath()}>
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
-            </Link>
-            <div className="flex items-center gap-3">
-              {universe.is_public ? (
-                <Globe className="h-6 w-6 text-green-600" />
-              ) : (
-                <Lock className="h-6 w-6 text-gray-600" />
-              )}
-              <h1 className="text-3xl font-bold text-blue-700">{universe.name}</h1>
+    <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6 max-w-7xl">
+      {/* Back Navigation */}
+      <div className="mb-4">
+        <Link to="/tv-shows/universes" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Universes
+        </Link>
+      </div>
+
+      {/* Universe Header */}
+      <div className="space-y-4">
+        <div className="flex flex-col space-y-3 lg:flex-row lg:items-start lg:justify-between lg:space-y-0 lg:space-x-4">
+          <div className="space-y-3 flex-1 min-w-0">
+            <div className="flex flex-col space-y-2">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-700 break-words">
+                {universe.name}
+              </h1>
+              <div className="flex flex-wrap gap-2 items-center">
+                <Badge 
+                  variant="outline" 
+                  className={`${universe.is_public ? "border-green-200 text-green-700" : "border-yellow-200 text-yellow-700"} text-xs sm:text-sm`}
+                >
+                  {universe.is_public ? (
+                    <>
+                      <Globe className="w-3 h-3 mr-1" />
+                      Public
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-3 h-3 mr-1" />
+                      Private
+                    </>
+                  )}
+                </Badge>
+                <Badge variant="outline" className="text-xs sm:text-sm border-blue-200 text-blue-700">
+                  <Calendar className="w-3 h-3 mr-1" />
+                  Created {new Date(universe.created_at).getFullYear()}
+                </Badge>
+              </div>
             </div>
-          </div>
-          
-          {universe.description && (
-            <p className="text-muted-foreground">{universe.description}</p>
-          )}
-          
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <Badge variant="outline" className={universe.is_public ? "border-green-200 text-green-700" : "border-gray-200"}>
-              {universe.is_public ? 'Public' : 'Private'}
-            </Badge>
-            <span>Created {new Date(universe.created_at).toLocaleDateString()}</span>
+            {universe.description && (
+              <p className="text-muted-foreground text-sm sm:text-base break-words">
+                {universe.description}
+              </p>
+            )}
           </div>
 
-          {!user && (
-            <p className="text-sm text-muted-foreground">
-              <Link to="/login" className="text-blue-700 hover:underline">
-                Sign in
-              </Link> to view episodes and manage universes
-            </p>
-          )}
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex w-full max-w-sm items-center space-x-2">
-            <Input
-              type="text"
-              placeholder="Search shows..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1"
-            />
-            <Button type="button" variant="secondary" className="border-blue-200">
-              <Search className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {user && canManage && (
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Show
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add Show to Universe</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <Select value={selectedShowId} onValueChange={setSelectedShowId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a show" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableShows
-                        .filter(show => !universeShows.some(us => us.show_id === show.id))
-                        .map((show) => (
+          {isOwner && (
+            <div className="flex-shrink-0 w-full lg:w-auto">
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-blue-600 hover:bg-blue-700 w-full lg:w-auto">
+                    <Plus className="mr-2 h-4 w-4" />
+                    <span>Add Show</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md mx-3 sm:mx-4">
+                  <DialogHeader>
+                    <DialogTitle>Add Show to Universe</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <Select value={selectedShow} onValueChange={setSelectedShow}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a show" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableShowsToAdd.map((show) => (
                           <SelectItem key={show.id} value={show.id}>
                             {show.title}
                           </SelectItem>
                         ))}
-                    </SelectContent>
-                  </Select>
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button onClick={handleAddShow}>Add Show</Button>
+                      </SelectContent>
+                    </Select>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Button onClick={handleAddShow} disabled={!selectedShow} className="flex-1">
+                        Add Show
+                      </Button>
+                      <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">
+                        Cancel
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
+            </div>
           )}
+        </div>
+
+        {/* Universe Statistics */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <Card className="border-blue-200">
+            <CardContent className="p-3 sm:p-4 text-center">
+              <div className="text-lg sm:text-xl lg:text-2xl font-bold text-blue-700">{universeShows.length}</div>
+              <p className="text-xs sm:text-sm text-muted-foreground">Shows</p>
+            </CardContent>
+          </Card>
+          <Card className="border-green-200">
+            <CardContent className="p-3 sm:p-4 text-center">
+              <div className="text-lg sm:text-xl lg:text-2xl font-bold text-green-700">
+                {universeShows.filter(us => us.show?.is_public).length}
+              </div>
+              <p className="text-xs sm:text-sm text-muted-foreground">Public</p>
+            </CardContent>
+          </Card>
+          <Card className="border-purple-200">
+            <CardContent className="p-3 sm:p-4 text-center">
+              <div className="text-lg sm:text-xl lg:text-2xl font-bold text-purple-700">
+                {universeShows.filter(us => !us.show?.is_public).length}
+              </div>
+              <p className="text-xs sm:text-sm text-muted-foreground">Private</p>
+            </CardContent>
+          </Card>
+          <Card className="border-orange-200">
+            <CardContent className="p-3 sm:p-4 text-center">
+              <div className="text-lg sm:text-xl lg:text-2xl font-bold text-orange-700">
+                {new Date(universe.created_at).getFullYear()}
+              </div>
+              <p className="text-xs sm:text-sm text-muted-foreground">Created</p>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
-      {/* Shows Grid */}
-      {showsLoading ? (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        </div>
-      ) : filteredShows.length === 0 ? (
-        <Card className="border-blue-200">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Users className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-lg font-medium">No shows in this universe</p>
-            <p className="text-muted-foreground">
-              {canManage ? 'Add some shows to get started!' : 'This universe doesn\'t have any shows yet.'}
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredShows.map((universeShow) => (
-            <Card key={universeShow.id} className="h-full transition-all hover:shadow-md overflow-hidden border-blue-200">
-              {universeShow.show?.poster_url ? (
-                <div className="aspect-video w-full overflow-hidden">
-                  <img 
-                    src={universeShow.show.poster_url} 
-                    alt={universeShow.show.title} 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ) : (
-                <div className="aspect-video w-full bg-muted flex items-center justify-center">
-                  <TvIcon className="h-12 w-12 text-muted-foreground" />
-                </div>
-              )}
-              
-              <CardHeader className="pb-2">
-                <CardTitle className="line-clamp-1 text-blue-700">
-                  {universeShow.show?.title || 'Unknown Show'}
-                </CardTitle>
-              </CardHeader>
-              
-              <CardContent>
-                <div className="flex justify-between items-center gap-2">
-                  <div className="text-sm text-muted-foreground flex-1">
-                    {universeShow.show?.description ? (
-                      <p className="line-clamp-2">{universeShow.show.description}</p>
-                    ) : (
-                      'No description available'
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    {user && canManage && (
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleRemoveShow(universeShow.id)}
-                        className="border-red-200 text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    )}
-                    {user ? (
-                      <Button size="sm" variant="secondary" className="border-blue-200">
-                        View Episodes
-                      </Button>
-                    ) : (
-                      <Button size="sm" variant="secondary" className="border-blue-200" disabled>
-                        <LogIn className="h-3 w-3 mr-1" />
-                        Sign in to view
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      {/* Main Content Tabs */}
+      <Tabs defaultValue="shows" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 h-9 sm:h-10">
+          <TabsTrigger value="shows" className="text-xs sm:text-sm">Shows</TabsTrigger>
+          <TabsTrigger value="episodes" className="text-xs sm:text-sm">Episodes</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="shows" className="space-y-4 mt-4 sm:mt-6">
+          <div>
+            <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-blue-700 mb-4">Shows in this Universe</h2>
+            
+            {universeShows.length === 0 ? (
+              <Card className="border-blue-200">
+                <CardContent className="text-center py-8 sm:py-12">
+                  <Play className="h-12 sm:h-16 w-12 sm:w-16 text-blue-500 mx-auto mb-4" />
+                  <h3 className="text-base sm:text-lg font-semibold mb-2">No Shows Yet</h3>
+                  <p className="text-muted-foreground text-sm sm:text-base px-4">
+                    {isOwner ? 'Add some shows to get started!' : 'No shows have been added to this universe yet.'}
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                {universeShows.map((universeShow) => (
+                  <Card key={universeShow.id} className="border-blue-200 hover:shadow-lg transition-shadow">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <CardTitle className="text-blue-700 text-sm sm:text-base lg:text-lg line-clamp-2 leading-tight break-words">
+                          {universeShow.show?.title || 'Unknown Show'}
+                        </CardTitle>
+                        {isOwner && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleRemoveShow(universeShow.id)}
+                            className="text-red-500 hover:text-red-700 flex-shrink-0 h-8 w-8 p-0"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </CardHeader>
+                    
+                    <CardContent className="space-y-3 pt-0">
+                      {universeShow.show?.description && (
+                        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3 break-words">
+                          {universeShow.show.description}
+                        </p>
+                      )}
+                      
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <Badge 
+                          variant="outline" 
+                          className={`${universeShow.show?.is_public ? "border-green-200 text-green-700" : "border-yellow-200 text-yellow-700"} text-xs`}
+                        >
+                          {universeShow.show?.is_public ? (
+                            <>
+                              <Eye className="w-3 h-3 mr-1" />
+                              Public
+                            </>
+                          ) : (
+                            <>
+                              <Lock className="w-3 h-3 mr-1" />
+                              Private
+                            </>
+                          )}
+                        </Badge>
+                        
+                        <Button size="sm" variant="outline" className="text-xs">
+                          <Play className="w-3 h-3 mr-1" />
+                          View
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="episodes" className="space-y-4 mt-4 sm:mt-6">
+          <div>
+            <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-blue-700 mb-4">Episodes in this Universe</h2>
+            <UniverseEpisodes key={episodeKey} universeId={universeId || ''} />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
 
-export default UniverseDetail;
+export default UniverseDetail; universe detail page fix. ge. 
