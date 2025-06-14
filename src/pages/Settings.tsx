@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,6 @@ import { useWallets } from '@/hooks/useWallets';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useCategories } from '@/hooks/useCategories';
 import { useTransfers } from '@/hooks/useTransfers';
-import { useLoans } from '@/hooks/useLoans';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { convertToCSV, downloadCSV, parseCSV } from '@/utils/csvUtils';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,15 +23,13 @@ export const FinanceSettings: React.FC = () => {
     wallets: true,
     transactions: true,
     categories: true,
-    transfers: true,
-    loans: true
+    transfers: true
   });
   const { toast } = useToast();
   const { wallets } = useWallets();
   const { transactions } = useTransactions();
   const { categories } = useCategories();
   const { transfers } = useTransfers();
-  const { loans } = useLoans();
   const { settings, toggleApp } = useAppSettings();
 
   const handleCurrencyChange = (value: string) => {
@@ -106,21 +104,6 @@ export const FinanceSettings: React.FC = () => {
           ['from_wallet_id', 'to_wallet_id', 'amount', 'date', 'description', 'status']
         );
         downloadCSV(transfersCSV, 'transfers');
-      }
-
-      if (exportOptions.loans && loans.length > 0) {
-        const loansCSV = convertToCSV(
-          loans.map(l => ({
-            name: l.name,
-            type: l.type,
-            amount: l.amount,
-            remaining_amount: l.remaining_amount,
-            person: l.person || '',
-            description: l.description || ''
-          })),
-          ['name', 'type', 'amount', 'remaining_amount', 'person', 'description']
-        );
-        downloadCSV(loansCSV, 'loans');
       }
       
       toast({
@@ -255,30 +238,6 @@ export const FinanceSettings: React.FC = () => {
                   }
                 } catch (err) {
                   console.error('Error processing category row:', err);
-                  totalErrors++;
-                }
-              }
-            } else if (fileName.includes('loan')) {
-              // Import loans
-              for (const row of data) {
-                try {
-                  const { error } = await supabase.from('loans').insert({
-                    name: row.name || 'Imported Loan',
-                    type: row.type || 'Personal',
-                    amount: parseFloat(row.amount) || 0,
-                    remaining_amount: parseFloat(row.remaining_amount) || parseFloat(row.amount) || 0,
-                    person: row.person || '',
-                    description: row.description || null,
-                    user_id: user.id
-                  });
-                  if (error) {
-                    console.error('Error importing loan:', error);
-                    totalErrors++;
-                  } else {
-                    totalImported++;
-                  }
-                } catch (err) {
-                  console.error('Error processing loan row:', err);
                   totalErrors++;
                 }
               }
@@ -448,7 +407,7 @@ export const FinanceSettings: React.FC = () => {
                 </Button>
                 <div className="flex items-start space-x-2 text-xs text-muted-foreground">
                   <FileText className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                  <span>Supports CSV files with headers. File names should contain keywords like 'wallet', 'transaction', 'category', 'transfer', or 'loan' to auto-detect data type.</span>
+                  <span>Supports CSV files with headers. File names should contain keywords like 'wallet', 'transaction', 'category', or 'transfer' to auto-detect data type.</span>
                 </div>
               </div>
             </div>
