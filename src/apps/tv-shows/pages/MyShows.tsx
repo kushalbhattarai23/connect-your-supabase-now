@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Eye, Clock, CheckCircle, Plus, Search, Tv as TvIcon, HeartOff, Loader2, Globe } from 'lucide-react';
@@ -18,16 +19,25 @@ export const TVShowMyShows: React.FC = () => {
   const { userShows, isLoading } = useUserShows();
   const [filter, setFilter] = useState<'all' | 'watching' | 'not_started' | 'completed'>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+
+  const itemsPerPage = 9;
 
   const filteredShows = userShows.filter(show => {
     const matchesFilter = filter === 'all' || show.status === filter;
     const matchesSearch = !searchTerm || show.title.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesFilter && matchesSearch;
   });
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredShows.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentShows = filteredShows.slice(startIndex, endIndex);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -53,6 +63,12 @@ export const TVShowMyShows: React.FC = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  const handleFilterChange = (newFilter: 'all' | 'watching' | 'not_started' | 'completed') => {
+    setFilter(newFilter);
+    setCurrentPage(1); // Reset to first page when filtering
   };
 
   // Untrack show mutation
@@ -111,7 +127,7 @@ export const TVShowMyShows: React.FC = () => {
           </form>
           
           <Button 
-            className="bg-purple-600 hover:bg-purple-700"
+            className="bg-purple-600 hover:bg-purple-700 text-white"
             onClick={handleViewShows}
           >
             <Plus className="mr-2 h-4 w-4" />
@@ -121,7 +137,7 @@ export const TVShowMyShows: React.FC = () => {
       </div>
 
       {/* Filter Buttons */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-3">
         {[
           { key: 'all', label: 'All Shows', count: userShows.length },
           { key: 'watching', label: 'Watching', count: userShows.filter(s => s.status === 'watching').length },
@@ -131,8 +147,13 @@ export const TVShowMyShows: React.FC = () => {
           <Button
             key={key}
             variant={filter === key ? 'default' : 'outline'}
-            onClick={() => setFilter(key as any)}
-            className="flex-1 sm:flex-none"
+            onClick={() => handleFilterChange(key as any)}
+            className={
+              filter === key 
+                ? 'bg-purple-600 hover:bg-purple-700 text-white border-purple-600' 
+                : 'border-purple-300 text-purple-700 hover:bg-purple-50 hover:text-purple-800'
+            }
+            size="sm"
           >
             {label} ({count})
           </Button>
@@ -155,63 +176,65 @@ export const TVShowMyShows: React.FC = () => {
                 ? 'Try adjusting your search criteria'
                 : `No ${filter.replace('_', ' ')} shows found`}
             </p>
-            <Button onClick={handleViewShows} className="bg-purple-600 hover:bg-purple-700">
+            <Button onClick={handleViewShows} className="bg-purple-600 hover:bg-purple-700 text-white">
               Browse Shows
             </Button>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredShows.map((show) => {
-            const progressPercentage = show.totalEpisodes > 0 ? (show.watchedEpisodes / show.totalEpisodes) * 100 : 0;
-            
-            return (
-              <Card key={show.id} className="h-full transition-all hover:shadow-md overflow-hidden border-purple-200">
-                <Link to={`/tv-shows/show/${show.id}`}>
-                  {show.poster_url ? (
-                    <div className="aspect-video w-full overflow-hidden">
-                      <img 
-                        src={show.poster_url} 
-                        alt={show.title} 
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <div className="aspect-video w-full bg-muted flex items-center justify-center">
-                      <TvIcon className="h-12 w-12 text-muted-foreground" />
-                    </div>
-                  )}
-                </Link>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-purple-700 break-words">{show.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {/* Status Badge */}
-                    <div className="flex justify-between items-center">
-                      <Badge variant="outline" className={`${getStatusColor(show.status)} text-white border-0 flex items-center gap-1`}>
-                        {getStatusIcon(show.status)}
-                        {show.status.replace('_', ' ')}
-                      </Badge>
-                      <span className="text-sm text-muted-foreground">
-                        {Math.round(progressPercentage)}%
-                      </span>
-                    </div>
-                    
-                    {/* Progress */}
-                    <div className="space-y-1">
-                      <div className="text-sm text-muted-foreground">
-                        {show.watchedEpisodes} / {show.totalEpisodes} episodes
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {currentShows.map((show) => {
+              const progressPercentage = show.totalEpisodes > 0 ? (show.watchedEpisodes / show.totalEpisodes) * 100 : 0;
+              
+              return (
+                <Card key={show.id} className="h-full transition-all hover:shadow-md overflow-hidden border-purple-200">
+                  <Link to={`/tv-shows/show/${show.id}`}>
+                    {show.poster_url ? (
+                      <div className="aspect-video w-full overflow-hidden">
+                        <img 
+                          src={show.poster_url} 
+                          alt={show.title} 
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                      <Progress value={progressPercentage} className="h-2" />
-                    </div>
-                    
-                    {/* Action Buttons */}
-                    <div className="flex justify-between items-center gap-2">
-                      <div className="text-sm text-muted-foreground flex-1">
+                    ) : (
+                      <div className="aspect-video w-full bg-muted flex items-center justify-center">
+                        <TvIcon className="h-12 w-12 text-muted-foreground" />
+                      </div>
+                    )}
+                  </Link>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-purple-700 break-words">{show.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {/* Status Badge */}
+                      <div className="flex justify-between items-center">
+                        <Badge variant="outline" className={`${getStatusColor(show.status)} text-white border-0 flex items-center gap-1`}>
+                          {getStatusIcon(show.status)}
+                          {show.status.replace('_', ' ')}
+                        </Badge>
+                        <span className="text-sm text-muted-foreground">
+                          {Math.round(progressPercentage)}%
+                        </span>
+                      </div>
+                      
+                      {/* Progress */}
+                      <div className="space-y-1">
+                        <div className="text-sm text-muted-foreground">
+                          {show.watchedEpisodes} / {show.totalEpisodes} episodes
+                        </div>
+                        <Progress value={progressPercentage} className="h-2" />
+                      </div>
+                      
+                      {/* Progress tracking text */}
+                      <div className="text-sm text-muted-foreground">
                         Progress tracking
                       </div>
-                      <div className="flex gap-2">
+                      
+                      {/* Action Buttons - Now on separate line */}
+                      <div className="flex gap-2 pt-2">
                         <Button 
                           size="sm" 
                           variant="outline"
@@ -219,24 +242,59 @@ export const TVShowMyShows: React.FC = () => {
                             e.preventDefault();
                             untrackShow(show.id);
                           }}
-                          className="border-purple-200 text-purple-700 hover:bg-purple-50"
+                          className="flex-1 border-purple-200 text-purple-700 hover:bg-purple-50"
                         >
                           <HeartOff className="h-3 w-3 mr-1" />
                           Untrack
                         </Button>
-                        <Link to={`/tv-shows/show/${show.id}`}>
-                          <Button size="sm" variant="secondary" className="border-purple-200">
+                        <Link to={`/tv-shows/show/${show.id}`} className="flex-1">
+                          <Button size="sm" variant="secondary" className="w-full border-purple-200">
                             View
                           </Button>
                         </Link>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-8">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                  
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        onClick={() => setCurrentPage(page)}
+                        isActive={currentPage === page}
+                        className="cursor-pointer"
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                  
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
