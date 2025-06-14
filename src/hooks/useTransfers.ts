@@ -1,8 +1,8 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 export interface Transfer {
   id: string;
@@ -13,6 +13,7 @@ export interface Transfer {
   description?: string;
   status: string;
   user_id: string;
+  organization_id?: string;
   created_at: string;
   updated_at: string;
   from_wallet?: { name: string };
@@ -23,12 +24,36 @@ export const useTransfers = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentOrganization, isPersonalMode } = useOrganizationContext();
 
   const { data: transfers = [], isLoading } = useQuery({
-    queryKey: ['transfers', user?.id],
+    queryKey: ['transfers', user?.id, currentOrganization?.id],
     queryFn: async () => {
       if (!user) return [];
       
+      // First get wallets for the current context to filter transfers
+      let walletQuery = supabase.from('wallets').select('id');
+      
+      if (isPersonalMode) {
+        walletQuery = walletQuery.eq('user_id', user.id).is('organization_id', null);
+      } else if (currentOrganization) {
+        walletQuery = walletQuery.eq('organization_id', currentOrganization.id);
+      }
+      
+      const { data: wallets, error: walletsError } = await walletQuery;
+      
+      if (walletsError) {
+        console.error('Error fetching wallets for transfer filtering:', walletsError);
+        throw walletsError;
+      }
+      
+      const walletIds = wallets?.map(w => w.id) || [];
+      
+      if (walletIds.length === 0) {
+        return [];
+      }
+      
+      // Now get transfers that involve these wallets
       const { data, error } = await supabase
         .from('transfers')
         .select(`
@@ -36,16 +61,20 @@ export const useTransfers = () => {
           from_wallet:wallets!from_wallet_id(name),
           to_wallet:wallets!to_wallet_id(name)
         `)
+        .or(`from_wallet_id.in.(${walletIds.join(',')}),to_wallet_id.in.(${walletIds.join(',')})`)
         .order('date', { ascending: false });
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching transfers:', error);
+        throw error;
+      }
       return data as Transfer[];
     },
     enabled: !!user
   });
 
   const createTransfer = useMutation({
-    mutationFn: async (transfer: Omit<Transfer, 'id' | 'created_at' | 'updated_at' | 'user_id' | 'status'>) => {
+    mutationFn: async (transfer: Omit<Transfer, 'id' | 'created_at' | 'updated_at' | 'user_id' | 'status' | 'organization_id'>) => {
       if (!user) throw new Error('User not authenticated');
       
       // Get wallet balances
@@ -69,14 +98,17 @@ export const useTransfers = () => {
       
       if (toWalletError) throw toWalletError;
       
-      // Create the transfer
+      // Create the transfer with organization context
+      const transferData = {
+        ...transfer,
+        user_id: user.id,
+        status: 'completed',
+        organization_id: isPersonalMode ? null : currentOrganization?.id || null
+      };
+      
       const { data, error } = await supabase
         .from('transfers')
-        .insert({
-          ...transfer,
-          user_id: user.id,
-          status: 'completed'
-        })
+        .insert(transferData)
         .select()
         .single();
         
