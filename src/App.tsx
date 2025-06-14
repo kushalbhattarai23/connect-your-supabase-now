@@ -1,4 +1,3 @@
-
 import { Suspense, lazy } from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -12,6 +11,7 @@ import NotFound from '@/pages/NotFound';
 import Landing from '@/pages/Landing';
 import Profile from '@/pages/Profile';
 import Settings from '@/pages/Settings';
+import Login from '@/pages/Login';
 
 // Lazy load pages
 const TvShowsDashboard = lazy(() => import('@/apps/tv-shows/pages/Dashboard'));
@@ -56,6 +56,7 @@ function App() {
                 <Toaster />
                 <Routes>
                   <Route path="/landing" element={<Landing />} />
+                  <Route path="/login" element={<Login />} />
                   <Route path="/" element={<AppLayout />}>
                     <Route index element={<Index />} />
                     <Route path="profile" element={<Profile />} />
