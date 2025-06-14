@@ -64,7 +64,7 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Features and Auth Links */}
+          {/* Features */}
           <div className="space-y-4">
             <h3 className="font-semibold">Features</h3>
             <ul className="space-y-2 text-sm">
@@ -84,34 +84,6 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
             </ul>
-            <Separator className="my-3" />
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link to="/login" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Sign In
-                </Link>
-              </li>
-              <li>
-                <Link to="/signup" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Sign Up
-                </Link>
-              </li>
-              <li>
-                <Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link to="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Terms of Service
-                </Link>
-              </li>
-              <li>
-                <Link to="/sitemap" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Sitemap
-                </Link>
-              </li>
-            </ul>
           </div>
         </div>
 
@@ -121,7 +93,13 @@ export const Footer: React.FC = () => {
           <p className="text-sm text-muted-foreground">
             © 2024 TrackerHub. All rights reserved.
           </p>
-          <div className="flex space-x-6 text-sm">
+          <div className="flex flex-wrap justify-center sm:justify-end gap-x-6 gap-y-2 text-sm">
+            <Link to="/login" className="text-muted-foreground hover:text-foreground transition-colors">
+              Sign In
+            </Link>
+            <Link to="/signup" className="text-muted-foreground hover:text-foreground transition-colors">
+              Sign Up
+            </Link>
             <Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
               Privacy Policy
             </Link>

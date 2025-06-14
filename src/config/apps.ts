@@ -1,4 +1,3 @@
-
 import { AppConfig } from '@/types';
 
 export const availableApps: AppConfig[] = [
@@ -49,6 +48,6 @@ export const availableApps: AppConfig[] = [
 ];
 
 export const getEnabledApps = (settings: any) => {
-  // For now, return all apps. In the future, this could be configured per user/org
-  return availableApps;
+  // For now, return all apps except admin. In the future, this could be configured per user/org
+  return availableApps.filter(app => app.id !== 'admin');
 };
