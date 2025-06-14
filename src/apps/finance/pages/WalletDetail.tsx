@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowUp, ArrowDown, Calendar, TrendingUp, TrendingDown, Wallet, ArrowLeft, ArrowLeftRight } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useWallets } from '@/hooks/useWallets';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useTransfers } from '@/hooks/useTransfers';
@@ -13,11 +14,17 @@ export const WalletDetail: React.FC = () => {
   const { walletId } = useParams<{ walletId: string }>();
   const navigate = useNavigate();
   const { currency, formatAmount } = useCurrency();
-  const { wallets } = useWallets();
+  const { getWalletById, wallets } = useWallets();
   const { transactions } = useTransactions();
   const { transfers } = useTransfers();
 
-  const wallet = wallets.find(w => w.id === walletId);
+  // Fetch the specific wallet
+  const { data: wallet, isLoading: walletLoading, error: walletError } = useQuery({
+    queryKey: ['wallet', walletId],
+    queryFn: () => walletId ? getWalletById(walletId) : null,
+    enabled: !!walletId
+  });
+
   const walletTransactions = transactions.filter(t => t.wallet_id === walletId);
   
   // Include transfers as transactions
@@ -45,13 +52,30 @@ export const WalletDetail: React.FC = () => {
     }))
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  if (!wallet) {
+  if (walletLoading) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <Card>
+          <CardContent className="text-center py-12">
+            <h3 className="text-lg font-semibold mb-2">Loading Wallet...</h3>
+            <p className="text-muted-foreground">Please wait while we fetch your wallet details.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (walletError || !wallet) {
     return (
       <div className="container mx-auto px-4 py-6">
         <Card className="border-red-200">
           <CardContent className="text-center py-12">
             <h3 className="text-lg font-semibold mb-2">Wallet Not Found</h3>
-            <p className="text-muted-foreground">The wallet you're looking for doesn't exist.</p>
+            <p className="text-muted-foreground">The wallet you're looking for doesn't exist or you don't have access to it.</p>
+            <Button onClick={() => navigate('/finance/wallets')} className="mt-4">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Wallets
+            </Button>
           </CardContent>
         </Card>
       </div>
