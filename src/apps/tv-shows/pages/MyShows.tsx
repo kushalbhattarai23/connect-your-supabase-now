@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,15 @@ export const TVShowMyShows: React.FC = () => {
   const queryClient = useQueryClient();
 
   const itemsPerPage = 9;
+
+  // Debug logging
+  useEffect(() => {
+    console.log('MyShows: Component rendered with:', {
+      userShowsCount: userShows.length,
+      isLoading,
+      user: user?.email
+    });
+  }, [userShows, isLoading, user]);
 
   const filteredShows = userShows.filter(show => {
     const matchesFilter = filter === 'all' || show.status === filter;
@@ -78,6 +87,8 @@ export const TVShowMyShows: React.FC = () => {
         throw new Error('You must be logged in to untrack shows');
       }
       
+      console.log('MyShows: Untracking show:', showId);
+      
       const { error } = await supabase
         .from('user_show_tracking')
         .delete()
@@ -87,14 +98,20 @@ export const TVShowMyShows: React.FC = () => {
       if (error) throw error;
       return { showId };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('MyShows: Show untracked successfully:', data.showId);
+      
+      // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['user-shows'] });
+      queryClient.invalidateQueries({ queryKey: ['trackedShows'] });
+      
       toast({
         title: 'Show removed from your list',
         variant: 'default',
       });
     },
     onError: (error: Error) => {
+      console.error('MyShows: Error removing show:', error);
       toast({
         title: 'Error removing show',
         description: error.message,
@@ -185,7 +202,12 @@ export const TVShowMyShows: React.FC = () => {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {currentShows.map((show) => {
-              const progressPercentage = show.totalEpisodes > 0 ? (show.watchedEpisodes / show.totalEpisodes) * 100 : 0;
+              // Better handling of episode counts with fallbacks
+              const totalEpisodes = show.totalEpisodes || 0;
+              const watchedEpisodes = Math.min(show.watchedEpisodes || 0, totalEpisodes);
+              const progressPercentage = totalEpisodes > 0 ? (watchedEpisodes / totalEpisodes) * 100 : 0;
+              
+              console.log(`MyShows: Rendering show "${show.title}" - Total: ${totalEpisodes}, Watched: ${watchedEpisodes}, Progress: ${progressPercentage}%`);
               
               return (
                 <Card key={show.id} className="h-full transition-all hover:shadow-md overflow-hidden border-purple-200">
@@ -223,7 +245,10 @@ export const TVShowMyShows: React.FC = () => {
                       {/* Progress */}
                       <div className="space-y-1">
                         <div className="text-sm text-muted-foreground">
-                          {show.watchedEpisodes} / {show.totalEpisodes} episodes
+                          {watchedEpisodes} / {totalEpisodes} episodes
+                          {totalEpisodes === 0 && (
+                            <span className="text-xs text-orange-600 ml-1">(calculating...)</span>
+                          )}
                         </div>
                         <Progress value={progressPercentage} className="h-2" />
                       </div>

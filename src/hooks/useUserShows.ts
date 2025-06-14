@@ -19,9 +19,14 @@ export const useUserShows = () => {
   const { data: userShows = [], isLoading } = useQuery({
     queryKey: ['user-shows', user?.id],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user) {
+        console.log('useUserShows: No user authenticated');
+        return [];
+      }
       
       try {
+        console.log('useUserShows: Fetching shows for user:', user.id);
+        
         // Get user's tracked shows with pre-calculated episode counts
         const { data: trackedShows, error: trackingError } = await supabase
           .from('user_show_tracking')
@@ -39,9 +44,15 @@ export const useUserShows = () => {
           `)
           .eq('user_id', user.id);
           
-        if (trackingError) throw trackingError;
+        if (trackingError) {
+          console.error('useUserShows: Error fetching tracked shows:', trackingError);
+          throw trackingError;
+        }
+        
+        console.log('useUserShows: Raw tracked shows data:', trackedShows);
         
         if (!trackedShows || trackedShows.length === 0) {
+          console.log('useUserShows: No tracked shows found');
           return [];
         }
 
@@ -49,14 +60,19 @@ export const useUserShows = () => {
         const showsWithProgress = trackedShows
           .map((item) => {
             const show = item.shows;
-            if (!show) return null;
+            if (!show) {
+              console.warn('useUserShows: Missing show data for item:', item);
+              return null;
+            }
 
             const totalEpisodes = item.total_episodes || 0;
             const watchedEpisodes = item.watched_episodes || 0;
 
+            console.log(`useUserShows: Show "${show.title}" - Total: ${totalEpisodes}, Watched: ${watchedEpisodes}`);
+
             // Determine status based on progress
             let status: 'watching' | 'completed' | 'not_started' = 'not_started';
-            if (watchedEpisodes === totalEpisodes && totalEpisodes > 0) {
+            if (totalEpisodes > 0 && watchedEpisodes === totalEpisodes) {
               status = 'completed';
             } else if (watchedEpisodes > 0) {
               status = 'watching';
@@ -74,15 +90,20 @@ export const useUserShows = () => {
           })
           .filter(Boolean) as UserShow[];
 
+        console.log('useUserShows: Final shows with progress:', showsWithProgress);
         return showsWithProgress;
         
       } catch (error) {
-        console.error('Error fetching user shows:', error);
+        console.error('useUserShows: Error fetching user shows:', error);
         return [];
       }
     },
-    enabled: !!user
+    enabled: !!user,
+    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+    cacheTime: 1000 * 60 * 30, // Keep in cache for 30 minutes
   });
+
+  console.log('useUserShows: Returning data:', { userShowsCount: userShows.length, isLoading });
 
   return {
     userShows,

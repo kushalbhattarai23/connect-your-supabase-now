@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -92,17 +93,40 @@ export const TVShowPublicShows: React.FC = () => {
           .insert({ user_id: user.id, show_id: showId });
           
         if (error) throw error;
+        
+        // After successful tracking, calculate episode counts
+        console.log('Show tracked successfully, calculating episode counts...');
+        
+        // Call the database function to update episode counts
+        const { error: updateError } = await supabase.rpc('update_user_show_episode_counts', {
+          p_user_id: user.id,
+          p_show_id: showId
+        });
+        
+        if (updateError) {
+          console.error('Error updating episode counts:', updateError);
+        } else {
+          console.log('Episode counts updated successfully');
+        }
+        
         return { showId, isTracking: true };
       }
     },
     onSuccess: (data) => {
+      // Invalidate both queries to ensure immediate updates
       queryClient.invalidateQueries({ queryKey: ['trackedShows'] });
+      queryClient.invalidateQueries({ queryKey: ['user-shows'] });
+      
+      console.log(`Show ${data.showId} ${data.isTracking ? 'tracked' : 'untracked'} successfully`);
+      console.log('Invalidated trackedShows and user-shows queries');
+      
       toast({
         title: data.isTracking ? 'Show added to your list' : 'Show removed from your list',
         variant: 'default',
       });
     },
     onError: (error: Error) => {
+      console.error('Error updating tracking:', error);
       toast({
         title: 'Error updating tracking',
         description: error.message,
