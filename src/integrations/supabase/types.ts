@@ -657,6 +657,24 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_show_tracking: {
         Row: {
           created_at: string
@@ -738,12 +756,20 @@ export type Database = {
         Args: { org_id: string }
         Returns: boolean
       }
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
       update_user_show_episode_counts: {
         Args: { p_user_id: string; p_show_id: string }
         Returns: undefined
       }
     }
     Enums: {
+      app_role: "admin" | "user"
       episode_status: "watched" | "not_watched"
     }
     CompositeTypes: {
@@ -860,6 +886,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "user"],
       episode_status: ["watched", "not_watched"],
     },
   },
