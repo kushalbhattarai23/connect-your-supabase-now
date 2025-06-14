@@ -8,27 +8,94 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Trash2, Play, Eye, Globe, Lock, Calendar, ArrowLeft } from 'lucide-react';
-import { useUniverses } from '@/hooks/useUniverses';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { useUniverseShows } from '@/hooks/useUniverseShows';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { UniverseEpisodes } from '@/apps/tv-shows/components/UniverseEpisodes';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Universe } from '@/hooks/useUniverses';
 
 export const UniverseDetail: React.FC = () => {
-  const { universeId } = useParams<{ universeId: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const { user } = useAuth();
   const isMobile = useIsMobile();
-  const { universes } = useUniverses();
-  const { universeShows, availableShows, addShowToUniverse, removeShowFromUniverse } = useUniverseShows(universeId || '');
+  const navigate = useNavigate();
+  const location = useLocation();
   const [selectedShow, setSelectedShow] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [episodeKey, setEpisodeKey] = useState(0);
 
-  const universe = universes.find(u => u.id === universeId);
+  // Fetch universe by slug or ID
+  const { data: universe, isLoading: universeLoading, error } = useQuery({
+    queryKey: ['universe', slug],
+    queryFn: async () => {
+      if (!slug) return null;
+      
+      console.log('Fetching universe with slug/id:', slug);
+      
+      // First try to find by slug
+      let { data, error } = await supabase
+        .from('universes')
+        .select('*')
+        .eq('slug', slug)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Error fetching by slug:', error);
+        throw error;
+      }
+      
+      // If not found by slug, try by ID
+      if (!data) {
+        console.log('Not found by slug, trying by ID');
+        const result = await supabase
+          .from('universes')
+          .select('*')
+          .eq('id', slug)
+          .maybeSingle();
+        
+        if (result.error) {
+          console.error('Error fetching by ID:', result.error);
+          throw result.error;
+        }
+        
+        data = result.data;
+      }
+      
+      console.log('Found universe:', data);
+      return data as Universe | null;
+    },
+    enabled: !!slug
+  });
+
+  const { universeShows, availableShows, addShowToUniverse, removeShowFromUniverse } = useUniverseShows(universe?.id || '');
+  
   const isOwner = user?.id === universe?.creator_id;
 
-  if (!universe) {
+  // Determine back path based on where user came from
+  const getBackPath = () => {
+    const from = location.state?.from;
+    if (from === 'private') return '/tv-shows/universes';
+    if (from === 'public') return '/tv-shows/public-universes';
+    return '/tv-shows/universes';
+  };
+
+  if (universeLoading) {
+    return (
+      <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 max-w-7xl">
+        <Card className="border-blue-200">
+          <CardContent className="text-center py-12">
+            <div className="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading universe...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (error || !universe) {
     return (
       <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 max-w-7xl">
         <Card className="border-red-200">
@@ -37,7 +104,7 @@ export const UniverseDetail: React.FC = () => {
             <p className="text-sm sm:text-base text-muted-foreground px-4">
               The universe you're looking for doesn't exist or you don't have access to it.
             </p>
-            <Link to="/tv-shows/universes" className="mt-4 inline-block">
+            <Link to={getBackPath()} className="mt-4 inline-block">
               <Button variant="outline" size="sm">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Universes
@@ -79,7 +146,7 @@ export const UniverseDetail: React.FC = () => {
     <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6 max-w-7xl">
       {/* Back Navigation */}
       <div className="mb-4">
-        <Link to="/tv-shows/universes" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <Link to={getBackPath()} className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Universes
         </Link>
@@ -283,7 +350,7 @@ export const UniverseDetail: React.FC = () => {
         <TabsContent value="episodes" className="space-y-4 mt-4 sm:mt-6">
           <div>
             <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-blue-700 mb-4">Episodes in this Universe</h2>
-            <UniverseEpisodes key={episodeKey} universeId={universeId || ''} />
+            <UniverseEpisodes key={episodeKey} universeId={universe?.id || ''} />
           </div>
         </TabsContent>
       </Tabs>
