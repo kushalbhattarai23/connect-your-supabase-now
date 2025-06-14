@@ -50,7 +50,7 @@ export const Universes: React.FC = () => {
     >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-blue-700 text-lg line-clamp-2 group-hover:text-blue-800">
+          <CardTitle className="text-blue-700 text-lg break-words group-hover:text-blue-800">
             {universe.name}
           </CardTitle>
           <div className="flex items-center gap-1">

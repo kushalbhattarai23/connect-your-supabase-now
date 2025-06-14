@@ -183,7 +183,7 @@ export const TVShowMyShows: React.FC = () => {
                   )}
                 </Link>
                 <CardHeader className="pb-2">
-                  <CardTitle className="line-clamp-1 text-purple-700">{show.title}</CardTitle>
+                  <CardTitle className="text-purple-700 break-words">{show.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">

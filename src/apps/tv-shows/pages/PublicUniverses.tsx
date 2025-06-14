@@ -72,7 +72,7 @@ export const PublicUniverses: React.FC = () => {
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-blue-700 text-lg line-clamp-2 group-hover:text-blue-800">
+                  <CardTitle className="text-blue-700 text-lg break-words group-hover:text-blue-800">
                     {universe.name}
                   </CardTitle>
                   <Badge variant="outline" className="border-green-200 text-green-700 flex-shrink-0">
