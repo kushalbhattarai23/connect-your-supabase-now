@@ -66,16 +66,8 @@ function App() {
                 <Toaster />
                 <Routes>
                   <Route path="/landing" element={<Landing />} />
-                  <Route path="/login" element={
-                    <AppLayout>
-                      <Login />
-                    </AppLayout>
-                  } />
-                  <Route path="/signup" element={
-                    <AppLayout>
-                      <SignUpForm />
-                    </AppLayout>
-                  } />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<SignUpForm />} />
                   <Route path="/admin/login" element={<AdminLogin />} />
                   <Route path="/privacy" element={<PrivacyPolicy />} />
                   <Route path="/terms" element={<TermsOfService />} />
