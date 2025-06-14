@@ -291,4 +291,4 @@ export const UniverseDetail: React.FC = () => {
   );
 };
 
-export default UniverseDetail; universe detail page fix. ge. 
+export default UniverseDetail;
