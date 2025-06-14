@@ -1,19 +1,13 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
-import { Plus, ArrowUpRight, ArrowDownRight, ArrowLeftRight, Edit, Trash2, Wallet } from 'lucide-react';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useTransfers } from '@/hooks/useTransfers';
 import { useWallets } from '@/hooks/useWallets';
 import { useCategories } from '@/hooks/useCategories';
-import { useCurrency } from '@/hooks/useCurrency';
+import { TransactionForm } from '@/apps/finance/components/TransactionForm';
+import { TransferForm } from '@/apps/finance/components/TransferForm';
+import { TransactionsList } from '@/apps/finance/components/TransactionsList';
 
 interface UnifiedTransaction {
   id: string;
@@ -35,7 +29,6 @@ const ITEMS_PER_PAGE = 5;
 export const FinanceTransactions: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { currency, formatAmount } = useCurrency();
   const { transactions, isLoading: transactionsLoading, createTransaction, updateTransaction, deleteTransaction } = useTransactions();
   const { transfers, isLoading: transfersLoading, createTransfer, updateTransfer, deleteTransfer } = useTransfers();
   const { wallets } = useWallets();
@@ -213,365 +206,49 @@ export const FinanceTransactions: React.FC = () => {
         </div>
         
         <div className="flex flex-col sm:flex-row gap-2">
-          <Dialog open={isTransactionDialogOpen} onOpenChange={setIsTransactionDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-green-600 hover:bg-green-700">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Transaction
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>{editingTransaction ? 'Edit Transaction' : 'Create New Transaction'}</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleTransactionSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="reason">Description</Label>
-                  <Input
-                    id="reason"
-                    value={transactionFormData.reason}
-                    onChange={(e) => setTransactionFormData({ ...transactionFormData, reason: e.target.value })}
-                    placeholder="e.g., Groceries, Salary"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="type">Type</Label>
-                  <Select value={transactionFormData.type} onValueChange={(value: 'income' | 'expense') => setTransactionFormData({ ...transactionFormData, type: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="income">Income</SelectItem>
-                      <SelectItem value="expense">Expense</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label htmlFor="amount">Amount</Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    step="0.01"
-                    value={transactionFormData.amount}
-                    onChange={(e) => setTransactionFormData({ ...transactionFormData, amount: parseFloat(e.target.value) || 0 })}
-                    placeholder="0.00"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="wallet">Wallet</Label>
-                  <Select value={transactionFormData.wallet_id} onValueChange={(value) => setTransactionFormData({ ...transactionFormData, wallet_id: value })} required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select wallet" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {wallets.map((wallet) => (
-                        <SelectItem key={wallet.id} value={wallet.id}>
-                          {wallet.name} ({formatAmount(wallet.balance)})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label htmlFor="category">Category (Optional)</Label>
-                  <Select value={transactionFormData.category_id} onValueChange={(value) => setTransactionFormData({ ...transactionFormData, category_id: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label htmlFor="date">Date</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={transactionFormData.date}
-                    onChange={(e) => setTransactionFormData({ ...transactionFormData, date: e.target.value })}
-                    required
-                  />
-                </div>
-                
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <Button type="submit" className="bg-green-600 hover:bg-green-700 flex-1">
-                    {editingTransaction ? 'Update' : 'Create'} Transaction
-                  </Button>
-                  <Button type="button" variant="outline" onClick={() => setIsTransactionDialogOpen(false)} className="flex-1">
-                    Cancel
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <TransactionForm
+            isOpen={isTransactionDialogOpen}
+            setIsOpen={setIsTransactionDialogOpen}
+            editingTransaction={editingTransaction}
+            setEditingTransaction={setEditingTransaction}
+            formData={transactionFormData}
+            setFormData={setTransactionFormData}
+            onSubmit={handleTransactionSubmit}
+            wallets={wallets}
+            categories={categories}
+          />
 
-          <Dialog open={isTransferDialogOpen} onOpenChange={setIsTransferDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <ArrowLeftRight className="mr-2 h-4 w-4" />
-                Add Transfer
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>{editingTransfer ? 'Edit Transfer' : 'Create New Transfer'}</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleTransferSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="from_wallet">From Wallet</Label>
-                  <Select value={transferFormData.from_wallet_id} onValueChange={(value) => setTransferFormData({ ...transferFormData, from_wallet_id: value })} required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select wallet" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {wallets.map((wallet) => (
-                        <SelectItem key={wallet.id} value={wallet.id}>
-                          {wallet.name} ({formatAmount(wallet.balance)})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label htmlFor="to_wallet">To Wallet</Label>
-                  <Select value={transferFormData.to_wallet_id} onValueChange={(value) => setTransferFormData({ ...transferFormData, to_wallet_id: value })} required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select wallet" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {wallets.map((wallet) => (
-                        <SelectItem key={wallet.id} value={wallet.id}>
-                          {wallet.name} ({formatAmount(wallet.balance)})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label htmlFor="amount">Amount</Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    step="0.01"
-                    value={transferFormData.amount}
-                    onChange={(e) => setTransferFormData({ ...transferFormData, amount: parseFloat(e.target.value) || 0 })}
-                    placeholder="0.00"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="date">Date</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={transferFormData.date}
-                    onChange={(e) => setTransferFormData({ ...transferFormData, date: e.target.value })}
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="description">Description (Optional)</Label>
-                  <Input
-                    id="description"
-                    value={transferFormData.description}
-                    onChange={(e) => setTransferFormData({ ...transferFormData, description: e.target.value })}
-                    placeholder="Transfer description"
-                  />
-                </div>
-                
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <Button type="submit" className="bg-green-600 hover:bg-green-700 flex-1">
-                    {editingTransfer ? 'Update' : 'Create'} Transfer
-                  </Button>
-                  <Button type="button" variant="outline" onClick={() => setIsTransferDialogOpen(false)} className="flex-1">
-                    Cancel
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <TransferForm
+            isOpen={isTransferDialogOpen}
+            setIsOpen={setIsTransferDialogOpen}
+            editingTransfer={editingTransfer}
+            setEditingTransfer={setEditingTransfer}
+            formData={transferFormData}
+            setFormData={setTransferFormData}
+            onSubmit={handleTransferSubmit}
+            wallets={wallets}
+          />
         </div>
       </div>
       
       {isLoading ? (
         <div className="text-center py-8">Loading...</div>
-      ) : unifiedData.length === 0 ? (
-        <Card className="border-green-200">
-          <CardContent className="text-center py-12">
-            <div className="flex justify-center space-x-4 mb-4">
-              <ArrowUpRight className="h-8 w-8 text-green-500" />
-              <ArrowLeftRight className="h-8 w-8 text-blue-500" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">No Transactions Yet</h3>
-            <p className="text-muted-foreground mb-4">Create your first transaction or transfer</p>
-          </CardContent>
-        </Card>
       ) : (
-        <div className="space-y-4">
-          {currentItems.map((item) => (
-            <Card key={`${item.type}-${item.id}`} className="border-green-200">
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex-shrink-0">
-                      {item.type === 'transfer' ? (
-                        <ArrowLeftRight className="h-8 w-8 text-blue-600" />
-                      ) : item.subtype === 'income' ? (
-                        <ArrowUpRight className="h-8 w-8 text-green-500" />
-                      ) : (
-                        <ArrowDownRight className="h-8 w-8 text-red-500" />
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <Badge variant={
-                          item.type === 'transfer' ? 'secondary' :
-                          item.subtype === 'income' ? 'default' : 'destructive'
-                        }>
-                          {item.type === 'transfer' ? 'Transfer' : item.subtype}
-                        </Badge>
-                        {item.type === 'transaction' && (
-                          <Badge variant="outline" className="cursor-pointer" onClick={() => navigate(`/finance/wallet/${item.wallet_id}`)}>
-                            <Wallet className="h-3 w-3 mr-1" />
-                            {getWalletName(item.wallet_id!)}
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="font-semibold text-green-700 truncate">
-                        {item.type === 'transfer' 
-                          ? `${getWalletName(item.from_wallet_id!)} → ${getWalletName(item.to_wallet_id!)}`
-                          : item.reason
-                        }
-                      </p>
-                      <p className="text-sm text-muted-foreground truncate">
-                        {item.type === 'transfer' ? item.description : ''}
-                      </p>
-                      <div className="flex items-center space-x-4 mt-1">
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(item.date).toLocaleDateString()}
-                        </p>
-                        {item.type === 'transaction' && item.category_id && (
-                          <Badge 
-                            variant="outline" 
-                            className="cursor-pointer hover:bg-gray-100" 
-                            style={{ borderColor: getCategoryColor(item.category_id), color: getCategoryColor(item.category_id) }}
-                            onClick={() => navigate(`/finance/category/${item.category_id}`)}
-                          >
-                            {getCategoryName(item.category_id)}
-                          </Badge>
-                        )}
-                        {item.type === 'transfer' && (
-                          <div className="flex items-center space-x-2">
-                            <Badge variant="outline" className="cursor-pointer" onClick={() => navigate(`/finance/wallet/${item.from_wallet_id}`)}>
-                              <Wallet className="h-3 w-3 mr-1" />
-                              {getWalletName(item.from_wallet_id!)}
-                            </Badge>
-                            <span>→</span>
-                            <Badge variant="outline" className="cursor-pointer" onClick={() => navigate(`/finance/wallet/${item.to_wallet_id}`)}>
-                              <Wallet className="h-3 w-3 mr-1" />
-                              {getWalletName(item.to_wallet_id!)}
-                            </Badge>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                    <div className="text-left sm:text-right">
-                      <p className={`text-xl font-bold ${
-                        item.type === 'transfer' ? 'text-blue-700' :
-                        item.subtype === 'income' ? 'text-green-700' : 'text-red-700'
-                      }`}>
-                        {item.type === 'transaction' && item.subtype === 'income' ? '+' : 
-                         item.type === 'transaction' && item.subtype === 'expense' ? '-' : ''}
-                        {formatAmount(item.amount)}
-                      </p>
-                    </div>
-                    <div className="flex space-x-1">
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        onClick={() => item.type === 'transfer' ? handleEditTransfer(transfers.find(t => t.id === item.id)) : handleEditTransaction(transactions.find(t => t.id === item.id))}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        onClick={() => item.type === 'transfer' ? handleDeleteTransfer(item.id) : handleDeleteTransaction(item.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-
-          {totalPages > 1 && (
-            <Card className="border-green-200">
-              <CardContent className="p-4">
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious 
-                        href="#" 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (currentPage > 1) setCurrentPage(currentPage - 1);
-                        }}
-                        className={currentPage <= 1 ? 'pointer-events-none opacity-50' : ''}
-                      />
-                    </PaginationItem>
-                    
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <PaginationItem key={page}>
-                        <PaginationLink
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setCurrentPage(page);
-                          }}
-                          isActive={currentPage === page}
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    ))}
-                    
-                    <PaginationItem>
-                      <PaginationNext 
-                        href="#" 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-                        }}
-                        className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : ''}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+        <TransactionsList
+          currentItems={currentItems}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          onEditTransaction={handleEditTransaction}
+          onDeleteTransaction={handleDeleteTransaction}
+          onEditTransfer={handleEditTransfer}
+          onDeleteTransfer={handleDeleteTransfer}
+          getWalletName={getWalletName}
+          getCategoryName={getCategoryName}
+          getCategoryColor={getCategoryColor}
+          transactions={transactions}
+          transfers={transfers}
+        />
       )}
     </div>
   );
