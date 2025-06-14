@@ -46,7 +46,7 @@ export const Universes: React.FC = () => {
   const UniverseCard = ({ universe, showDelete = false }: { universe: any, showDelete?: boolean }) => (
     <Card 
       className="border-blue-200 hover:shadow-lg transition-shadow cursor-pointer group"
-      onClick={() => navigate(`/tv-shows/universe/${universe.id}`)}
+      onClick={() => navigate(`/tv-shows/universe/${universe.slug || universe.id}`)}
     >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">

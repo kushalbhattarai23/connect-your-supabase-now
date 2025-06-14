@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +15,7 @@ import { Universe } from '@/hooks/useUniverses';
 import { useAuth } from '@/hooks/useAuth';
 
 export const UniverseDetail: React.FC = () => {
-  const { universeId } = useParams<{ universeId: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedShowId, setSelectedShowId] = useState<string>('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -24,20 +23,20 @@ export const UniverseDetail: React.FC = () => {
   const { user } = useAuth();
 
   const { data: universe, isLoading: universeLoading } = useQuery({
-    queryKey: ['universe', universeId],
+    queryKey: ['universe', slug],
     queryFn: async () => {
-      if (!universeId) throw new Error('Universe ID is required');
+      if (!slug) throw new Error('Universe slug is required');
       
       const { data, error } = await supabase
         .from('universes')
         .select('*')
-        .eq('id', universeId)
+        .or(`slug.eq.${slug},id.eq.${slug}`)
         .single();
         
       if (error) throw error;
       return data as Universe;
     },
-    enabled: !!universeId
+    enabled: !!slug
   });
 
   const {
@@ -46,7 +45,7 @@ export const UniverseDetail: React.FC = () => {
     isLoading: showsLoading,
     addShowToUniverse,
     removeShowFromUniverse
-  } = useUniverseShows(universeId || '');
+  } = useUniverseShows(universe?.id || '');
 
   // Check if current user is the creator
   const isCreator = user?.id === universe?.creator_id;
