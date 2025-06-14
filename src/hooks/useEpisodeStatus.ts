@@ -52,7 +52,9 @@ export const useEpisodeStatus = () => {
       return { episodeId, newStatus: newStatus === 'watched' };
     },
     onSuccess: (data) => {
-      // Invalidate and refetch universe episodes data
+      // Invalidate user shows data so it refreshes with updated counts
+      queryClient.invalidateQueries({ queryKey: ['user-shows'] });
+      // Invalidate universe episodes data
       queryClient.invalidateQueries({ queryKey: ['universe-episodes'] });
       console.log(`Episode ${data.episodeId} marked as ${data.newStatus ? 'watched' : 'not watched'}`);
     },

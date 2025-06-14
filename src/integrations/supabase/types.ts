@@ -661,20 +661,29 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          last_updated: string | null
           show_id: string
+          total_episodes: number | null
           user_id: string
+          watched_episodes: number | null
         }
         Insert: {
           created_at?: string
           id?: string
+          last_updated?: string | null
           show_id: string
+          total_episodes?: number | null
           user_id: string
+          watched_episodes?: number | null
         }
         Update: {
           created_at?: string
           id?: string
+          last_updated?: string | null
           show_id?: string
+          total_episodes?: number | null
           user_id?: string
+          watched_episodes?: number | null
         }
         Relationships: [
           {
@@ -728,6 +737,10 @@ export type Database = {
       get_user_organization_access: {
         Args: { org_id: string }
         Returns: boolean
+      }
+      update_user_show_episode_counts: {
+        Args: { p_user_id: string; p_show_id: string }
+        Returns: undefined
       }
     }
     Enums: {

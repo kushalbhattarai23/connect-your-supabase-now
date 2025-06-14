@@ -22,11 +22,13 @@ export const useUserShows = () => {
       if (!user) return [];
       
       try {
-        // Get user's tracked shows
+        // Get user's tracked shows with pre-calculated episode counts
         const { data: trackedShows, error: trackingError } = await supabase
           .from('user_show_tracking')
           .select(`
             show_id,
+            total_episodes,
+            watched_episodes,
             shows (
               id,
               title,
@@ -43,41 +45,14 @@ export const useUserShows = () => {
           return [];
         }
 
-        // Get episode counts and watch status for each show
-        const showsWithProgress = await Promise.all(
-          trackedShows.map(async (item) => {
+        // Transform the data using the pre-calculated values
+        const showsWithProgress = trackedShows
+          .map((item) => {
             const show = item.shows;
             if (!show) return null;
 
-            // Get total episodes for this show
-            const { data: episodes, error: episodesError } = await supabase
-              .from('episodes')
-              .select('id')
-              .eq('show_id', show.id);
-
-            if (episodesError) {
-              console.error('Error fetching episodes:', episodesError);
-              return null;
-            }
-
-            const totalEpisodes = episodes?.length || 0;
-
-            // Get watched episodes count
-            let watchedEpisodes = 0;
-            if (totalEpisodes > 0) {
-              const episodeIds = episodes?.map(ep => ep.id) || [];
-              
-              const { data: watchedData, error: watchedError } = await supabase
-                .from('user_episode_status')
-                .select('episode_id')
-                .eq('user_id', user.id)
-                .eq('status', 'watched')
-                .in('episode_id', episodeIds);
-
-              if (!watchedError && watchedData) {
-                watchedEpisodes = watchedData.length;
-              }
-            }
+            const totalEpisodes = item.total_episodes || 0;
+            const watchedEpisodes = item.watched_episodes || 0;
 
             // Determine status based on progress
             let status: 'watching' | 'completed' | 'not_started' = 'not_started';
@@ -97,10 +72,9 @@ export const useUserShows = () => {
               status
             } as UserShow;
           })
-        );
+          .filter(Boolean) as UserShow[];
 
-        // Filter out null results and return
-        return showsWithProgress.filter(Boolean) as UserShow[];
+        return showsWithProgress;
         
       } catch (error) {
         console.error('Error fetching user shows:', error);
