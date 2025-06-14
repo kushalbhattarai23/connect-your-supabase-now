@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -48,18 +49,30 @@ export const useWallets = () => {
   const getWalletById = async (walletId: string) => {
     if (!user) throw new Error('User not authenticated');
     
-    const { data, error } = await supabase
+    console.log('Fetching wallet with ID:', walletId, 'for user:', user.id);
+    
+    let query = supabase
       .from('wallets')
       .select('*')
       .eq('id', walletId)
-      .eq('user_id', user.id)
-      .single();
+      .eq('user_id', user.id);
+    
+    // Apply organization filtering
+    if (isPersonalMode) {
+      query = query.is('organization_id', null);
+    } else if (currentOrganization) {
+      query = query.eq('organization_id', currentOrganization.id);
+    }
+    
+    const { data, error } = await query.single();
       
     if (error) {
       console.error('Error fetching wallet:', error);
+      console.log('Query details - walletId:', walletId, 'userId:', user.id, 'orgMode:', isPersonalMode ? 'personal' : currentOrganization?.id);
       throw error;
     }
     
+    console.log('Successfully fetched wallet:', data);
     return data as Wallet;
   };
 

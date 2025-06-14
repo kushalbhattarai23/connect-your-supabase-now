@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,18 +12,21 @@ import { useTransfers } from '@/hooks/useTransfers';
 import { useCurrency } from '@/hooks/useCurrency';
 
 export const WalletDetail: React.FC = () => {
-  const { walletId } = useParams<{ walletId: string }>();
+  const { id: walletId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { currency, formatAmount } = useCurrency();
   const { getWalletById, wallets } = useWallets();
   const { transactions } = useTransactions();
   const { transfers } = useTransfers();
 
+  console.log('WalletDetail - walletId from params:', walletId);
+
   // Fetch the specific wallet
   const { data: wallet, isLoading: walletLoading, error: walletError } = useQuery({
     queryKey: ['wallet', walletId],
     queryFn: () => walletId ? getWalletById(walletId) : null,
-    enabled: !!walletId
+    enabled: !!walletId,
+    retry: 1
   });
 
   const walletTransactions = transactions.filter(t => t.wallet_id === walletId);
@@ -66,12 +70,20 @@ export const WalletDetail: React.FC = () => {
   }
 
   if (walletError || !wallet) {
+    console.error('Wallet fetch error:', walletError);
+    console.log('Available wallets:', wallets.map(w => ({ id: w.id, name: w.name })));
+    
     return (
       <div className="container mx-auto px-4 py-6">
         <Card className="border-red-200">
           <CardContent className="text-center py-12">
             <h3 className="text-lg font-semibold mb-2">Wallet Not Found</h3>
-            <p className="text-muted-foreground">The wallet you're looking for doesn't exist or you don't have access to it.</p>
+            <p className="text-muted-foreground">
+              The wallet you're looking for doesn't exist or you don't have access to it.
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              Wallet ID: {walletId}
+            </p>
             <Button onClick={() => navigate('/finance/wallets')} className="mt-4">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Wallets
