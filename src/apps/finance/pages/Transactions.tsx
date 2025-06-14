@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,6 +34,7 @@ const ITEMS_PER_PAGE = 5;
 
 export const FinanceTransactions: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { currency, formatAmount } = useCurrency();
   const { transactions, isLoading: transactionsLoading, createTransaction, updateTransaction, deleteTransaction } = useTransactions();
   const { transfers, isLoading: transfersLoading, createTransfer, updateTransfer, deleteTransfer } = useTransfers();
@@ -93,6 +94,16 @@ export const FinanceTransactions: React.FC = () => {
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const currentItems = unifiedData.slice(startIndex, endIndex);
+
+  // Check for openModal parameter on component mount
+  useEffect(() => {
+    if (searchParams.get('openModal') === 'true') {
+      setIsTransactionDialogOpen(true);
+      // Remove the parameter from URL
+      searchParams.delete('openModal');
+      setSearchParams(searchParams);
+    }
+  }, [searchParams, setSearchParams]);
 
   const handleTransactionSubmit = (e: React.FormEvent) => {
     e.preventDefault();

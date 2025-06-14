@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +18,7 @@ import { useTransactions } from '@/hooks/useTransactions';
 import { useCurrency } from '@/hooks/useCurrency';
 
 export const FinanceDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const { wallets } = useWallets();
   const { transactions } = useTransactions();
   const { formatAmount } = useCurrency();
@@ -45,6 +47,10 @@ export const FinanceDashboard: React.FC = () => {
 
   const recentTransactions = transactions.slice(0, 5);
 
+  const handleAddTransaction = () => {
+    navigate('/finance/transactions?openModal=true');
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -52,7 +58,7 @@ export const FinanceDashboard: React.FC = () => {
           <h1 className="text-3xl font-bold text-green-700">Finance Dashboard</h1>
           <p className="text-muted-foreground">Track your financial health and manage your money</p>
         </div>
-        <Button className="bg-green-600 hover:bg-green-700">
+        <Button className="bg-green-600 hover:bg-green-700" onClick={handleAddTransaction}>
           <Plus className="mr-2 h-4 w-4" />
           Add Transaction
         </Button>
