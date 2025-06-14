@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -142,11 +141,11 @@ export const TVShowPublicShows: React.FC = () => {
           )}
         </Link>
         <CardHeader className="pb-2">
-          <CardTitle className="line-clamp-1 text-purple-700">{show.name}</CardTitle>
+          <CardTitle className="text-purple-700 break-words">{show.name}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex justify-between items-center gap-2">
-            <div className="text-sm text-muted-foreground flex-1">
+          <div className="flex flex-col gap-3">
+            <div className="text-sm text-muted-foreground">
               {show.genres?.length ? show.genres.join(', ') : 'No genres'}
             </div>
             <div className="flex gap-2">
