@@ -24,25 +24,38 @@ export const UniverseDetail: React.FC = () => {
   const { toast } = useToast();
   const { user } = useAuth();
 
+  console.log('UniverseDetail - slug from params:', slug);
+  console.log('UniverseDetail - location state:', location.state);
+
   // Determine back navigation based on current route context
   const getBackPath = () => {
-    const pathname = location.pathname;
-    if (pathname.includes('/public-universes') || location.state?.from === 'public') {
+    if (location.state?.from === 'public') {
       return '/tv-shows/public-universes';
     }
-    if (pathname.includes('/private-universes') || location.state?.from === 'private') {
+    if (location.state?.from === 'private') {
       return '/tv-shows/private-universes';
     }
-    // Default fallback - check if user owns any universes to decide
+    // Default based on current path
+    if (location.pathname.includes('/public-universes/')) {
+      return '/tv-shows/public-universes';
+    }
+    if (location.pathname.includes('/private-universes/')) {
+      return '/tv-shows/private-universes';
+    }
     return '/tv-shows/universes';
   };
 
   const getBackLabel = () => {
-    const pathname = location.pathname;
-    if (pathname.includes('/public-universes') || location.state?.from === 'public') {
+    if (location.state?.from === 'public') {
       return 'Back to Public Universes';
     }
-    if (pathname.includes('/private-universes') || location.state?.from === 'private') {
+    if (location.state?.from === 'private') {
+      return 'Back to My Universes';
+    }
+    if (location.pathname.includes('/public-universes/')) {
+      return 'Back to Public Universes';
+    }
+    if (location.pathname.includes('/private-universes/')) {
       return 'Back to My Universes';
     }
     return 'Back to Universes';
@@ -51,15 +64,42 @@ export const UniverseDetail: React.FC = () => {
   const { data: universe, isLoading: universeLoading, error: universeError } = useQuery({
     queryKey: ['universe', slug],
     queryFn: async () => {
-      if (!slug) throw new Error('Universe slug is required');
+      if (!slug) {
+        console.error('No slug provided');
+        throw new Error('Universe slug is required');
+      }
       
-      const { data, error } = await supabase
+      console.log('Fetching universe with slug/id:', slug);
+      
+      // First try to find by slug
+      let { data, error } = await supabase
         .from('universes')
         .select('*')
-        .or(`slug.eq.${slug},id.eq.${slug}`)
+        .eq('slug', slug)
         .maybeSingle();
         
-      if (error) throw error;
+      console.log('Query by slug result:', { data, error });
+      
+      // If not found by slug, try by ID
+      if (!data && !error) {
+        console.log('Not found by slug, trying by ID...');
+        const result = await supabase
+          .from('universes')
+          .select('*')
+          .eq('id', slug)
+          .maybeSingle();
+          
+        data = result.data;
+        error = result.error;
+        console.log('Query by ID result:', { data, error });
+      }
+        
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
+      
+      console.log('Final universe data:', data);
       return data as Universe | null;
     },
     enabled: !!slug
@@ -105,29 +145,36 @@ export const UniverseDetail: React.FC = () => {
 
   if (universeLoading) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
       </div>
     );
   }
 
   if (universeError || !universe) {
+    console.error('Universe not found or error:', { universeError, universe });
     return (
-      <div className="text-center py-12">
-        <h2 className="text-2xl font-bold mb-4">Universe not found</h2>
-        <p className="text-muted-foreground mb-4">The universe you're looking for doesn't exist or you don't have permission to view it.</p>
-        <Link to={getBackPath()}>
-          <Button className="bg-blue-600 hover:bg-blue-700">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {getBackLabel()}
-          </Button>
-        </Link>
+      <div className="container mx-auto px-4 py-6">
+        <div className="text-center py-12">
+          <h2 className="text-2xl font-bold mb-4">Universe not found</h2>
+          <p className="text-muted-foreground mb-4">
+            The universe you're looking for doesn't exist or you don't have permission to view it.
+          </p>
+          <Link to={getBackPath()}>
+            <Button className="bg-blue-600 hover:bg-blue-700">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              {getBackLabel()}
+            </Button>
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto px-4 py-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
         <div className="space-y-2">
