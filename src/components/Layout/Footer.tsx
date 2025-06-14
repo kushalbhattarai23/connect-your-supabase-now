@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Separator } from '@/components/ui/separator';
@@ -97,6 +96,21 @@ export const Footer: React.FC = () => {
                   Sign Up
                 </Link>
               </li>
+              <li>
+                <Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link to="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link to="/sitemap" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Sitemap
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
@@ -113,6 +127,9 @@ export const Footer: React.FC = () => {
             </Link>
             <Link to="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
               Terms of Service
+            </Link>
+            <Link to="/sitemap" className="text-muted-foreground hover:text-foreground transition-colors">
+              Sitemap
             </Link>
           </div>
         </div>

@@ -14,7 +14,9 @@ import Settings from '@/pages/Settings';
 import Login from '@/pages/Login';
 import SignUpForm from '@/components/Auth/SignUpForm';
 import AdminLogin from '@/pages/admin/AdminLogin';
-
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import TermsOfService from "@/pages/TermsOfService";
+import Sitemap from "@/pages/Sitemap";
 
 // Lazy load pages
 const TvShowsDashboard = lazy(() => import('@/apps/tv-shows/pages/Dashboard'));
@@ -64,10 +66,21 @@ function App() {
                 <Toaster />
                 <Routes>
                   <Route path="/landing" element={<Landing />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/signup" element={<SignUpForm />} />
+                  <Route path="/login" element={
+                    <AppLayout>
+                      <Login />
+                    </AppLayout>
+                  } />
+                  <Route path="/signup" element={
+                    <AppLayout>
+                      <SignUpForm />
+                    </AppLayout>
+                  } />
                   <Route path="/admin/login" element={<AdminLogin />} />
-
+                  <Route path="/privacy" element={<PrivacyPolicy />} />
+                  <Route path="/terms" element={<TermsOfService />} />
+                  <Route path="/sitemap" element={<Sitemap />} />
+                  
                   <Route path="/" element={<AppLayout />}>
                     <Route index element={<Index />} />
                     <Route path="profile" element={<Profile />} />
