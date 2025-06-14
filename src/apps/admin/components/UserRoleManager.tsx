@@ -12,12 +12,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Shield, ShieldCheck, UserPlus, Trash2 } from 'lucide-react';
 
+interface UserRole {
+  role: string;
+}
+
 interface UserWithRoles {
   id: string;
   first_name: string;
   last_name: string;
   created_at: string;
-  user_roles: { role: string }[];
+  user_roles: UserRole[];
 }
 
 export const UserRoleManager: React.FC = () => {
@@ -26,23 +30,33 @@ export const UserRoleManager: React.FC = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch all users with their roles
+  // Fetch all users with their roles using a more complex query
   const { data: users, isLoading } = useQuery({
     queryKey: ['admin-users-with-roles'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First, get all profiles
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select(`
-          id,
-          first_name,
-          last_name,
-          created_at,
-          user_roles (role)
-        `)
+        .select('id, first_name, last_name, created_at')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return data as UserWithRoles[];
+      if (profilesError) throw profilesError;
+
+      // Then, get all user roles
+      const { data: userRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
+
+      if (rolesError) throw rolesError;
+
+      // Combine the data
+      const usersWithRoles = profiles?.map(profile => ({
+        ...profile,
+        user_roles: userRoles?.filter(role => role.user_id === profile.id)
+          .map(role => ({ role: role.role })) || []
+      })) || [];
+
+      return usersWithRoles;
     }
   });
 
@@ -227,7 +241,7 @@ export const UserRoleManager: React.FC = () => {
                         user.user_roles.map((roleObj, index) => (
                           <Badge 
                             key={index} 
-                            variant={getRoleBadgeVariant(roleObj.role)}
+                            variant={getRoleBadgeVariant(roleObj.role) as any}
                             className="flex items-center gap-1"
                           >
                             {getRoleIcon(roleObj.role)}
