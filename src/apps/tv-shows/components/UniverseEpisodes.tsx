@@ -24,7 +24,37 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
   const [showFilter, setShowFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
-  const filteredEpisodes = episodes.filter(episode => {
+  // Sort episodes: unwatched first, then by air date
+  const sortedEpisodes = React.useMemo(() => {
+    return [...episodes].sort((a, b) => {
+      // Primary sort: unwatched episodes first
+      if (a.watched !== b.watched) {
+        return a.watched ? 1 : -1;
+      }
+      
+      // Secondary sort: by air date (ascending)
+      if (a.air_date && b.air_date) {
+        const dateA = new Date(a.air_date).getTime();
+        const dateB = new Date(b.air_date).getTime();
+        if (dateA !== dateB) {
+          return dateA - dateB;
+        }
+      }
+      
+      // Handle null air dates (put them at the end)
+      if (a.air_date && !b.air_date) return -1;
+      if (!a.air_date && b.air_date) return 1;
+      
+      // Tertiary sort: by season and episode number
+      if (a.season_number !== b.season_number) {
+        return a.season_number - b.season_number;
+      }
+      
+      return a.episode_number - b.episode_number;
+    });
+  }, [episodes]);
+
+  const filteredEpisodes = sortedEpisodes.filter(episode => {
     const matchesSearch = episode.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          episode.show?.title?.toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -116,7 +146,7 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
       {/* Filters and Controls */}
       <Card className="border-blue-200">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base sm:text-lg">Episodes</CardTitle>
+          <CardTitle className="text-base sm:text-lg">All Episodes</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Search and View Toggle */}
@@ -124,7 +154,7 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
-                placeholder="Search episodes..."
+                placeholder="Search episodes or shows..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -156,20 +186,9 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
 
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as any)}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Episodes</SelectItem>
-                <SelectItem value="watched">Watched</SelectItem>
-                <SelectItem value="unwatched">Unwatched</SelectItem>
-              </SelectContent>
-            </Select>
-
             <Select value={showFilter} onValueChange={setShowFilter}>
               <SelectTrigger className="w-full sm:w-[200px]">
-                <SelectValue placeholder="Filter by show" />
+                <SelectValue placeholder="All Shows" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Shows</SelectItem>
@@ -178,6 +197,17 @@ export const UniverseEpisodes: React.FC<UniverseEpisodesProps> = ({ universeId }
                     {show.title}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as any)}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="unwatched">Unwatched</SelectItem>
+                <SelectItem value="watched">Watched</SelectItem>
               </SelectContent>
             </Select>
           </div>
