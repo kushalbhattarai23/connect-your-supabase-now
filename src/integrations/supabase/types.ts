@@ -88,6 +88,83 @@ export type Database = {
           },
         ]
       }
+      credit_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          credit_id: string
+          description: string | null
+          id: string
+          payment_date: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          credit_id: string
+          description?: string | null
+          id?: string
+          payment_date?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          credit_id?: string
+          description?: string | null
+          id?: string
+          payment_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_payments_credit_id_fkey"
+            columns: ["credit_id"]
+            isOneToOne: false
+            referencedRelation: "credits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credits: {
+        Row: {
+          created_at: string
+          description: string | null
+          email: string | null
+          id: string
+          name: string
+          person: string
+          phone: string | null
+          remaining_amount: number
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          person: string
+          phone?: string | null
+          remaining_amount?: number
+          total_amount?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          person?: string
+          phone?: string | null
+          remaining_amount?: number
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       episodes: {
         Row: {
           air_date: string | null

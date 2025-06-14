@@ -1,115 +1,176 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/hooks/useAuth";
-import { OrganizationProvider } from "@/contexts/OrganizationContext";
-import { LoginForm } from "@/components/Auth/LoginForm";
-import { SignUpForm } from "@/components/Auth/SignUpForm";
-import { AppLayout } from "@/components/Layout/AppLayout";
-import { getEnabledApps } from "@/config/apps";
-import { useAppSettings } from "@/hooks/useAppSettings";
-import Landing from "@/pages/Landing";
-import SettingsPage from '@/pages/Settings';
-import WalletDetail from '@/apps/finance/pages/WalletDetail';
-import CategoryDetail from '@/apps/finance/pages/CategoryDetail';
-import Loans from '@/apps/finance/pages/Loans';
-import Budgets from '@/apps/finance/pages/Budgets';
-import UniverseDashboard from '@/apps/tv-shows/pages/UniverseDashboard';
-import UniverseDetail from '@/apps/tv-shows/pages/UniverseDetail';
-import Universes from '@/apps/tv-shows/pages/Universes';
-import PublicShows from '@/apps/tv-shows/pages/PublicShows';
-import PublicUniverses from '@/apps/tv-shows/pages/PublicUniverses';
-import MyShows from '@/apps/tv-shows/pages/MyShows';
+import { Suspense, lazy } from 'react';
+import { Toaster } from '@/components/ui/sonner';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from '@/hooks/useAuth';
+import AppLayout from '@/components/Layout/AppLayout';
+import Index from '@/pages/Index';
 import NotFound from '@/pages/NotFound';
+import Landing from '@/pages/Landing';
 import Profile from '@/pages/Profile';
+import Settings from '@/pages/Settings';
 
-const queryClient = new QueryClient();
+// Lazy load pages
+const TvShowsDashboard = lazy(() => import('@/apps/tv-shows/pages/Dashboard'));
+const MyShows = lazy(() => import('@/apps/tv-shows/pages/MyShows'));
+const PublicShows = lazy(() => import('@/apps/tv-shows/pages/PublicShows'));
+const PublicUniverses = lazy(() => import('@/apps/tv-shows/pages/PublicUniverses'));
+const Universes = lazy(() => import('@/apps/tv-shows/pages/Universes'));
+const UniverseDetail = lazy(() => import('@/apps/tv-shows/pages/UniverseDetail'));
+const UniverseDashboard = lazy(() => import('@/apps/tv-shows/pages/UniverseDashboard'));
+const ShowDetail = lazy(() => import('@/apps/tv-shows/pages/ShowDetail'));
 
-const AppRoutes = () => {
-  const { user, isLoading } = useAuth();
-  const { settings } = useAppSettings();
-  const enabledApps = getEnabledApps(settings);
+const FinanceDashboard = lazy(() => import('@/apps/finance/pages/Dashboard'));
+const Wallets = lazy(() => import('@/apps/finance/pages/Wallets'));
+const WalletDetail = lazy(() => import('@/apps/finance/pages/WalletDetail'));
+const Transactions = lazy(() => import('@/apps/finance/pages/Transactions'));
+const Categories = lazy(() => import('@/apps/finance/pages/Categories'));
+const CategoryDetail = lazy(() => import('@/apps/finance/pages/CategoryDetail'));
+const Transfers = lazy(() => import('@/apps/finance/pages/Transfers'));
+const Reports = lazy(() => import('@/apps/finance/pages/Reports'));
+const FinanceSettings = lazy(() => import('@/apps/finance/pages/Settings'));
+const Budgets = lazy(() => import('@/apps/finance/pages/Budgets'));
+const Loans = lazy(() => import('@/apps/finance/pages/Loans'));
+const Credits = lazy(() => import('@/apps/finance/pages/Credits'));
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000,
+      retry: 1,
+    },
+  },
+});
 
-  // Public TV Shows routes that don't require authentication
-  const publicTVShowsRoutes = (
-    <>
-      <Route path="/tv-shows/public-shows" element={<PublicShows />} />
-      <Route path="/tv-shows/public-universes" element={<PublicUniverses />} />
-      <Route path="/tv-shows/universe/:universeId" element={<UniverseDetail />} />
-    </>
-  );
-
-  if (!user) {
-    return (
-      <AppLayout>
-        <Routes>
-          <Route path="/login" element={<LoginForm />} />
-          <Route path="/signup" element={<SignUpForm />} />
-          {/* Allow public access to TV shows and homepage */}
-          <Route path="/" element={<Landing />} />
-          {publicTVShowsRoutes}
-          <Route path="*" element={<LoginForm />} />
-        </Routes>
-      </AppLayout>
-    );
-  }
-
+function App() {
   return (
-    <OrganizationProvider>
-      <AppLayout>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          {enabledApps.map((app) =>
-            app.routes.map((route) => (
-              <Route
-                key={route.path}
-                path={route.path}
-                element={<route.component />}
-              />
-            ))
-          )}
-          <Route path="/finance/wallet/:walletId" element={<WalletDetail />} />
-          <Route path="/finance/category/:categoryId" element={<CategoryDetail />} />
-          <Route path="/finance/loans" element={<Loans />} />
-          <Route path="/finance/budgets" element={<Budgets />} />
-          <Route path="/tv-shows/universes" element={<Universes />} />
-          <Route path="/tv-shows/universe/:universeId/dashboard" element={<UniverseDashboard />} />
-          <Route path="/tv-shows/universe/:universeId" element={<UniverseDetail />} />
-          <Route path="/tv-shows/my-shows" element={<MyShows />} />
-          {/* Public TV shows routes available to authenticated users too */}
-          {publicTVShowsRoutes}
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </AppLayout>
-    </OrganizationProvider>
-  );
-};
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
+    <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
+        <TooltipProvider>
+          <BrowserRouter>
+            <div className="min-h-screen bg-gray-50">
+              <Toaster />
+              <Routes>
+                <Route path="/landing" element={<Landing />} />
+                <Route path="/" element={<AppLayout />}>
+                  <Route index element={<Index />} />
+                  <Route path="profile" element={<Profile />} />
+                  <Route path="settings" element={<Settings />} />
+                  
+                  {/* TV Shows Routes */}
+                  <Route path="tv-shows" element={
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <TvShowsDashboard />
+                    </Suspense>
+                  } />
+                  <Route path="tv-shows/my-shows" element={
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <MyShows />
+                    </Suspense>
+                  } />
+                  <Route path="tv-shows/public-shows" element={
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <PublicShows />
+                    </Suspense>
+                  } />
+                  <Route path="tv-shows/public-universes" element={
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <PublicUniverses />
+                    </Suspense>
+                  } />
+                  <Route path="tv-shows/universes" element={
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <Universes />
+                    </Suspense>
+                  } />
+                  <Route path="tv-shows/universe/:slug" element={
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <UniverseDetail />
+                    </Suspense>
+                  } />
+                  <Route path="tv-shows/universe/:slug/dashboard" element={
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <UniverseDashboard />
+                    </Suspense>
+                  } />
+                  <Route path="tv-shows/show/:slug" element={
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <ShowDetail />
+                    </Suspense>
+                  } />
+                  
+                  {/* Finance Routes */}
+                  <Route path="finance" element={
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <FinanceDashboard />
+                    </Suspense>
+                  } />
+                  <Route path="finance/wallets" element={
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <Wallets />
+                    </Suspense>
+                  } />
+                  <Route path="finance/wallet/:id" element={
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <WalletDetail />
+                    </Suspense>
+                  } />
+                  <Route path="finance/transactions" element={
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <Transactions />
+                    </Suspense>
+                  } />
+                  <Route path="finance/categories" element={
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <Categories />
+                    </Suspense>
+                  } />
+                  <Route path="finance/category/:id" element={
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <CategoryDetail />
+                    </Suspense>
+                  } />
+                  <Route path="finance/transfers" element={
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <Transfers />
+                    </Suspense>
+                  } />
+                  <Route path="finance/reports" element={
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <Reports />
+                    </Suspense>
+                  } />
+                  <Route path="finance/settings" element={
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <FinanceSettings />
+                    </Suspense>
+                  } />
+                  <Route path="finance/budgets" element={
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <Budgets />
+                    </Suspense>
+                  } />
+                  <Route path="finance/loans" element={
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <Loans />
+                    </Suspense>
+                  } />
+                  <Route path="finance/credits" element={
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <Credits />
+                    </Suspense>
+                  } />
+                </Route>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </div>
+          </BrowserRouter>
+        </TooltipProvider>
       </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+    </QueryClientProvider>
+  );
+}
 
 export default App;
