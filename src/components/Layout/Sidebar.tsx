@@ -259,7 +259,7 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
                 </CollapsibleContent>
               </div>
             </Collapsible>
-          ))}
+          ))
         )}
       </nav>
 
