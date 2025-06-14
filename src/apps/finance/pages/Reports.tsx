@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -52,8 +51,8 @@ export const FinanceReports: React.FC = () => {
     return filtered;
   };
 
-  // Categories Report
-  const getCategoriesData = () => {
+  // Categories Report - Expenses
+  const getCategoriesExpenseData = () => {
     const filteredTransactions = getFilteredTransactions();
     const categorySpending = categories.map(category => {
       const categoryTransactions = filteredTransactions.filter(t => t.category_id === category.id && t.type === 'expense');
@@ -66,6 +65,22 @@ export const FinanceReports: React.FC = () => {
     }).filter(item => item.amount > 0);
     
     return categorySpending;
+  };
+
+  // Categories Report - Income
+  const getCategoriesIncomeData = () => {
+    const filteredTransactions = getFilteredTransactions();
+    const categoryIncome = categories.map(category => {
+      const categoryTransactions = filteredTransactions.filter(t => t.category_id === category.id && t.type === 'income');
+      const total = categoryTransactions.reduce((sum, t) => sum + (t.income || 0), 0);
+      return {
+        name: category.name,
+        amount: total,
+        color: category.color
+      };
+    }).filter(item => item.amount > 0);
+    
+    return categoryIncome;
   };
 
   // Wallets Report
@@ -124,57 +139,114 @@ export const FinanceReports: React.FC = () => {
     
     switch (selectedReport) {
       case 'categories':
-        const categoriesData = getCategoriesData();
+        const categoriesExpenseData = getCategoriesExpenseData();
+        const categoriesIncomeData = getCategoriesIncomeData();
         return (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold text-green-700">Spending by Category</h3>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="border-green-200">
-                <CardHeader>
-                  <CardTitle className="text-green-700">Category Breakdown</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={categoriesData}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="amount"
-                        label={({ name, value }) => `${name}: रु ${value.toLocaleString()}`}
-                      >
-                        {categoriesData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => `रु ${value.toLocaleString()}`} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-              <Card className="border-green-200">
-                <CardHeader>
-                  <CardTitle className="text-green-700">Category List</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {categoriesData.map((category, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 border border-green-200 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <div 
-                            className="w-4 h-4 rounded-full" 
-                            style={{ backgroundColor: category.color || COLORS[index % COLORS.length] }}
-                          />
-                          <span className="font-medium">{category.name}</span>
+          <div className="space-y-8">
+            {/* Spending by Category */}
+            <div className="space-y-6">
+              <h3 className="text-xl font-semibold text-green-700">Spending by Category</h3>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card className="border-green-200">
+                  <CardHeader>
+                    <CardTitle className="text-green-700">Expense Breakdown</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={categoriesExpenseData}
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="amount"
+                          label={({ name, value }) => `${name}: रु ${value.toLocaleString()}`}
+                        >
+                          {categoriesExpenseData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value) => `रु ${value.toLocaleString()}`} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+                <Card className="border-green-200">
+                  <CardHeader>
+                    <CardTitle className="text-green-700">Expense Categories</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {categoriesExpenseData.map((category, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 border border-green-200 rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <div 
+                              className="w-4 h-4 rounded-full" 
+                              style={{ backgroundColor: category.color || COLORS[index % COLORS.length] }}
+                            />
+                            <span className="font-medium">{category.name}</span>
+                          </div>
+                          <span className="font-semibold text-red-600">रु {category.amount.toLocaleString()}</span>
                         </div>
-                        <span className="font-semibold text-green-700">रु {category.amount.toLocaleString()}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            {/* Income by Category */}
+            <div className="space-y-6">
+              <h3 className="text-xl font-semibold text-green-700">Income by Category</h3>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card className="border-green-200">
+                  <CardHeader>
+                    <CardTitle className="text-green-700">Income Breakdown</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={categoriesIncomeData}
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="amount"
+                          label={({ name, value }) => `${name}: रु ${value.toLocaleString()}`}
+                        >
+                          {categoriesIncomeData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value) => `रु ${value.toLocaleString()}`} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+                <Card className="border-green-200">
+                  <CardHeader>
+                    <CardTitle className="text-green-700">Income Categories</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {categoriesIncomeData.map((category, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 border border-green-200 rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <div 
+                              className="w-4 h-4 rounded-full" 
+                              style={{ backgroundColor: category.color || COLORS[index % COLORS.length] }}
+                            />
+                            <span className="font-medium">{category.name}</span>
+                          </div>
+                          <span className="font-semibold text-green-600">रु {category.amount.toLocaleString()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
         );
