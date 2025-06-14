@@ -10,9 +10,11 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Wallet, Edit, Trash2, Eye } from 'lucide-react';
 import { useWallets } from '@/hooks/useWallets';
 import { useNavigate } from 'react-router-dom';
+import { useCurrency } from '@/hooks/useCurrency';
 
 export const FinanceWallets: React.FC = () => {
   const navigate = useNavigate();
+  const { currency, formatAmount } = useCurrency();
   const { wallets, isLoading, createWallet, updateWallet, deleteWallet } = useWallets();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingWallet, setEditingWallet] = useState<any>(null);
@@ -144,7 +146,7 @@ export const FinanceWallets: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="text-2xl font-bold text-green-700">
-                  रु {wallet.balance.toLocaleString()}
+                  {formatAmount(wallet.balance)}
                 </div>
                 <Badge variant="outline" className="border-green-200 text-green-700">
                   {wallet.currency}

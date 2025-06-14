@@ -12,6 +12,7 @@ import { useTransactions } from '@/hooks/useTransactions';
 import { useTransfers } from '@/hooks/useTransfers';
 import { useWallets } from '@/hooks/useWallets';
 import { useCategories } from '@/hooks/useCategories';
+import { useCurrency } from '@/hooks/useCurrency';
 
 interface UnifiedTransaction {
   id: string;
@@ -30,6 +31,7 @@ interface UnifiedTransaction {
 
 export const FinanceTransactions: React.FC = () => {
   const navigate = useNavigate();
+  const { currency, formatAmount } = useCurrency();
   const { transactions, isLoading: transactionsLoading, createTransaction, updateTransaction, deleteTransaction } = useTransactions();
   const { transfers, isLoading: transfersLoading, createTransfer, updateTransfer, deleteTransfer } = useTransfers();
   const { wallets } = useWallets();
@@ -249,7 +251,7 @@ export const FinanceTransactions: React.FC = () => {
                     <SelectContent>
                       {wallets.map((wallet) => (
                         <SelectItem key={wallet.id} value={wallet.id}>
-                          {wallet.name} (रु {wallet.balance.toLocaleString()})
+                          {wallet.name} ({formatAmount(wallet.balance)})
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -316,7 +318,7 @@ export const FinanceTransactions: React.FC = () => {
                     <SelectContent>
                       {wallets.map((wallet) => (
                         <SelectItem key={wallet.id} value={wallet.id}>
-                          {wallet.name} (रु {wallet.balance.toLocaleString()})
+                          {wallet.name} ({formatAmount(wallet.balance)})
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -332,7 +334,7 @@ export const FinanceTransactions: React.FC = () => {
                     <SelectContent>
                       {wallets.map((wallet) => (
                         <SelectItem key={wallet.id} value={wallet.id}>
-                          {wallet.name} (रु {wallet.balance.toLocaleString()})
+                          {wallet.name} ({formatAmount(wallet.balance)})
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -478,7 +480,7 @@ export const FinanceTransactions: React.FC = () => {
                       }`}>
                         {item.type === 'transaction' && item.subtype === 'income' ? '+' : 
                          item.type === 'transaction' && item.subtype === 'expense' ? '-' : ''}
-                        रु {item.amount.toLocaleString()}
+                        {formatAmount(item.amount)}
                       </p>
                     </div>
                     <div className="flex space-x-1">

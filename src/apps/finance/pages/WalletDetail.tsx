@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,10 +7,12 @@ import { ArrowUp, ArrowDown, Calendar, TrendingUp, TrendingDown, Wallet, ArrowLe
 import { useWallets } from '@/hooks/useWallets';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useTransfers } from '@/hooks/useTransfers';
+import { useCurrency } from '@/hooks/useCurrency';
 
 export const WalletDetail: React.FC = () => {
   const { walletId } = useParams<{ walletId: string }>();
   const navigate = useNavigate();
+  const { currency, formatAmount } = useCurrency();
   const { wallets } = useWallets();
   const { transactions } = useTransactions();
   const { transfers } = useTransfers();
@@ -99,7 +100,7 @@ export const WalletDetail: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-700">
-              रु {wallet.balance.toLocaleString()}
+              {formatAmount(wallet.balance)}
             </div>
             <Badge variant="outline" className="border-green-200 text-green-700 mt-1">
               {wallet.currency}
@@ -114,7 +115,7 @@ export const WalletDetail: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-700">
-              रु {totalIncome.toLocaleString()}
+              {formatAmount(totalIncome)}
             </div>
           </CardContent>
         </Card>
@@ -126,7 +127,7 @@ export const WalletDetail: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-700">
-              रु {totalExpense.toLocaleString()}
+              {formatAmount(totalExpense)}
             </div>
           </CardContent>
         </Card>
@@ -191,7 +192,7 @@ export const WalletDetail: React.FC = () => {
                         ? transaction.is_income ? 'text-green-600' : 'text-red-600'
                         : transaction.is_income ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      {(transaction.transaction_type === 'transfer' ? transaction.is_income : transaction.is_income) ? '+' : '-'}रु {transaction.display_amount.toLocaleString()}
+                      {(transaction.transaction_type === 'transfer' ? transaction.is_income : transaction.is_income) ? '+' : '-'}{formatAmount(transaction.display_amount)}
                     </p>
                     <Badge variant="outline" className={`${
                       transaction.transaction_type === 'transfer'

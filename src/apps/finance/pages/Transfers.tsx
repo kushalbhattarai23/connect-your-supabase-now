@@ -10,8 +10,10 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, ArrowLeftRight, Edit, Trash2 } from 'lucide-react';
 import { useTransfers } from '@/hooks/useTransfers';
 import { useWallets } from '@/hooks/useWallets';
+import { useCurrency } from '@/hooks/useCurrency';
 
 export const FinanceTransfers: React.FC = () => {
+  const { currency, formatAmount } = useCurrency();
   const { transfers, isLoading, createTransfer, updateTransfer, deleteTransfer } = useTransfers();
   const { wallets } = useWallets();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -188,7 +190,7 @@ export const FinanceTransfers: React.FC = () => {
                   </div>
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                     <div className="text-left sm:text-right">
-                      <p className="text-xl font-bold text-green-700">रु {transfer.amount.toLocaleString()}</p>
+                      <p className="text-xl font-bold text-green-700">{formatAmount(transfer.amount)}</p>
                       <Badge variant="outline" className="border-green-200 text-green-700">
                         {transfer.status}
                       </Badge>
