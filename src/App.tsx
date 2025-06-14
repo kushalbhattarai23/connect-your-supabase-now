@@ -1,10 +1,10 @@
-
 import { Suspense, lazy } from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@/hooks/useAuth';
+import { OrganizationProvider } from '@/contexts/OrganizationContext';
 import { AppLayout } from '@/components/Layout/AppLayout';
 import Index from '@/pages/Index';
 import NotFound from '@/pages/NotFound';
@@ -48,126 +48,128 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <BrowserRouter>
-            <div className="min-h-screen bg-gray-50">
-              <Toaster />
-              <Routes>
-                <Route path="/landing" element={<Landing />} />
-                <Route path="/" element={<AppLayout />}>
-                  <Route index element={<Index />} />
-                  <Route path="profile" element={<Profile />} />
-                  <Route path="settings" element={<Settings />} />
-                  
-                  {/* TV Shows Routes */}
-                  <Route path="tv-shows" element={
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <TvShowsDashboard />
-                    </Suspense>
-                  } />
-                  <Route path="tv-shows/my-shows" element={
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <MyShows />
-                    </Suspense>
-                  } />
-                  <Route path="tv-shows/public-shows" element={
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <PublicShows />
-                    </Suspense>
-                  } />
-                  <Route path="tv-shows/public-universes" element={
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <PublicUniverses />
-                    </Suspense>
-                  } />
-                  <Route path="tv-shows/universes" element={
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <Universes />
-                    </Suspense>
-                  } />
-                  <Route path="tv-shows/universe/:slug" element={
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <UniverseDetail />
-                    </Suspense>
-                  } />
-                  <Route path="tv-shows/universe/:slug/dashboard" element={
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <UniverseDashboard />
-                    </Suspense>
-                  } />
-                  <Route path="tv-shows/show/:slug" element={
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <ShowDetail />
-                    </Suspense>
-                  } />
-                  
-                  {/* Finance Routes */}
-                  <Route path="finance" element={
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <FinanceDashboard />
-                    </Suspense>
-                  } />
-                  <Route path="finance/wallets" element={
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <Wallets />
-                    </Suspense>
-                  } />
-                  <Route path="finance/wallet/:id" element={
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <WalletDetail />
-                    </Suspense>
-                  } />
-                  <Route path="finance/transactions" element={
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <Transactions />
-                    </Suspense>
-                  } />
-                  <Route path="finance/categories" element={
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <Categories />
-                    </Suspense>
-                  } />
-                  <Route path="finance/category/:id" element={
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <CategoryDetail />
-                    </Suspense>
-                  } />
-                  <Route path="finance/transfers" element={
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <Transfers />
-                    </Suspense>
-                  } />
-                  <Route path="finance/reports" element={
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <Reports />
-                    </Suspense>
-                  } />
-                  <Route path="finance/settings" element={
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <FinanceSettings />
-                    </Suspense>
-                  } />
-                  <Route path="finance/budgets" element={
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <Budgets />
-                    </Suspense>
-                  } />
-                  <Route path="finance/loans" element={
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <Loans />
-                    </Suspense>
-                  } />
-                  <Route path="finance/credits" element={
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <Credits />
-                    </Suspense>
-                  } />
-                </Route>
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </div>
-          </BrowserRouter>
-        </TooltipProvider>
+        <OrganizationProvider>
+          <TooltipProvider>
+            <BrowserRouter>
+              <div className="min-h-screen bg-gray-50">
+                <Toaster />
+                <Routes>
+                  <Route path="/landing" element={<Landing />} />
+                  <Route path="/" element={<AppLayout />}>
+                    <Route index element={<Index />} />
+                    <Route path="profile" element={<Profile />} />
+                    <Route path="settings" element={<Settings />} />
+                    
+                    {/* TV Shows Routes */}
+                    <Route path="tv-shows" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <TvShowsDashboard />
+                      </Suspense>
+                    } />
+                    <Route path="tv-shows/my-shows" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <MyShows />
+                      </Suspense>
+                    } />
+                    <Route path="tv-shows/public-shows" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <PublicShows />
+                      </Suspense>
+                    } />
+                    <Route path="tv-shows/public-universes" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <PublicUniverses />
+                      </Suspense>
+                    } />
+                    <Route path="tv-shows/universes" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <Universes />
+                      </Suspense>
+                    } />
+                    <Route path="tv-shows/universe/:slug" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <UniverseDetail />
+                      </Suspense>
+                    } />
+                    <Route path="tv-shows/universe/:slug/dashboard" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <UniverseDashboard />
+                      </Suspense>
+                    } />
+                    <Route path="tv-shows/show/:slug" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <ShowDetail />
+                      </Suspense>
+                    } />
+                    
+                    {/* Finance Routes */}
+                    <Route path="finance" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <FinanceDashboard />
+                      </Suspense>
+                    } />
+                    <Route path="finance/wallets" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <Wallets />
+                      </Suspense>
+                    } />
+                    <Route path="finance/wallet/:id" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <WalletDetail />
+                      </Suspense>
+                    } />
+                    <Route path="finance/transactions" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <Transactions />
+                      </Suspense>
+                    } />
+                    <Route path="finance/categories" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <Categories />
+                      </Suspense>
+                    } />
+                    <Route path="finance/category/:id" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <CategoryDetail />
+                      </Suspense>
+                    } />
+                    <Route path="finance/transfers" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <Transfers />
+                      </Suspense>
+                    } />
+                    <Route path="finance/reports" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <Reports />
+                      </Suspense>
+                    } />
+                    <Route path="finance/settings" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <FinanceSettings />
+                      </Suspense>
+                    } />
+                    <Route path="finance/budgets" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <Budgets />
+                      </Suspense>
+                    } />
+                    <Route path="finance/loans" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <Loans />
+                      </Suspense>
+                    } />
+                    <Route path="finance/credits" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <Credits />
+                      </Suspense>
+                    } />
+                  </Route>
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </div>
+            </BrowserRouter>
+          </TooltipProvider>
+        </OrganizationProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
