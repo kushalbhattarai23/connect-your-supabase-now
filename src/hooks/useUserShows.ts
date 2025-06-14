@@ -100,7 +100,7 @@ export const useUserShows = () => {
     },
     enabled: !!user,
     staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
-    cacheTime: 1000 * 60 * 30, // Keep in cache for 30 minutes
+    gcTime: 1000 * 60 * 30, // Keep in cache for 30 minutes
   });
 
   console.log('useUserShows: Returning data:', { userShowsCount: userShows.length, isLoading });
