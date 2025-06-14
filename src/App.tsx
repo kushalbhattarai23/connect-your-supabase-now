@@ -66,134 +66,135 @@ function App() {
                 <Toaster />
                 <Routes>
                   <Route path="/landing" element={<Landing />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/signup" element={<SignUpForm />} />
                   <Route path="/admin/login" element={<AdminLogin />} />
-                  <Route path="/privacy" element={<PrivacyPolicy />} />
-                  <Route path="/terms" element={<TermsOfService />} />
-                  <Route path="/sitemap" element={<Sitemap />} />
-                  
-                  <Route path="/" element={<AppLayout />}>
-                    <Route index element={<Index />} />
-                    <Route path="profile" element={<Profile />} />
-                    <Route path="settings" element={<Settings />} />
-                    
+
+                  <Route element={<AppLayout />}>
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<SignUpForm />} />
+                    <Route path="/privacy" element={<PrivacyPolicy />} />
+                    <Route path="/terms" element={<TermsOfService />} />
+                    <Route path="/sitemap" element={<Sitemap />} />
+
+                    <Route path="/" element={<Index />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/settings" element={<Settings />} />
+
                     {/* TV Shows Routes */}
-                    <Route path="tv-shows" element={
+                    <Route path="/tv-shows" element={
                       <Suspense fallback={<div>Loading...</div>}>
                         <TvShowsDashboard />
                       </Suspense>
                     } />
-                    <Route path="tv-shows/my-shows" element={
+                    <Route path="/tv-shows/my-shows" element={
                       <Suspense fallback={<div>Loading...</div>}>
                         <MyShows />
                       </Suspense>
                     } />
-                    <Route path="tv-shows/public-shows" element={
+                    <Route path="/tv-shows/public-shows" element={
                       <Suspense fallback={<div>Loading...</div>}>
                         <PublicShows />
                       </Suspense>
                     } />
-                    <Route path="tv-shows/public-universes" element={
+                    <Route path="/tv-shows/public-universes" element={
                       <Suspense fallback={<div>Loading...</div>}>
                         <PublicUniverses />
                       </Suspense>
                     } />
-                    <Route path="tv-shows/universes" element={
+                    <Route path="/tv-shows/universes" element={
                       <Suspense fallback={<div>Loading...</div>}>
                         <Universes />
                       </Suspense>
                     } />
-                    <Route path="tv-shows/private-universes" element={
+                    <Route path="/tv-shows/private-universes" element={
                       <Suspense fallback={<div>Loading...</div>}>
                         <PrivateUniverses />
                       </Suspense>
                     } />
-                    <Route path="tv-shows/universe/:slug" element={
+                    <Route path="/tv-shows/universe/:slug" element={
                       <Suspense fallback={<div>Loading...</div>}>
                         <UniverseDetail />
                       </Suspense>
                     } />
-                    <Route path="tv-shows/universe/:slug/dashboard" element={
+                    <Route path="/tv-shows/universe/:slug/dashboard" element={
                       <Suspense fallback={<div>Loading...</div>}>
                         <UniverseDashboard />
                       </Suspense>
                     } />
-                    <Route path="tv-shows/show/:slug" element={
+                    <Route path="/tv-shows/show/:slug" element={
                       <Suspense fallback={<div>Loading...</div>}>
                         <ShowDetail />
                       </Suspense>
                     } />
                     
                     {/* Finance Routes */}
-                    <Route path="finance" element={
+                    <Route path="/finance" element={
                       <Suspense fallback={<div>Loading...</div>}>
                         <FinanceDashboard />
                       </Suspense>
                     } />
-                    <Route path="finance/wallets" element={
+                    <Route path="/finance/wallets" element={
                       <Suspense fallback={<div>Loading...</div>}>
                         <Wallets />
                       </Suspense>
                     } />
-                    <Route path="finance/wallet/:id" element={
+                    <Route path="/finance/wallet/:id" element={
                       <Suspense fallback={<div>Loading...</div>}>
                         <WalletDetail />
                       </Suspense>
                     } />
-                    <Route path="finance/transactions" element={
+                    <Route path="/finance/transactions" element={
                       <Suspense fallback={<div>Loading...</div>}>
                         <Transactions />
                       </Suspense>
                     } />
-                    <Route path="finance/categories" element={
+                    <Route path="/finance/categories" element={
                       <Suspense fallback={<div>Loading...</div>}>
                         <Categories />
                       </Suspense>
                     } />
-                    <Route path="finance/category/:id" element={
+                    <Route path="/finance/category/:id" element={
                       <Suspense fallback={<div>Loading...</div>}>
                         <CategoryDetail />
                       </Suspense>
                     } />
-                    <Route path="finance/transfers" element={
+                    <Route path="/finance/transfers" element={
                       <Suspense fallback={<div>Loading...</div>}>
                         <Transfers />
                       </Suspense>
                     } />
-                    <Route path="finance/reports" element={
+                    <Route path="/finance/reports" element={
                       <Suspense fallback={<div>Loading...</div>}>
                         <Reports />
                       </Suspense>
                     } />
-                    <Route path="finance/settings" element={
+                    <Route path="/finance/settings" element={
                       <Suspense fallback={<div>Loading...</div>}>
                         <FinanceSettings />
                       </Suspense>
                     } />
-                    <Route path="finance/budgets" element={
+                    <Route path="/finance/budgets" element={
                       <Suspense fallback={<div>Loading...</div>}>
                         <Budgets />
                       </Suspense>
                     } />
-                    <Route path="finance/credits" element={
+                    <Route path="/finance/credits" element={
                       <Suspense fallback={<div>Loading...</div>}>
                         <Credits />
                       </Suspense>
                     } />
 
                     {/* Admin Routes */}
-                    <Route path="admin" element={
+                    <Route path="/admin" element={
                       <Suspense fallback={<div>Loading...</div>}>
                         <AdminDashboard />
                       </Suspense>
                     } />
-                    <Route path="admin/users" element={
+                    <Route path="/admin/users" element={
                       <Suspense fallback={<div>Loading...</div>}>
                         <AdminUsers />
                       </Suspense>
                     } />
-                    <Route path="admin/content" element={
+                    <Route path="/admin/content" element={
                       <Suspense fallback={<div>Loading...</div>}>
                         <AdminContent />
                       </Suspense>
