@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Tag, Edit, Trash2 } from 'lucide-react';
+import { Plus, Tag, Edit, Trash2, Search } from 'lucide-react';
 import { useCategories } from '@/hooks/useCategories';
 
 const colorOptions = [
@@ -26,10 +26,17 @@ export const FinanceCategories: React.FC = () => {
   const { categories, isLoading, createCategory, updateCategory, deleteCategory } = useCategories();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     color: '#22C55E'
   });
+
+  const filteredCategories = useMemo(() => {
+    return categories.filter(category =>
+      category.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [categories, searchTerm]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,20 +133,44 @@ export const FinanceCategories: React.FC = () => {
           </DialogContent>
         </Dialog>
       </div>
+
+      <Card className="border-green-200">
+        <CardHeader>
+          <CardTitle className="text-green-700">Search Categories</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              placeholder="Search categories..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </CardContent>
+      </Card>
       
       {isLoading ? (
         <div className="text-center py-8">Loading categories...</div>
-      ) : categories.length === 0 ? (
+      ) : filteredCategories.length === 0 ? (
         <Card className="border-green-200">
           <CardContent className="text-center py-8">
             <Tag className="h-12 w-12 text-green-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Categories Yet</h3>
-            <p className="text-muted-foreground mb-4">Create your first category to organize your transactions</p>
+            <h3 className="text-lg font-semibold mb-2">
+              {searchTerm ? 'No Categories Found' : 'No Categories Yet'}
+            </h3>
+            <p className="text-muted-foreground mb-4">
+              {searchTerm 
+                ? `No categories match "${searchTerm}"`
+                : 'Create your first category to organize your transactions'
+              }
+            </p>
           </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {categories.map((category) => (
+          {filteredCategories.map((category) => (
             <Card 
               key={category.id} 
               className="border-green-200 cursor-pointer hover:shadow-md transition-shadow"

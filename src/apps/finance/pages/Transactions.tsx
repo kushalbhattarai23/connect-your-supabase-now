@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { Plus, ArrowUpRight, ArrowDownRight, ArrowLeftRight, Edit, Trash2, Wallet } from 'lucide-react';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useTransfers } from '@/hooks/useTransfers';
@@ -29,6 +30,8 @@ interface UnifiedTransaction {
   created_at: string;
 }
 
+const ITEMS_PER_PAGE = 5;
+
 export const FinanceTransactions: React.FC = () => {
   const navigate = useNavigate();
   const { currency, formatAmount } = useCurrency();
@@ -40,6 +43,7 @@ export const FinanceTransactions: React.FC = () => {
   const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<any>(null);
   const [editingTransfer, setEditingTransfer] = useState<any>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const [transactionFormData, setTransactionFormData] = useState({
     reason: '',
     type: 'expense' as 'income' | 'expense',
@@ -84,6 +88,11 @@ export const FinanceTransactions: React.FC = () => {
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
   }, [transactions, transfers]);
+
+  const totalPages = Math.ceil(unifiedData.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentItems = unifiedData.slice(startIndex, endIndex);
 
   const handleTransactionSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -404,7 +413,7 @@ export const FinanceTransactions: React.FC = () => {
         </Card>
       ) : (
         <div className="space-y-4">
-          {unifiedData.map((item) => (
+          {currentItems.map((item) => (
             <Card key={`${item.type}-${item.id}`} className="border-green-200">
               <CardContent className="p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -504,6 +513,53 @@ export const FinanceTransactions: React.FC = () => {
               </CardContent>
             </Card>
           ))}
+
+          {totalPages > 1 && (
+            <Card className="border-green-200">
+              <CardContent className="p-4">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        href="#" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (currentPage > 1) setCurrentPage(currentPage - 1);
+                        }}
+                        className={currentPage <= 1 ? 'pointer-events-none opacity-50' : ''}
+                      />
+                    </PaginationItem>
+                    
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setCurrentPage(page);
+                          }}
+                          isActive={currentPage === page}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    
+                    <PaginationItem>
+                      <PaginationNext 
+                        href="#" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                        }}
+                        className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : ''}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
     </div>
