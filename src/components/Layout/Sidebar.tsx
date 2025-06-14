@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { getEnabledApps } from '@/config/apps';
@@ -204,21 +203,6 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
                 {/* Add special routes for TV Shows - available to everyone */}
                 {app.id === 'tv-shows' && (
                   <>
-                    <Link
-                      to="/tv-shows/public-universes"
-                      title={isCollapsed ? "Public Universes" : undefined}
-                      className={cn(
-                        "flex items-center space-x-3 px-3 lg:px-6 py-2 rounded-lg transition-colors text-sm",
-                        location.pathname === '/tv-shows/public-universes'
-                          ? `bg-${app.color}-100 text-${app.color}-700 dark:bg-${app.color}-900 dark:text-${app.color}-300`
-                          : "text-muted-foreground hover:text-foreground hover:bg-accent",
-                        isCollapsed && "lg:justify-center lg:space-x-0 lg:px-3"
-                      )}
-                    >
-                      <Globe className="w-4 h-4 flex-shrink-0" />
-                      {!isCollapsed && <span>Public Universes</span>}
-                    </Link>
-                    
                     {/* Show user-specific TV shows routes only to authenticated users */}
                     {user && (
                       <Link

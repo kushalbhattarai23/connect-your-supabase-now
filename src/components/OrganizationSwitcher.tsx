@@ -43,7 +43,7 @@ export const OrganizationSwitcher: React.FC = () => {
   const currentValue = isPersonalMode ? 'personal' : currentOrganization?.id || 'personal';
 
   return (
-    <div className="flex items-center space-x-2">
+    <div className="space-y-2">
       <div className="flex items-center space-x-2 min-w-0">
         {isPersonalMode ? (
           <User className="h-4 w-4 text-blue-600" />
@@ -77,7 +77,7 @@ export const OrganizationSwitcher: React.FC = () => {
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogTrigger asChild>
-          <Button size="sm" variant="outline">
+          <Button size="sm" variant="outline" className="w-full">
             <Plus className="h-4 w-4 mr-2" />
             New Company
           </Button>
