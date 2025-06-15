@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,9 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRoles } from "@/hooks/useUserRoles";
-import { UploadIcon, Import } from "lucide-react";
+import { UploadIcon, Import, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { parseCSV } from "@/utils/csvUtils";
+import { parseCSV, downloadCSV, convertToCSV } from "@/utils/csvUtils";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
 
@@ -25,6 +24,32 @@ const AdminAddShowForm: React.FC = () => {
 
   // Only render if admin
   if (!isAdmin) return null;
+
+  const handleDownloadTemplate = () => {
+    const templateData = [
+      {
+        "Show": "Agent Carter",
+        "Episode": "S01E01",
+        "Title": "Now is Not the End",
+        "Air Date": "January 6, 2015"
+      },
+      {
+        "Show": "Agent Carter", 
+        "Episode": "S01E02",
+        "Title": "Bridge and Tunnel",
+        "Air Date": "January 13, 2015"
+      },
+      {
+        "Show": "The Mandalorian",
+        "Episode": "S1E1", 
+        "Title": "Chapter 1: The Mandalorian",
+        "Air Date": "November 12, 2019"
+      }
+    ];
+    
+    const csvContent = convertToCSV(templateData, CSV_HEADERS);
+    downloadCSV(csvContent, "tv_shows_import_template");
+  };
 
   const handleCsvFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -180,7 +205,19 @@ const AdminAddShowForm: React.FC = () => {
       <CardContent>
         <form onSubmit={handleImport} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium mb-2">Upload CSV File</label>
+            <div className="flex justify-between items-center mb-2">
+              <label className="block text-sm font-medium">Upload CSV File</label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadTemplate}
+                className="flex items-center gap-1"
+              >
+                <Download className="h-4 w-4" />
+                Download Template
+              </Button>
+            </div>
             <Input
               type="file"
               accept=".csv,text/csv"
@@ -215,7 +252,11 @@ Agent Carter,S01E02,Bridge and Tunnel,"January 13, 2015"
           </div>
 
           <Button
-            className="w-full bg-gray-400 text-white hover:bg-gray-500 disabled:opacity-50"
+            className={`w-full text-white hover:opacity-90 disabled:opacity-50 ${
+              csvText.trim() 
+                ? "bg-gray-800 hover:bg-gray-900" 
+                : "bg-gray-400 hover:bg-gray-500"
+            }`}
             type="submit"
             disabled={csvLoading || !csvText.trim()}
           >
