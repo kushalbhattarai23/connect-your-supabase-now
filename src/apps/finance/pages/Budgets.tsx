@@ -358,6 +358,7 @@ export const Budgets: React.FC = () => {
             </div>
             <Progress 
               value={Math.min(monthlyProgressPercentage, 100)} 
+              color={monthlyProgressPercentage > 100 ? "red" : "green"}
               className={`h-3 ${monthlyProgressPercentage > 100 ? 'bg-red-100' : 'bg-green-100'}`}
             />
           </div>
@@ -454,6 +455,7 @@ export const Budgets: React.FC = () => {
                   </div>
                   <Progress 
                     value={Math.min(percentage, 100)} 
+                    color={isOverBudget ? "red" : "green"}
                     className={`h-2 ${isOverBudget ? 'bg-red-100' : 'bg-green-100'}`}
                   />
                   <div className="flex justify-between text-sm">
