@@ -1,3 +1,4 @@
+
 # 🎯 Track Hub
 
 Track Hub is a modular, full-stack web application combining two powerful systems in a single platform:
@@ -57,6 +58,13 @@ Track Hub is a modular, full-stack web application combining two powerful system
 
 ---
 
+### 🚀 Platform Features
+- **Feature Requests**: A dedicated page for users to submit feature requests or suggestions for new TV shows.
+- **Secure User Data**: Each user's data is isolated and secured using Supabase's Row-Level Security.
+- **Role-Based Access**: Admin roles for managing content and user requests.
+
+---
+
 ## 🧰 Tech Stack
 
 ### 🖥️ Frontend
@@ -82,3 +90,28 @@ Track Hub is a modular, full-stack web application combining two powerful system
 
 ## 📂 Project Structure
 
+The project follows a modular structure, separating concerns for scalability and maintainability.
+
+```
+/
+├── public/              # Static assets and favicons
+├── supabase/            # Supabase migrations and configuration
+├── src/
+│   ├── apps/            # Core application modules (the "apps")
+│   │   ├── admin/       # Admin dashboard pages and components
+│   │   ├── finance/     # Finance hub module
+│   │   └── tv-shows/    # TV shows tracker module
+│   ├── components/      # Shared React components
+│   │   ├── Auth/        # Authentication components (login, signup)
+│   │   ├── Layout/      # App layout components (header, sidebar, etc.)
+│   │   └── ui/          # Reusable UI components from shadcn/ui
+│   ├── contexts/        # React context providers
+│   ├── hooks/           # Custom React hooks for logic and data fetching
+│   ├── integrations/    # Third-party service integrations (e.g., Supabase)
+│   │   └── supabase/
+│   ├── lib/             # Utility functions and libraries
+│   ├── pages/           # Top-level page components for routing
+│   ├── App.tsx          # Main application component with routing
+│   └── main.tsx         # Application entry point
+└── ...                  # Configuration files (vite, tailwind, etc.)
+```
