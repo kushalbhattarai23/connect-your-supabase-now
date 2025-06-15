@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -301,7 +300,7 @@ export const PublicUniverseDetail: React.FC = () => {
                     S{episode.season_number}E{episode.episode_number}
                   </Badge>
                 </div>
-                <p className="text-sm text-muted-foreground truncate">{episode.episode_title}</p>
+                <h3 className="text-base font-semibold text-gray-900 truncate">{episode.episode_title}</h3>
               </CardHeader>
               <CardContent className="space-y-2">
                 {episode.air_date && (
