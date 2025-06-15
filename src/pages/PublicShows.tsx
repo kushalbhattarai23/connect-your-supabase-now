@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Tv, Search, Calendar, Globe } from 'lucide-react';
+import { Tv, Search, Calendar, Globe, Filter } from 'lucide-react';
 import { useShowUniverseData } from '@/hooks/useShowUniverseData';
 
 export const PublicShows: React.FC = () => {
@@ -44,8 +44,8 @@ export const PublicShows: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <Tv className="h-16 w-16 text-blue-500 mx-auto mb-4" />
-        <h1 className="text-3xl font-bold mb-2">All Shows</h1>
+        <Tv className="h-16 w-16 text-blue-600 mx-auto mb-4" />
+        <h1 className="text-3xl font-bold mb-2 text-blue-700">All Shows</h1>
         <p className="text-muted-foreground">
           Explore all TV shows across different universes and track your viewing progress
         </p>
@@ -53,57 +53,60 @@ export const PublicShows: React.FC = () => {
 
       <div className="max-w-md mx-auto mb-8">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 h-4 w-4" />
           <Input
             placeholder="Search shows..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 pr-10 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
           />
+          <Filter className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-400 h-4 w-4" />
         </div>
       </div>
 
       {filteredShows.length === 0 ? (
-        <div className="text-center py-12">
-          <Tv className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No Shows Found</h3>
-          <p className="text-muted-foreground">
-            {searchTerm ? 'Try adjusting your search terms.' : 'No shows are available at the moment.'}
-          </p>
-        </div>
+        <Card className="border-blue-200 shadow-lg">
+          <CardContent className="text-center py-12">
+            <Tv className="h-16 w-16 text-blue-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2 text-blue-700">No Shows Found</h3>
+            <p className="text-muted-foreground">
+              {searchTerm ? 'Try adjusting your search terms.' : 'No shows are available at the moment.'}
+            </p>
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredShows.map((show) => (
-            <Card key={show?.show_id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
+            <Card key={show?.show_id} className="border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:border-blue-300">
+              <CardHeader className="border-b border-blue-100">
                 <div className="flex items-start justify-between">
                   <CardTitle className="text-xl">
                     <Link 
                       to={`/public/show/${show?.slug || show?.show_title.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-')}`}
-                      className="text-blue-600 hover:underline"
+                      className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
                     >
                       {show?.show_title}
                     </Link>
                   </CardTitle>
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="outline" className="text-xs border-blue-200 text-blue-700">
                     {show?.universeCount} universe{show?.universeCount !== 1 ? 's' : ''}
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-3 pt-4">
                 {show?.show_description && (
                   <p className="text-sm text-muted-foreground line-clamp-3">
                     {show.show_description}
                   </p>
                 )}
                 
-                <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+                <div className="flex flex-wrap gap-2 text-sm text-muted-foreground pt-2 border-t border-blue-50">
                   <div className="flex items-center">
-                    <Calendar className="w-4 h-4 mr-1" />
+                    <Calendar className="w-4 h-4 mr-1 text-blue-500" />
                     <span>{show?.seasonCount} seasons</span>
                   </div>
                   <div className="flex items-center">
-                    <span># {show?.episodeCount} episodes</span>
+                    <span className="text-blue-600"># {show?.episodeCount} episodes</span>
                   </div>
                 </div>
               </CardContent>

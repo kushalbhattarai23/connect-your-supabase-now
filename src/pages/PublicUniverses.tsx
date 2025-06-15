@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Globe, Search, Tv } from 'lucide-react';
+import { Globe, Search, Tv, Filter } from 'lucide-react';
 import { useShowUniverseData } from '@/hooks/useShowUniverseData';
 
 export const PublicUniverses: React.FC = () => {
@@ -41,8 +41,8 @@ export const PublicUniverses: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <Globe className="h-16 w-16 text-blue-500 mx-auto mb-4" />
-        <h1 className="text-3xl font-bold mb-2">All Universes</h1>
+        <Globe className="h-16 w-16 text-blue-600 mx-auto mb-4" />
+        <h1 className="text-3xl font-bold mb-2 text-blue-700">All Universes</h1>
         <p className="text-muted-foreground">
           Explore different universes and discover the shows and episodes within each one
         </p>
@@ -50,52 +50,55 @@ export const PublicUniverses: React.FC = () => {
 
       <div className="max-w-md mx-auto mb-8">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 h-4 w-4" />
           <Input
             placeholder="Search universes..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
           />
+          <Filter className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-400 h-4 w-4" />
         </div>
       </div>
 
       {filteredUniverses.length === 0 ? (
-        <div className="text-center py-12">
-          <Globe className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No Universes Found</h3>
-          <p className="text-muted-foreground">
-            {searchTerm ? 'Try adjusting your search terms.' : 'No universes are available at the moment.'}
-          </p>
-        </div>
+        <Card className="border-blue-200 shadow-lg">
+          <CardContent className="text-center py-12">
+            <Globe className="h-16 w-16 text-blue-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2 text-blue-700">No Universes Found</h3>
+            <p className="text-muted-foreground">
+              {searchTerm ? 'Try adjusting your search terms.' : 'No universes are available at the moment.'}
+            </p>
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredUniverses.map((universe) => (
-            <Card key={universe?.universe_id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
+            <Card key={universe?.universe_id} className="border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:border-blue-300">
+              <CardHeader className="border-b border-blue-100">
                 <CardTitle className="text-xl">
                   <Link 
                     to={`/public/universe/${universe?.universe_name.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-')}`}
-                    className="text-blue-600 hover:underline"
+                    className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
                   >
                     {universe?.universe_name}
                   </Link>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-3 pt-4">
                 {universe?.universe_description && (
                   <p className="text-sm text-muted-foreground line-clamp-3">
                     {universe.universe_description}
                   </p>
                 )}
                 
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <div className="flex items-center justify-between text-sm text-muted-foreground pt-2 border-t border-blue-50">
                   <div className="flex items-center">
-                    <Tv className="w-4 h-4 mr-1" />
+                    <Tv className="w-4 h-4 mr-1 text-blue-500" />
                     <span>{universe?.showCount} shows</span>
                   </div>
                   <div className="flex items-center">
-                    <span># {universe?.episodeCount} episodes</span>
+                    <span className="text-blue-600"># {universe?.episodeCount} episodes</span>
                   </div>
                 </div>
               </CardContent>
