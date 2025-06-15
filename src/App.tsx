@@ -47,7 +47,7 @@ const AdminDashboard = lazy(() => import('@/apps/admin/pages/Dashboard'));
 const AdminUsers = lazy(() => import('@/apps/admin/pages/Users'));
 const AdminContent = lazy(() => import('@/apps/admin/pages/Content'));
 
-// Public pages for standalone viewing
+// Public pages
 const PublicUniversesList = lazy(() => import('@/pages/PublicUniverses'));
 const PublicShowsList = lazy(() => import('@/pages/PublicShows'));
 const PublicUniverseDetail = lazy(() => import('@/pages/PublicUniverseDetail'));
@@ -75,28 +75,6 @@ function App() {
                   <Route path="/landing" element={<Landing />} />
                   <Route path="/admin/login" element={<AdminLogin />} />
 
-                  {/* Public routes - no layout needed */}
-                  <Route path="/public/universes" element={
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <PublicUniversesList />
-                    </Suspense>
-                  } />
-                  <Route path="/public/shows" element={
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <PublicShowsList />
-                    </Suspense>
-                  } />
-                  <Route path="/public/universe/:slug" element={
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <PublicUniverseDetail />
-                    </Suspense>
-                  } />
-                  <Route path="/public/show/:slug" element={
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <PublicShowDetail />
-                    </Suspense>
-                  } />
-
                   <Route element={<AppLayout />}>
                     <Route path="/login" element={<Login />} />
                     <Route path="/signup" element={<SignUpForm />} />
@@ -107,6 +85,28 @@ function App() {
                     <Route path="/" element={<Index />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/settings" element={<Settings />} />
+
+                    {/* Public routes with layout */}
+                    <Route path="/public/universes" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <PublicUniversesList />
+                      </Suspense>
+                    } />
+                    <Route path="/public/shows" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <PublicShowsList />
+                      </Suspense>
+                    } />
+                    <Route path="/public/universe/:slug" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <PublicUniverseDetail />
+                      </Suspense>
+                    } />
+                    <Route path="/public/show/:slug" element={
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <PublicShowDetail />
+                      </Suspense>
+                    } />
 
                     {/* TV Shows Routes */}
                     <Route path="/tv-shows" element={

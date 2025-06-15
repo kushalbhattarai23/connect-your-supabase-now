@@ -12,7 +12,7 @@ export const PublicUniverseDetail: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-6">
+      <div className="text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
       </div>
     );
@@ -25,13 +25,11 @@ export const PublicUniverseDetail: React.FC = () => {
 
   if (!universeData) {
     return (
-      <div className="container mx-auto px-4 py-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Universe Not Found</h1>
-          <Link to="/public/universes" className="text-blue-600 hover:underline">
-            Back to Universes
-          </Link>
-        </div>
+      <div className="text-center">
+        <h1 className="text-2xl font-bold mb-4">Universe Not Found</h1>
+        <Link to="/public/universes" className="text-blue-600 hover:underline">
+          Back to Universes
+        </Link>
       </div>
     );
   }
@@ -51,7 +49,7 @@ export const PublicUniverseDetail: React.FC = () => {
   });
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center gap-4 mb-6">
         <Link to="/public/universes" className="flex items-center text-blue-600 hover:underline">
           <ArrowLeft className="h-4 w-4 mr-1" />

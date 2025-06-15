@@ -12,11 +12,9 @@ export const PublicUniverses: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-6">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading universes...</p>
-        </div>
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-muted-foreground">Loading universes...</p>
       </div>
     );
   }
@@ -41,7 +39,7 @@ export const PublicUniverses: React.FC = () => {
   );
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
+    <div className="space-y-6">
       <div className="text-center mb-8">
         <Globe className="h-16 w-16 text-blue-500 mx-auto mb-4" />
         <h1 className="text-3xl font-bold mb-2">All Universes</h1>
