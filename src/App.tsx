@@ -1,3 +1,4 @@
+
 import { Suspense, lazy } from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -21,8 +22,8 @@ import Sitemap from "@/pages/Sitemap";
 // Lazy load pages
 const TvShowsDashboard = lazy(() => import('@/apps/tv-shows/pages/Dashboard'));
 const MyShows = lazy(() => import('@/apps/tv-shows/pages/MyShows'));
-const PublicShows = lazy(() => import('@/apps/tv-shows/pages/PublicShows'));
-const PublicUniverses = lazy(() => import('@/apps/tv-shows/pages/PublicUniverses'));
+const AppPublicShows = lazy(() => import('@/apps/tv-shows/pages/PublicShows'));
+const AppPublicUniverses = lazy(() => import('@/apps/tv-shows/pages/PublicUniverses'));
 const Universes = lazy(() => import('@/apps/tv-shows/pages/Universes'));
 const PrivateUniverses = lazy(() => import('@/apps/tv-shows/pages/PrivateUniverses'));
 const UniverseDetail = lazy(() => import('@/apps/tv-shows/pages/UniverseDetail'));
@@ -46,9 +47,9 @@ const AdminDashboard = lazy(() => import('@/apps/admin/pages/Dashboard'));
 const AdminUsers = lazy(() => import('@/apps/admin/pages/Users'));
 const AdminContent = lazy(() => import('@/apps/admin/pages/Content'));
 
-// Add new lazy loads for public pages
-const PublicUniverses = lazy(() => import('@/pages/PublicUniverses'));
-const PublicShows = lazy(() => import('@/pages/PublicShows'));
+// Public pages for standalone viewing
+const PublicUniversesList = lazy(() => import('@/pages/PublicUniverses'));
+const PublicShowsList = lazy(() => import('@/pages/PublicShows'));
 const PublicUniverseDetail = lazy(() => import('@/pages/PublicUniverseDetail'));
 const PublicShowDetail = lazy(() => import('@/pages/PublicShowDetail'));
 
@@ -77,12 +78,12 @@ function App() {
                   {/* Public routes - no layout needed */}
                   <Route path="/public/universes" element={
                     <Suspense fallback={<div>Loading...</div>}>
-                      <PublicUniverses />
+                      <PublicUniversesList />
                     </Suspense>
                   } />
                   <Route path="/public/shows" element={
                     <Suspense fallback={<div>Loading...</div>}>
-                      <PublicShows />
+                      <PublicShowsList />
                     </Suspense>
                   } />
                   <Route path="/public/universe/:slug" element={
@@ -120,12 +121,12 @@ function App() {
                     } />
                     <Route path="/tv-shows/public-shows" element={
                       <Suspense fallback={<div>Loading...</div>}>
-                        <PublicShows />
+                        <AppPublicShows />
                       </Suspense>
                     } />
                     <Route path="/tv-shows/public-universes" element={
                       <Suspense fallback={<div>Loading...</div>}>
-                        <PublicUniverses />
+                        <AppPublicUniverses />
                       </Suspense>
                     } />
                     <Route path="/tv-shows/universes" element={
