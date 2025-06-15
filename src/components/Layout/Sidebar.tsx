@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { getEnabledApps } from '@/config/apps';
@@ -121,9 +122,12 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 lg:p-6">
-        <div className="flex items-center justify-between">
-          <Link to="/" className={cn("flex items-center space-x-2", isCollapsed && "lg:justify-center")}>
+      <div className="p-4 lg:p-6 relative">
+        <div className={cn(
+          "flex items-center",
+          isCollapsed ? "justify-center" : "justify-between"
+        )}>
+          <Link to="/" className={cn("flex items-center space-x-2")}>
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <span className="text-primary-foreground font-bold">T</span>
             </div>
@@ -137,7 +141,7 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
               variant="ghost"
               size="sm"
               onClick={onToggleCollapse}
-              className="hidden lg:flex h-8 w-8 p-0"
+              className={cn("hidden lg:flex h-8 w-8 p-0", isCollapsed && "absolute right-2 top-1/2 -translate-y-1/2")}
             >
               {isCollapsed ? (
                 <ChevronRight className="h-4 w-4" />
