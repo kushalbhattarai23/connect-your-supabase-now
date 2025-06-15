@@ -9,6 +9,7 @@ import { Plus, Edit, Trash2, DollarSign, Phone, Mail, CreditCard } from 'lucide-
 import { useCredits, CreateCreditData } from '@/hooks/useCredits';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useCategories } from '@/hooks/useCategories';
+import { useTransactions } from '@/hooks/useTransactions';
 import {
   Table,
   TableHeader,
@@ -365,9 +366,99 @@ export const Credits: React.FC = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Loan Transactions Section */}
+      <LoanTransactionsSection />
+
       {/* Loan Categories Section */}
       <LoanCategoriesSection />
     </div>
+  );
+};
+
+const LoanTransactionsSection: React.FC = () => {
+  const { transactions, isLoading: txLoading } = useTransactions();
+  const { categories, isLoading: catLoading } = useCategories();
+  const { formatAmount } = useCurrency();
+
+  if (txLoading || catLoading) return <div className="text-muted-foreground py-4">Loading transactions...</div>;
+
+  // Find category ids whose name includes 'loan' (case-insensitive)
+  const loanCategories = categories.filter(cat =>
+    cat.name.toLowerCase().includes('loan')
+  );
+  const loanCategoryIds = loanCategories.map(cat => cat.id);
+
+  // Filter transactions with those category ids
+  const loanTxs = transactions.filter(tx =>
+    tx.category_id && loanCategoryIds.includes(tx.category_id)
+  );
+
+  if (!loanTxs.length) {
+    return (
+      <section className="mt-10">
+        <h2 className="text-xl font-semibold mb-2 text-green-700">Loan Transactions</h2>
+        <div className="text-muted-foreground py-4">No transactions found for loan categories.</div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mt-10">
+      <h2 className="text-xl font-semibold mb-2 text-green-700">Loan Transactions</h2>
+      <div className="bg-background border rounded-lg overflow-x-auto">
+        <Table>
+          <TableCaption>All your transactions in "Loan" categories.</TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Date</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Reason</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Amount</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loanTxs.map(tx => {
+              const cat = categories.find(c => c.id === tx.category_id);
+              return (
+                <TableRow key={tx.id}>
+                  <TableCell>{new Date(tx.date).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <span
+                      className="inline-block w-4 h-4 rounded-full align-middle mr-2"
+                      style={{ backgroundColor: cat?.color }}
+                      aria-label={`Category color for ${cat?.name}`}
+                    />
+                    <span className="text-xs">{cat?.name}</span>
+                  </TableCell>
+                  <TableCell>{tx.reason}</TableCell>
+                  <TableCell>
+                    <span
+                      className={
+                        tx.type === 'income'
+                          ? 'text-green-700 font-medium'
+                          : 'text-red-700 font-medium'
+                      }
+                    >
+                      {tx.type.charAt(0).toUpperCase() + tx.type.slice(1)}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span>
+                      {tx.type === 'income' && tx.income
+                        ? formatAmount(tx.income)
+                        : tx.type === 'expense' && tx.expense
+                        ? formatAmount(tx.expense)
+                        : '-'}
+                    </span>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+    </section>
   );
 };
 
