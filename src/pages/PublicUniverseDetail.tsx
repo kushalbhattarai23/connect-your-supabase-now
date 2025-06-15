@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
-import { Calendar, Tv, ArrowLeft, Search, Filter, ArrowUpDown, Globe } from 'lucide-react';
+import { Calendar, Tv, ArrowLeft, Search, Filter, ArrowUpDown } from 'lucide-react';
 import { useShowUniverseData } from '@/hooks/useShowUniverseData';
 
 export const PublicUniverseDetail: React.FC = () => {
@@ -17,6 +18,81 @@ export const PublicUniverseDetail: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
 
+  // Memoize derived data to prevent re-computation and fix hook order
+  const universeData = useMemo(() => {
+    if (isLoading || !data) return undefined;
+    return data.find(item => 
+      item.universe_name.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-') === slug
+    );
+  }, [data, isLoading, slug]);
+
+  const universeItems = useMemo(() => {
+    if (!universeData) return [];
+    return data.filter(item => item.universe_id === universeData.universe_id);
+  }, [data, universeData]);
+
+  const shows = useMemo(() => {
+    if (!universeItems.length) return [];
+    const showsMap = new Map();
+    universeItems.forEach(item => {
+      if (!showsMap.has(item.show_id) && item) {
+        showsMap.set(item.show_id, item);
+      }
+    });
+    return Array.from(showsMap.values());
+  }, [universeItems]);
+
+  const allEpisodes = useMemo(() => {
+    if (!universeItems.length) return [];
+    return [...universeItems].sort((a, b) => {
+      // Default sort by air date
+      if (a.air_date && b.air_date) {
+        return new Date(a.air_date).getTime() - new Date(b.air_date).getTime();
+      }
+      // Fallback to season/episode if air dates are missing
+      if (a.season_number !== b.season_number) {
+        return a.season_number - b.season_number;
+      }
+      return a.episode_number - b.episode_number;
+    });
+  }, [universeItems]);
+
+  const seasons = useMemo(() => {
+    return [...new Set(allEpisodes.map(ep => ep.season_number))].sort((a, b) => a - b);
+  }, [allEpisodes]);
+
+  const filteredAndSortedEpisodes = useMemo(() => {
+    const filtered = allEpisodes.filter(episode => {
+      const matchesSearch = episode.episode_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           episode.show_title.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSeason = selectedSeason === 'all' || episode.season_number.toString() === selectedSeason;
+      return matchesSearch && matchesSeason;
+    });
+
+    return [...filtered].sort((a, b) => {
+      if (a.air_date && b.air_date) {
+        const dateA = new Date(a.air_date).getTime();
+        const dateB = new Date(b.air_date).getTime();
+        return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+      }
+      
+      const seasonA = a.season_number;
+      const seasonB = b.season_number;
+      const episodeA = a.episode_number;
+      const episodeB = b.episode_number;
+
+      if (seasonA !== seasonB) {
+        return sortOrder === 'asc' ? seasonA - seasonB : seasonB - seasonA;
+      }
+      return sortOrder === 'asc' ? episodeA - episodeB : episodeB - episodeA;
+    });
+  }, [allEpisodes, searchTerm, sortOrder, selectedSeason]);
+
+  // Reset to page 1 when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedSeason, sortOrder, itemsPerPage]);
+
   if (isLoading) {
     return (
       <div className="text-center">
@@ -24,11 +100,6 @@ export const PublicUniverseDetail: React.FC = () => {
       </div>
     );
   }
-
-  // Find the universe by slug
-  const universeData = data.find(item => 
-    item.universe_name.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-') === slug
-  );
 
   if (!universeData) {
     return (
@@ -41,70 +112,11 @@ export const PublicUniverseDetail: React.FC = () => {
     );
   }
 
-  // Group data by universe
-  const universeItems = data.filter(item => item.universe_id === universeData.universe_id);
-  const shows = [...new Set(universeItems.map(item => item.show_id))].map(showId => {
-    const showItem = universeItems.find(item => item.show_id === showId);
-    return showItem;
-  }).filter(Boolean);
-
-  const allEpisodes = universeItems.sort((a, b) => {
-    // Default sort by air date
-    if (a.air_date && b.air_date) {
-      return new Date(a.air_date).getTime() - new Date(b.air_date).getTime();
-    }
-    // Fallback to season/episode if air dates are missing
-    if (a.season_number !== b.season_number) {
-      return a.season_number - b.season_number;
-    }
-    return a.episode_number - b.episode_number;
-  });
-
-  // Get unique seasons for filter
-  const seasons = [...new Set(allEpisodes.map(ep => ep.season_number))].sort((a, b) => a - b);
-
-  // Filter and sort episodes
-  const filteredAndSortedEpisodes = useMemo(() => {
-    let filtered = allEpisodes.filter(episode => {
-      const matchesSearch = episode.episode_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           episode.show_title.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesSeason = selectedSeason === 'all' || episode.season_number.toString() === selectedSeason;
-      return matchesSearch && matchesSeason;
-    });
-
-    // Sort by air date
-    filtered.sort((a, b) => {
-      if (a.air_date && b.air_date) {
-        const dateA = new Date(a.air_date).getTime();
-        const dateB = new Date(b.air_date).getTime();
-        return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
-      }
-      
-      // Fallback to season/episode if air dates are missing
-      const seasonA = a.season_number;
-      const seasonB = b.season_number;
-      const episodeA = a.episode_number;
-      const episodeB = b.episode_number;
-
-      if (seasonA !== seasonB) {
-        return sortOrder === 'asc' ? seasonA - seasonB : seasonB - seasonA;
-      }
-      return sortOrder === 'asc' ? episodeA - episodeB : episodeB - episodeA;
-    });
-
-    return filtered;
-  }, [allEpisodes, searchTerm, sortOrder, selectedSeason]);
-
   // Pagination calculations
   const totalPages = Math.ceil(filteredAndSortedEpisodes.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentEpisodes = filteredAndSortedEpisodes.slice(startIndex, endIndex);
-
-  // Reset to page 1 when filters change
-  React.useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, selectedSeason, sortOrder, itemsPerPage]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
