@@ -187,7 +187,10 @@ export const Budgets: React.FC = () => {
   };
 
   // Calculate total monthly budget and spending
-  const totalMonthlyBudget = budgets.reduce((sum, budget) => sum + budget.amount, 0);
+  // If a monthly total exists, use its amount. Otherwise, sum the budgets.
+  const totalMonthlyBudget = monthlyTotalBudget
+    ? monthlyTotalBudget.amount
+    : budgets.reduce((sum, budget) => sum + budget.amount, 0);
   const totalMonthlySpent = getSpentAmount();
   const monthlyBudgetRemaining = totalMonthlyBudget - totalMonthlySpent;
   const monthlyProgressPercentage = totalMonthlyBudget > 0 ? (totalMonthlySpent / totalMonthlyBudget) * 100 : 0;
