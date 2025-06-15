@@ -14,6 +14,7 @@ export const PublicUniverseDetail: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [selectedSeason, setSelectedSeason] = useState<string>('all');
+  const [selectedShow, setSelectedShow] = useState<string>('all'); // ADDED
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
 
@@ -60,12 +61,14 @@ export const PublicUniverseDetail: React.FC = () => {
     return [...new Set(allEpisodes.map(ep => ep.season_number))].sort((a, b) => a - b);
   }, [allEpisodes]);
 
+  // Update filteredAndSortedEpisodes: add show filter logic
   const filteredAndSortedEpisodes = useMemo(() => {
     const filtered = allEpisodes.filter(episode => {
       const matchesSearch = episode.episode_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            episode.show_title.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesSeason = selectedSeason === 'all' || episode.season_number.toString() === selectedSeason;
-      return matchesSearch && matchesSeason;
+      const matchesShow = selectedShow === 'all' || episode.show_id === selectedShow;
+      return matchesSearch && matchesSeason && matchesShow;
     });
 
     return [...filtered].sort((a, b) => {
@@ -85,12 +88,12 @@ export const PublicUniverseDetail: React.FC = () => {
       }
       return sortOrder === 'asc' ? episodeA - episodeB : episodeB - episodeA;
     });
-  }, [allEpisodes, searchTerm, sortOrder, selectedSeason]);
+  }, [allEpisodes, searchTerm, sortOrder, selectedSeason, selectedShow]);
 
   // Reset to page 1 when filters change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedSeason, sortOrder, itemsPerPage]);
+  }, [searchTerm, selectedSeason, sortOrder, itemsPerPage, selectedShow]); // added selectedShow
 
   if (isLoading) {
     return (
@@ -227,7 +230,7 @@ export const PublicUniverseDetail: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
             {/* Search Episodes */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500 h-4 w-4" />
@@ -238,6 +241,21 @@ export const PublicUniverseDetail: React.FC = () => {
                 className="pl-10 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
+
+            {/* NEW Show Filter */}
+            <Select value={selectedShow} onValueChange={setSelectedShow}>
+              <SelectTrigger className="border-blue-200 focus:border-blue-500 focus:ring-blue-500">
+                <SelectValue placeholder="All Shows" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Shows</SelectItem>
+                {shows.map((show) => (
+                  <SelectItem key={show.show_id} value={show.show_id}>
+                    {show.show_title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             {/* Air Date Sort */}
             <Select value={sortOrder} onValueChange={(value: 'asc' | 'desc') => setSortOrder(value)}>
