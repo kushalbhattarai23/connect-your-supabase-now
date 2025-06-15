@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -22,7 +21,7 @@ export const Landing: React.FC = () => {
         <div className="container mx-auto px-2 sm:px-4 py-10 sm:py-16">
           <div className="text-center max-w-2xl sm:max-w-4xl mx-auto">
             <h1 className="text-4xl sm:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              ModularApp
+              Tracker Hub
             </h1>
             <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-xl sm:max-w-2xl mx-auto">
               Your all-in-one platform for tracking TV shows and managing finances.
@@ -190,4 +189,3 @@ export const Landing: React.FC = () => {
 };
 
 export default Landing;
-
