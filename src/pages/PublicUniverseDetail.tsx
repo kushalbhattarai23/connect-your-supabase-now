@@ -281,15 +281,15 @@ export const PublicUniverseDetail: React.FC = () => {
           {currentEpisodes.map((episode) => (
             <Card key={episode.episode_id} className="border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:border-blue-300">
               <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <CardTitle className="text-lg text-blue-600">
-                    {episode.episode_title}
+                <div className="flex items-start justify-between gap-2">
+                  <CardTitle className="text-lg text-blue-600 truncate">
+                    {episode.show_title}
                   </CardTitle>
-                  <Badge variant="outline" className="text-xs border-blue-200 text-blue-700">
+                  <Badge variant="outline" className="text-xs border-blue-200 text-blue-700 flex-shrink-0">
                     S{episode.season_number}E{episode.episode_number}
                   </Badge>
                 </div>
-                <p className="text-sm text-muted-foreground">{episode.show_title}</p>
+                <p className="text-sm text-muted-foreground truncate">{episode.episode_title}</p>
               </CardHeader>
               <CardContent className="space-y-2">
                 {episode.air_date && (
@@ -298,10 +298,6 @@ export const PublicUniverseDetail: React.FC = () => {
                     {new Date(episode.air_date).toLocaleDateString()}
                   </div>
                 )}
-                <div className="flex items-center text-sm text-blue-600">
-                  <Globe className="h-4 w-4 mr-1" />
-                  {episode.universe_name}
-                </div>
               </CardContent>
             </Card>
           ))}
