@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 export interface Budget {
   id: string;
   user_id: string;
-  category_id: string;
+  category_id: string | null;
   amount: number;
   month: number;
   year: number;
@@ -19,8 +19,9 @@ export interface Budget {
   };
 }
 
+// category_id now nullable
 export interface CreateBudgetData {
-  category_id: string;
+  category_id: string | null;
   amount: number;
   month: number;
   year: number;
@@ -61,10 +62,16 @@ export const useBudgets = (month?: number, year?: number) => {
   const createBudget = useMutation({
     mutationFn: async (budgetData: CreateBudgetData) => {
       if (!user) throw new Error('User not authenticated');
+      // Fix: send category_id as null, not empty string
+      const safeData = {
+        ...budgetData,
+        user_id: user.id,
+        category_id: budgetData.category_id === '' ? null : budgetData.category_id,
+      };
 
       const { data, error } = await supabase
         .from('budgets')
-        .insert([{ ...budgetData, user_id: user.id }])
+        .insert([safeData])
         .select()
         .single();
 
@@ -75,17 +82,28 @@ export const useBudgets = (month?: number, year?: number) => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
       toast.success('Budget created successfully');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Create budget error:', error);
-      toast.error('Failed to create budget');
+      // Improve error toast for unique violation
+      if (error?.message?.includes('duplicate key value')) {
+        toast.error('Budget for this type/category/month/year already exists');
+      } else {
+        toast.error('Failed to create budget');
+      }
     }
   });
 
   const updateBudget = useMutation({
     mutationFn: async ({ id, ...updateData }: Partial<Budget> & { id: string }) => {
+      // Fix: handle empty string case
+      const safeUpdateData = {
+        ...updateData,
+        category_id: updateData.category_id === '' ? null : updateData.category_id,
+      };
+
       const { data, error } = await supabase
         .from('budgets')
-        .update(updateData)
+        .update(safeUpdateData)
         .eq('id', id)
         .select()
         .single();
@@ -97,9 +115,13 @@ export const useBudgets = (month?: number, year?: number) => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
       toast.success('Budget updated successfully');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Update budget error:', error);
-      toast.error('Failed to update budget');
+      if (error?.message?.includes('duplicate key value')) {
+        toast.error('Budget for this type/category/month/year already exists');
+      } else {
+        toast.error('Failed to update budget');
+      }
     }
   });
 

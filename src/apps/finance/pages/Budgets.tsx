@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,7 +26,7 @@ export const Budgets: React.FC = () => {
   const { transactions } = useTransactions();
 
   const [formData, setFormData] = useState<CreateBudgetData>({
-    category_id: '',
+    category_id: null,
     amount: 0,
     month: selectedMonth,
     year: selectedYear
@@ -38,7 +39,7 @@ export const Budgets: React.FC = () => {
 
   const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i - 5);
 
-  const getSpentAmount = (categoryId?: string) => {
+  const getSpentAmount = (categoryId?: string | null) => {
     if (categoryId) {
       return transactions
         .filter(t => 
@@ -62,7 +63,7 @@ export const Budgets: React.FC = () => {
 
   const resetForm = () => {
     setFormData({
-      category_id: '',
+      category_id: budgetType === 'category' ? '' : null,
       amount: 0,
       month: selectedMonth,
       year: selectedYear
@@ -72,14 +73,26 @@ export const Budgets: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      let data: CreateBudgetData = {
+        ...formData,
+        // Set category_id properly depending on budget type
+        category_id:
+          budgetType === 'category'
+            ? formData.category_id
+              ? formData.category_id
+              : ''
+            : null,
+        month: formData.month,
+        year: formData.year
+      };
       if (editingBudget) {
         await updateBudget.mutateAsync({
           id: editingBudget.id,
-          ...formData
+          ...data
         });
         setIsEditOpen(false);
       } else {
-        await createBudget.mutateAsync(formData);
+        await createBudget.mutateAsync(data);
         setIsCreateOpen(false);
       }
       resetForm();
@@ -90,9 +103,11 @@ export const Budgets: React.FC = () => {
   };
 
   const handleEdit = (budget: any) => {
+    const hasCategory = !!budget.category_id;
     setEditingBudget(budget);
+    setBudgetType(hasCategory ? 'category' : 'monthly');
     setFormData({
-      category_id: budget.category_id || '',
+      category_id: hasCategory ? budget.category_id : '',
       amount: budget.amount,
       month: budget.month,
       year: budget.year
@@ -143,7 +158,13 @@ export const Budgets: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="budget-type">Budget Type</Label>
-                <Select value={budgetType} onValueChange={(value: 'monthly' | 'category') => setBudgetType(value)}>
+                <Select value={budgetType} onValueChange={(value: 'monthly' | 'category') => {
+                  setBudgetType(value);
+                  setFormData(f => ({
+                    ...f,
+                    category_id: value === 'category' ? '' : null
+                  }));
+                }}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select budget type" />
                   </SelectTrigger>
@@ -157,7 +178,11 @@ export const Budgets: React.FC = () => {
               {budgetType === 'category' && (
                 <div>
                   <Label htmlFor="category">Category</Label>
-                  <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
+                  <Select
+                    value={typeof formData.category_id === 'string' ? formData.category_id : ''}
+                    onValueChange={(value) => setFormData({ ...formData, category_id: value })}
+                    required
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
@@ -390,26 +415,50 @@ export const Budgets: React.FC = () => {
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="edit-category">Category</Label>
-              <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
+              <Label htmlFor="edit-budget-type">Budget Type</Label>
+              <Select value={budgetType} onValueChange={(value: 'monthly' | 'category') => {
+                setBudgetType(value);
+                setFormData(f => ({
+                  ...f,
+                  category_id: value === 'category' ? (typeof f.category_id === 'string' ? f.category_id : '') : null
+                }));
+              }}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
+                  <SelectValue placeholder="Select budget type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      <div className="flex items-center">
-                        <div 
-                          className="w-3 h-3 rounded-full mr-2" 
-                          style={{ backgroundColor: category.color }}
-                        />
-                        {category.name}
-                      </div>
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="monthly">Monthly Total Budget</SelectItem>
+                  <SelectItem value="category">Category Budget</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+            {budgetType === 'category' && (
+              <div>
+                <Label htmlFor="edit-category">Category</Label>
+                <Select
+                  value={typeof formData.category_id === 'string' ? formData.category_id : ''}
+                  onValueChange={(value) => setFormData({ ...formData, category_id: value })}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        <div className="flex items-center">
+                          <div 
+                            className="w-3 h-3 rounded-full mr-2" 
+                            style={{ backgroundColor: category.color }}
+                          />
+                          {category.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div>
               <Label htmlFor="edit-amount">Budget Amount</Label>
               <Input
@@ -431,3 +480,5 @@ export const Budgets: React.FC = () => {
 };
 
 export default Budgets;
+
+// This file is now over 434 lines. Consider splitting it into smaller components for maintainability.
