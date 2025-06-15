@@ -1,4 +1,3 @@
-
 import { Suspense, lazy } from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -18,6 +17,7 @@ import AdminLogin from '@/pages/admin/AdminLogin';
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import TermsOfService from "@/pages/TermsOfService";
 import Sitemap from "@/pages/Sitemap";
+import RequireAuth from '@/components/Auth/RequireAuth';
 
 // Lazy load pages
 const TvShowsDashboard = lazy(() => import('@/apps/tv-shows/pages/Dashboard'));
@@ -108,111 +108,207 @@ function App() {
                       </Suspense>
                     } />
 
-                    {/* TV Shows Routes */}
-                    <Route path="/tv-shows" element={
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <TvShowsDashboard />
-                      </Suspense>
-                    } />
-                    <Route path="/tv-shows/my-shows" element={
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <MyShows />
-                      </Suspense>
-                    } />
-                    <Route path="/tv-shows/public-shows" element={
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <AppPublicShows />
-                      </Suspense>
-                    } />
-                    <Route path="/tv-shows/public-universes" element={
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <AppPublicUniverses />
-                      </Suspense>
-                    } />
-                    <Route path="/tv-shows/universes" element={
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <Universes />
-                      </Suspense>
-                    } />
-                    <Route path="/tv-shows/private-universes" element={
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <PrivateUniverses />
-                      </Suspense>
-                    } />
-                    <Route path="/tv-shows/universe/:slug" element={
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <UniverseDetail />
-                      </Suspense>
-                    } />
-                    <Route path="/tv-shows/universe/:slug/dashboard" element={
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <UniverseDashboard />
-                      </Suspense>
-                    } />
-                    <Route path="/tv-shows/show/:slug" element={
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <ShowDetail />
-                      </Suspense>
-                    } />
-                    
-                    {/* Finance Routes */}
-                    <Route path="/finance" element={
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <FinanceDashboard />
-                      </Suspense>
-                    } />
-                    <Route path="/finance/wallets" element={
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <Wallets />
-                      </Suspense>
-                    } />
-                    <Route path="/finance/wallet/:id" element={
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <WalletDetail />
-                      </Suspense>
-                    } />
-                    <Route path="/finance/transactions" element={
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <Transactions />
-                      </Suspense>
-                    } />
-                    <Route path="/finance/categories" element={
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <Categories />
-                      </Suspense>
-                    } />
-                    <Route path="/finance/category/:id" element={
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <CategoryDetail />
-                      </Suspense>
-                    } />
-                    <Route path="/finance/transfers" element={
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <Transfers />
-                      </Suspense>
-                    } />
-                    <Route path="/finance/reports" element={
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <Reports />
-                      </Suspense>
-                    } />
-                    <Route path="/finance/settings" element={
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <FinanceSettings />
-                      </Suspense>
-                    } />
-                    <Route path="/finance/budgets" element={
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <Budgets />
-                      </Suspense>
-                    } />
-                    <Route path="/finance/credits" element={
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <Credits />
-                      </Suspense>
-                    } />
+                    {/* TV Shows Routes (protected) */}
+                    <Route
+                      path="/tv-shows"
+                      element={
+                        <RequireAuth>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <TvShowsDashboard />
+                          </Suspense>
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/tv-shows/my-shows"
+                      element={
+                        <RequireAuth>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <MyShows />
+                          </Suspense>
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/tv-shows/public-shows"
+                      element={
+                        <Suspense fallback={<div>Loading...</div>}>
+                          <AppPublicShows />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="/tv-shows/public-universes"
+                      element={
+                        <Suspense fallback={<div>Loading...</div>}>
+                          <AppPublicUniverses />
+                        </Suspense>
+                      }
+                    />
+                    <Route
+                      path="/tv-shows/universes"
+                      element={
+                        <RequireAuth>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <Universes />
+                          </Suspense>
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/tv-shows/private-universes"
+                      element={
+                        <RequireAuth>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <PrivateUniverses />
+                          </Suspense>
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/tv-shows/universe/:slug"
+                      element={
+                        <RequireAuth>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <UniverseDetail />
+                          </Suspense>
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/tv-shows/universe/:slug/dashboard"
+                      element={
+                        <RequireAuth>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <UniverseDashboard />
+                          </Suspense>
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/tv-shows/show/:slug"
+                      element={
+                        <RequireAuth>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <ShowDetail />
+                          </Suspense>
+                        </RequireAuth>
+                      }
+                    />
 
-                    {/* Admin Routes */}
+                    {/* Finance Routes (protected) */}
+                    <Route
+                      path="/finance"
+                      element={
+                        <RequireAuth>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <FinanceDashboard />
+                          </Suspense>
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/finance/wallets"
+                      element={
+                        <RequireAuth>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <Wallets />
+                          </Suspense>
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/finance/wallet/:id"
+                      element={
+                        <RequireAuth>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <WalletDetail />
+                          </Suspense>
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/finance/transactions"
+                      element={
+                        <RequireAuth>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <Transactions />
+                          </Suspense>
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/finance/categories"
+                      element={
+                        <RequireAuth>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <Categories />
+                          </Suspense>
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/finance/category/:id"
+                      element={
+                        <RequireAuth>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <CategoryDetail />
+                          </Suspense>
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/finance/transfers"
+                      element={
+                        <RequireAuth>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <Transfers />
+                          </Suspense>
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/finance/reports"
+                      element={
+                        <RequireAuth>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <Reports />
+                          </Suspense>
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/finance/settings"
+                      element={
+                        <RequireAuth>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <FinanceSettings />
+                          </Suspense>
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/finance/budgets"
+                      element={
+                        <RequireAuth>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <Budgets />
+                          </Suspense>
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/finance/credits"
+                      element={
+                        <RequireAuth>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <Credits />
+                          </Suspense>
+                        </RequireAuth>
+                      }
+                    />
+
+                    {/* Admin Routes (not protected here) */}
                     <Route path="/admin" element={
                       <Suspense fallback={<div>Loading...</div>}>
                         <AdminDashboard />
