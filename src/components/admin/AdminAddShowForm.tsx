@@ -9,6 +9,8 @@ import { useUserRoles } from "@/hooks/useUserRoles";
 import { UploadIcon, Import } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { parseCSV } from "@/utils/csvUtils";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { Loader2 } from "lucide-react";
 
 const CSV_HEADERS = ["Show", "Episode", "Title", "Air Date"];
 
@@ -18,11 +20,12 @@ const AdminAddShowForm: React.FC = () => {
 
   const [csvText, setCsvText] = useState("");
   const [csvLoading, setCsvLoading] = useState(false);
+  const [importedEpisodes, setImportedEpisodes] = useState<any[]>([]);
+  const [importErrorRows, setImportErrorRows] = useState<{ row: number, error: string }[]>([]);
 
   // Only render if admin
   if (!isAdmin) return null;
 
-  // Handle input file change (reads CSV as text and puts in CSV text area)
   const handleCsvFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -30,10 +33,11 @@ const AdminAddShowForm: React.FC = () => {
     setCsvText(text);
   };
 
-  // Main import handler (handles both pasted and uploaded CSV)
   const handleImport = async (e: React.FormEvent) => {
     e.preventDefault();
     setCsvLoading(true);
+    setImportedEpisodes([]);
+    setImportErrorRows([]);
 
     let rows: any[] = [];
     try {
@@ -63,34 +67,35 @@ const AdminAddShowForm: React.FC = () => {
       return;
     }
 
-    let total = rows.length;
-    let success = 0, failed = 0;
-    let failedRows: number[] = [];
+    let uploadedEpisodes: any[] = [];
+    let errorRows: { row: number, error: string }[] = [];
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
-      // Read and trim fields
       const show_title = row["Show"]?.trim();
       const episode_code = row["Episode"]?.trim();
       const episode_title = row["Title"]?.trim();
       const air_date = row["Air Date"]?.trim();
 
+      // skip if any required field is missing
       if (!show_title || !episode_code || !episode_title || !air_date) {
-        failed++;
-        failedRows.push(i + 2); // +2 since CSV usually has header (row 1-based)
+        errorRows.push({ row: i + 2, error: "Missing required field(s)" });
         continue;
       }
 
+      let showId: string | null = null;
       try {
-        // Check/add show
+        // Get or insert show
         let { data: show, error: showError } = await supabase
           .from("shows")
           .select("id")
           .eq("title", show_title)
           .maybeSingle();
 
-        let showId = show?.id;
+        if (showError) throw showError;
+        showId = show?.id;
         if (!showId) {
+          // Insert show
           const { data: inserted, error: insertErr } = await supabase
             .from("shows")
             .insert({ title: show_title })
@@ -100,17 +105,20 @@ const AdminAddShowForm: React.FC = () => {
           showId = inserted.id;
         }
 
-        // Parse episode code: S01E01 / S1E1 / 1x1
+        // Parse episode code (e.g., S01E01, S1E1, 1x1)
         let snum = 1, epnum = 1;
-        const match = episode_code.match(
-          /S?(\d{1,2})[Ex](\d{1,2})|(\d{1,2})x(\d{1,2})/
-        );
-        if (match) {
-          snum = parseInt(match[1] || match[3] || "1", 10);
-          epnum = parseInt(match[2] || match[4] || "1", 10);
+        const codeMatch = episode_code.match(/^S?(\d{1,2})[Ex](\d{1,2})$/i) 
+          || episode_code.match(/^(\d{1,2})x(\d{1,2})$/i);
+        if (codeMatch) {
+          snum = parseInt(codeMatch[1], 10);
+          epnum = parseInt(codeMatch[2], 10);
+        } else {
+          errorRows.push({ row: i + 2, error: "Invalid episode format" });
+          continue;
         }
 
-        const { error: episodeErr } = await supabase
+        // Insert the episode
+        const { data: episode, error: episodeErr } = await supabase
           .from("episodes")
           .insert({
             show_id: showId,
@@ -118,34 +126,45 @@ const AdminAddShowForm: React.FC = () => {
             season_number: snum,
             episode_number: epnum,
             air_date: air_date || null,
-          });
+          })
+          .select("*")
+          .single();
 
         if (episodeErr) throw episodeErr;
 
-        success++;
-      } catch (err) {
-        failed++;
-        failedRows.push(i + 2);
+        uploadedEpisodes.push({
+          ...episode,
+          show_title,
+          season_number: snum,
+          episode_number: epnum
+        });
+      } catch (err: any) {
+        errorRows.push({ row: i + 2, error: "DB error or duplicate entry" });
       }
     }
 
-    if (success > 0) {
+    // Show toast based on result
+    if (uploadedEpisodes.length > 0) {
       toast({
-        title: `Import Finished: ${success} added.`,
-        description: `${failed} failed.` + (failed > 0 ? ` Rows: ${failedRows.join(", ")}` : ""),
-        variant: "default",
+        title: `Import finished. ${uploadedEpisodes.length} episode(s) uploaded.`,
+        description: errorRows.length > 0
+          ? `Some rows failed: ${errorRows.map(er => "Row " + er.row).join(", ")}`
+          : undefined,
+        variant: errorRows.length > 0 ? "destructive" : "default",
       });
+      setImportedEpisodes(uploadedEpisodes);
     } else {
       toast({
-        title: "Import Failed.",
-        description: "No rows added.",
-        variant: "destructive",
+        title: "No episodes uploaded.",
+        description: errorRows.length > 0 ? errorRows.map(er => `Row ${er.row}: ${er.error}`).join(" / ") : "",
+        variant: "destructive"
       });
+      setImportedEpisodes([]);
     }
 
+    setImportErrorRows(errorRows);
     setCsvLoading(false);
-    // Reset text area only if all processed
-    if (success > 0) setCsvText("");
+    if (uploadedEpisodes.length > 0) setCsvText("");
   };
 
   return (
@@ -196,13 +215,46 @@ Agent Carter,S01E02,Bridge and Tunnel,"January 13, 2015"
           </div>
 
           <Button
-            className="w-full bg-gray-400 text-white hover:bg-gray-500"
+            className="w-full bg-gray-400 text-white hover:bg-gray-500 disabled:opacity-50"
             type="submit"
             disabled={csvLoading || !csvText.trim()}
           >
-            <UploadIcon className="mr-1" /> {csvLoading ? "Importing..." : "Import Data"}
+            {csvLoading ? <Loader2 className="animate-spin mr-1" /> : <UploadIcon className="mr-1" />}
+            {csvLoading ? "Importing..." : "Import Data"}
           </Button>
         </form>
+        {importedEpisodes.length > 0 && (
+          <div className="mt-8">
+            <div className="font-semibold mb-2 text-lg">Imported Episodes</div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Show</TableHead>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Season</TableHead>
+                  <TableHead>Episode</TableHead>
+                  <TableHead>Air Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {importedEpisodes.map((ep, idx) => (
+                  <TableRow key={ep.id || idx}>
+                    <TableCell>{ep.show_title}</TableCell>
+                    <TableCell>{ep.title}</TableCell>
+                    <TableCell>{ep.season_number}</TableCell>
+                    <TableCell>{ep.episode_number}</TableCell>
+                    <TableCell>{ep.air_date}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+        {(importErrorRows.length > 0 && importedEpisodes.length > 0) && (
+          <div className="mt-4 text-sm text-red-500">
+            <b>Some rows failed:</b> {importErrorRows.map(er => `Row ${er.row}: ${er.error}`).join("; ")}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
