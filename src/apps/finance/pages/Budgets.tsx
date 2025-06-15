@@ -19,6 +19,7 @@ export const Budgets: React.FC = () => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<any>(null);
   const [budgetType, setBudgetType] = useState<'monthly' | 'category'>('monthly');
+  const [formError, setFormError] = useState<string | null>(null);
 
   const { budgets, isLoading, createBudget, updateBudget, deleteBudget } = useBudgets(selectedMonth, selectedYear);
   const { categories } = useCategories();
@@ -37,6 +38,21 @@ export const Budgets: React.FC = () => {
   ];
 
   const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i - 5);
+
+  // Helper: Get the monthly total budget object for the selected month/year
+  const monthlyTotalBudget = budgets.find((b) => !b.category_id);
+
+  // Helper: Sum of all category budgets for the selected month/year (excluding a specific budget if needed, e.g. when editing)
+  const sumOfCategoryBudgets = (excludeBudgetId?: string | null, overrideAmount?: number) => {
+    return budgets
+      .filter(
+        (b) => !!b.category_id && (excludeBudgetId ? b.id !== excludeBudgetId : true)
+      )
+      .reduce(
+        (sum, b) => sum + (editingBudget && overrideAmount !== undefined && b.id === editingBudget.id ? overrideAmount : b.amount),
+        0
+      );
+  };
 
   const getSpentAmount = (categoryId?: string | null) => {
     if (categoryId) {
@@ -71,15 +87,45 @@ export const Budgets: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    setFormError(null);
+
+    // If creating/updating a category budget, run the check
+    if (budgetType === "category") {
+      // If we are editing, exclude the old budget and add the new amount
+      const oldAmount = editingBudget ? editingBudget.amount : 0;
+      const totalCatBudgetsExcludingThis = budgets
+        .filter(
+          (b) =>
+            !!b.category_id &&
+            (editingBudget ? b.id !== editingBudget.id : true)
+        )
+        .reduce((sum, b) => sum + b.amount, 0);
+      const newCatBudgetsTotal = totalCatBudgetsExcludingThis + formData.amount;
+
+      if (
+        monthlyTotalBudget &&
+        newCatBudgetsTotal > monthlyTotalBudget.amount
+      ) {
+        // Show toast and abort
+        window?.toast?.error?.(
+          `Category budgets (${formatCurrency(newCatBudgetsTotal)}) cannot exceed the Monthly Total Budget (${formatCurrency(monthlyTotalBudget.amount)}).`
+        );
+        setFormError(
+          `Category budgets cannot exceed the Monthly Total Budget (${formatCurrency(monthlyTotalBudget.amount)}).`
+        );
+        return;
+      }
+    }
     try {
       let data: CreateBudgetData = {
         ...formData,
         // Set category_id properly depending on budget type
         category_id:
-          budgetType === 'category'
+          budgetType === "category"
             ? formData.category_id
               ? formData.category_id
-              : ''
+              : ""
             : null,
         month: formData.month,
         year: formData.year
@@ -287,6 +333,9 @@ export const Budgets: React.FC = () => {
                   </Select>
                 </div>
               </div>
+              {formError && (
+                <div className="text-red-600 text-sm font-medium">{formError}</div>
+              )}
               <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">
                 Create Budget
               </Button>
@@ -547,6 +596,9 @@ export const Budgets: React.FC = () => {
                 required
               />
             </div>
+            {formError && (
+              <div className="text-red-600 text-sm font-medium">{formError}</div>
+            )}
             <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">
               Update Budget
             </Button>
