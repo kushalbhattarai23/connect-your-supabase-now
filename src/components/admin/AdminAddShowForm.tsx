@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,15 +9,6 @@ import { useUserRoles } from "@/hooks/useUserRoles";
 import { UploadIcon, Import } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { parseCSV } from "@/utils/csvUtils";
-import { Link } from "react-router-dom";
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from "@/components/ui/table";
 
 const CSV_HEADERS = ["Show", "Episode", "Title", "Air Date"];
 
@@ -26,7 +18,6 @@ const AdminAddShowForm: React.FC = () => {
 
   const [csvText, setCsvText] = useState("");
   const [csvLoading, setCsvLoading] = useState(false);
-  const [recentShows, setRecentShows] = useState<{ id: string; title: string; slug: string }[]>([]);
 
   // Only render if admin
   if (!isAdmin) return null;
@@ -43,7 +34,6 @@ const AdminAddShowForm: React.FC = () => {
   const handleImport = async (e: React.FormEvent) => {
     e.preventDefault();
     setCsvLoading(true);
-    setRecentShows([]); // Clear before new import
 
     let rows: any[] = [];
     try {
@@ -60,7 +50,9 @@ const AdminAddShowForm: React.FC = () => {
 
     // Validate headers
     const actualHeaders = Object.keys(rows[0] || {});
-    const headersValid = CSV_HEADERS.every((header, idx) => actualHeaders[idx]?.trim() === header);
+    const headersValid = CSV_HEADERS.every((header, idx) => (
+      actualHeaders[idx]?.trim() === header
+    ));
     if (!headersValid) {
       toast({
         title: "Invalid CSV headers.",
@@ -71,13 +63,13 @@ const AdminAddShowForm: React.FC = () => {
       return;
     }
 
+    let total = rows.length;
     let success = 0, failed = 0;
     let failedRows: number[] = [];
-    let addedShows: { id: string; title: string; slug: string }[] = [];
-    const createdShowTitles: Record<string, { id: string; slug: string }> = {};
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
+      // Read and trim fields
       const show_title = row["Show"]?.trim();
       const episode_code = row["Episode"]?.trim();
       const episode_title = row["Title"]?.trim();
@@ -85,42 +77,27 @@ const AdminAddShowForm: React.FC = () => {
 
       if (!show_title || !episode_code || !episode_title || !air_date) {
         failed++;
-        failedRows.push(i + 2);
+        failedRows.push(i + 2); // +2 since CSV usually has header (row 1-based)
         continue;
       }
 
       try {
-        // See if show exists or already added in this import
-        let showId: string | undefined;
-        let showSlug: string | undefined;
-        if (createdShowTitles[show_title]) {
-          showId = createdShowTitles[show_title].id;
-          showSlug = createdShowTitles[show_title].slug;
-        } else {
-          let { data: show, error: showError } = await supabase
-            .from("shows")
-            .select("id,slug")
-            .eq("title", show_title)
-            .maybeSingle();
+        // Check/add show
+        let { data: show, error: showError } = await supabase
+          .from("shows")
+          .select("id")
+          .eq("title", show_title)
+          .maybeSingle();
 
-          if (show && show.id) {
-            showId = show.id;
-            showSlug = show.slug;
-          } else {
-            const { data: inserted, error: insertErr } = await supabase
-              .from("shows")
-              .insert({ title: show_title }) // The auto_generate_slug will set slug
-              .select("id,slug")
-              .single();
-            if (insertErr) throw insertErr;
-            showId = inserted.id;
-            showSlug = inserted.slug;
-            // Only newly created shows in *this import* are tracked for display
-            if (showId && showSlug) {
-              addedShows.push({ id: showId, title: show_title, slug: showSlug });
-              createdShowTitles[show_title] = { id: showId, slug: showSlug };
-            }
-          }
+        let showId = show?.id;
+        if (!showId) {
+          const { data: inserted, error: insertErr } = await supabase
+            .from("shows")
+            .insert({ title: show_title })
+            .select("id")
+            .single();
+          if (insertErr) throw insertErr;
+          showId = inserted.id;
         }
 
         // Parse episode code: S01E01 / S1E1 / 1x1
@@ -144,6 +121,7 @@ const AdminAddShowForm: React.FC = () => {
           });
 
         if (episodeErr) throw episodeErr;
+
         success++;
       } catch (err) {
         failed++;
@@ -157,18 +135,17 @@ const AdminAddShowForm: React.FC = () => {
         description: `${failed} failed.` + (failed > 0 ? ` Rows: ${failedRows.join(", ")}` : ""),
         variant: "default",
       });
-      setRecentShows(addedShows);
-      setCsvText("");
     } else {
       toast({
         title: "Import Failed.",
         description: "No rows added.",
         variant: "destructive",
       });
-      setRecentShows([]);
     }
 
     setCsvLoading(false);
+    // Reset text area only if all processed
+    if (success > 0) setCsvText("");
   };
 
   return (
@@ -226,37 +203,6 @@ Agent Carter,S01E02,Bridge and Tunnel,"January 13, 2015"
             <UploadIcon className="mr-1" /> {csvLoading ? "Importing..." : "Import Data"}
           </Button>
         </form>
-        {/* Display newly added shows below the form */}
-        {recentShows.length > 0 && (
-          <div className="mt-8">
-            <div className="text-lg font-bold mb-2">Recently Added Shows</div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Show Title</TableHead>
-                  <TableHead>Link</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentShows.map((show) => (
-                  <TableRow key={show.id}>
-                    <TableCell>{show.title}</TableCell>
-                    <TableCell>
-                      <Link
-                        className="text-blue-600 underline"
-                        to={`/tv-shows/show/${show.slug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        View show page
-                      </Link>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
       </CardContent>
     </Card>
   );
