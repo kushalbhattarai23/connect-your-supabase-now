@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -120,25 +121,28 @@ const AdminAddShowForm: React.FC = () => {
       }
 
       let showId: string | null = null;
+      let showSlug: string | null = null;
       try {
         // Get or insert show
         let { data: show, error: showError } = await supabase
           .from("shows")
-          .select("id")
+          .select("id, slug")
           .eq("title", show_title)
           .maybeSingle();
 
         if (showError) throw showError;
         showId = show?.id;
+        showSlug = show?.slug;
         if (!showId) {
           // Insert show
           const { data: inserted, error: insertErr } = await supabase
             .from("shows")
             .insert({ title: show_title })
-            .select("id")
+            .select("id, slug")
             .single();
           if (insertErr) throw insertErr;
           showId = inserted.id;
+          showSlug = inserted.slug;
         }
 
         // Parse episode code (e.g., S01E01, S1E1, 1x1)
@@ -171,6 +175,7 @@ const AdminAddShowForm: React.FC = () => {
         uploadedEpisodes.push({
           ...episode,
           show_title,
+          show_slug: showSlug,
           season_number: snum,
           episode_number: epnum
         });
@@ -311,7 +316,7 @@ Agent Carter,S01E02,Bridge and Tunnel,"January 13, 2015"
                     <div className="flex items-center gap-2">
                       <Tv className="h-4 w-4 text-blue-500" />
                       <Link 
-                        to={`/show/${episode.show_id}`}
+                        to={`/tv-shows/show/${episode.show_slug}`}
                         className="text-blue-600 hover:text-blue-800 hover:underline font-medium text-sm"
                       >
                         {episode.show_title}
