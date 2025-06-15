@@ -37,9 +37,17 @@ export const PublicShowDetail: React.FC = () => {
     );
   }
 
-  // Get all episodes for this show
-  const showEpisodes = data
+  // Get unique episodes for this show only
+  const uniqueEpisodes = data
     .filter(item => item.show_id === showData.show_id)
+    .reduce((acc, current) => {
+      // Check if we already have this episode
+      const existingEpisode = acc.find(ep => ep.episode_id === current.episode_id);
+      if (!existingEpisode) {
+        acc.push(current);
+      }
+      return acc;
+    }, [] as typeof data)
     .sort((a, b) => {
       if (a.season_number !== b.season_number) {
         return a.season_number - b.season_number;
@@ -48,10 +56,16 @@ export const PublicShowDetail: React.FC = () => {
     });
 
   // Get unique universes this show belongs to
-  const universes = [...new Set(showEpisodes.map(item => item.universe_id))].map(universeId => {
-    const universeItem = showEpisodes.find(item => item.universe_id === universeId);
-    return universeItem;
-  }).filter(Boolean);
+  const uniqueUniverses = data
+    .filter(item => item.show_id === showData.show_id)
+    .reduce((acc, current) => {
+      // Check if we already have this universe
+      const existingUniverse = acc.find(univ => univ.universe_id === current.universe_id);
+      if (!existingUniverse) {
+        acc.push(current);
+      }
+      return acc;
+    }, [] as typeof data);
 
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
@@ -69,30 +83,30 @@ export const PublicShowDetail: React.FC = () => {
         )}
         <div className="mt-4">
           <Badge variant="outline" className="text-sm">
-            {showEpisodes.length} episodes across {[...new Set(showEpisodes.map(ep => ep.season_number))].length} seasons
+            {uniqueEpisodes.length} episodes across {[...new Set(uniqueEpisodes.map(ep => ep.season_number))].length} seasons
           </Badge>
         </div>
       </div>
 
-      {universes.length > 0 && (
+      {uniqueUniverses.length > 0 && (
         <div className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">Part of Universes</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {universes.map((universe) => (
-              <Card key={universe?.universe_id} className="hover:shadow-lg transition-shadow">
+            {uniqueUniverses.map((universe) => (
+              <Card key={universe.universe_id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Globe className="h-5 w-5" />
                     <Link 
-                      to={`/public/universe/${universe?.universe_name.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-')}`}
+                      to={`/public/universe/${universe.universe_name.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-')}`}
                       className="text-blue-600 hover:underline"
                     >
-                      {universe?.universe_name}
+                      {universe.universe_name}
                     </Link>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {universe?.universe_description && (
+                  {universe.universe_description && (
                     <p className="text-sm text-muted-foreground">
                       {universe.universe_description}
                     </p>
@@ -107,7 +121,7 @@ export const PublicShowDetail: React.FC = () => {
       <div>
         <h2 className="text-2xl font-semibold mb-4">Episodes</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {showEpisodes.map((episode) => (
+          {uniqueEpisodes.map((episode) => (
             <Card key={episode.episode_id} className="hover:shadow-lg transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
