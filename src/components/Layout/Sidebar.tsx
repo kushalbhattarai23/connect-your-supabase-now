@@ -124,8 +124,8 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
     <div className="flex flex-col h-full">
       <div className="p-4 lg:p-6 relative">
         <div className={cn(
-          "flex items-center",
-          isCollapsed ? "justify-center" : "justify-between"
+          "flex",
+          isCollapsed ? "justify-center items-center" : "flex-col items-center gap-4"
         )}>
           <Link to="/" className={cn("flex items-center space-x-2")}>
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
@@ -141,7 +141,10 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
               variant="ghost"
               size="sm"
               onClick={onToggleCollapse}
-              className={cn("hidden lg:flex h-8 w-8 p-0", isCollapsed && "absolute right-2 top-1/2 -translate-y-1/2")}
+              className={cn(
+                "hidden lg:flex h-8 w-8 p-0",
+                isCollapsed && "absolute right-2 top-1/2 -translate-y-1/2"
+              )}
             >
               {isCollapsed ? (
                 <ChevronRight className="h-4 w-4" />
