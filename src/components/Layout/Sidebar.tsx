@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { getEnabledApps } from '@/config/apps';
@@ -121,8 +120,8 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
   console.log('Visible apps:', visibleApps.map(app => app.id));
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-4 lg:p-6 relative">
+    <div className="flex flex-col h-full relative">
+      <div className="p-4 lg:p-6">
         <div className={cn(
           "flex",
           isCollapsed ? "justify-center items-center" : "flex-col items-center gap-4"
@@ -143,7 +142,7 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
               onClick={onToggleCollapse}
               className={cn(
                 "hidden lg:flex h-8 w-8 p-0",
-                isCollapsed && "absolute right-2 top-1/2 -translate-y-1/2"
+                isCollapsed && "absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2"
               )}
             >
               {isCollapsed ? (
