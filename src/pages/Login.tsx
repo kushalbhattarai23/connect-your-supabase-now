@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -137,7 +136,7 @@ const Login = () => {
               </div>
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-2 transition-all duration-200"
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 transition-all duration-200"
                 disabled={isLoading}
               >
                 {isLoading ? (

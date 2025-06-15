@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -188,7 +187,7 @@ export const LoginForm: React.FC = () => {
                 </div>
                 <Button 
                   type="submit" 
-                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-2 transition-all duration-200" 
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 transition-all duration-200" 
                   disabled={isLoading}
                 >
                   <LogIn className="mr-2 h-4 w-4" />
