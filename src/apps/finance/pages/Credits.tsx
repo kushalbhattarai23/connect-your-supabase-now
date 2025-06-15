@@ -368,9 +368,6 @@ export const Credits: React.FC = () => {
 
       {/* Loan Transactions Section */}
       <LoanTransactionsSection />
-
-      {/* Loan Categories Section */}
-      <LoanCategoriesSection />
     </div>
   );
 };
@@ -458,48 +455,6 @@ const LoanTransactionsSection: React.FC = () => {
           </TableBody>
         </Table>
       </div>
-    </section>
-  );
-};
-
-const LoanCategoriesSection: React.FC = () => {
-  const { categories, isLoading } = useCategories();
-
-  return (
-    <section className="mt-10">
-      <h2 className="text-xl font-semibold mb-2 text-green-700">Loan Categories</h2>
-      {isLoading ? (
-        <div className="text-muted-foreground py-4">Loading categories...</div>
-      ) : categories && categories.length > 0 ? (
-        <div className="bg-background border rounded-lg overflow-x-auto">
-          <Table>
-            <TableCaption>A list of all your loan categories.</TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Color</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {categories.map((cat) => (
-                <TableRow key={cat.id}>
-                  <TableCell>{cat.name}</TableCell>
-                  <TableCell>
-                    <span
-                      className="inline-block w-4 h-4 rounded-full align-middle mr-2"
-                      style={{ backgroundColor: cat.color }}
-                      aria-label={`Category color for ${cat.name}`}
-                    />
-                    <span className="text-xs text-muted-foreground">{cat.color}</span>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      ) : (
-        <div className="text-muted-foreground py-4">No loan categories found.</div>
-      )}
     </section>
   );
 };
