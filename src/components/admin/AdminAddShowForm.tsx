@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -205,7 +204,7 @@ const AdminAddShowForm: React.FC = () => {
       toast({
         title: `Upload Finished: ${success} added.`,
         description: `${failed} failed.` + (failed > 0 ? ` Rows: ${failedRows.join(", ")}` : ""),
-        variant: failed > 0 ? "default" : "success",
+        variant: "default",
       });
     } else {
       toast({
