@@ -6,21 +6,23 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://gzampnmelaeqhwzzsvam.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd6YW1wbm1lbGFlcWh3enpzdmFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3NTMyNjcsImV4cCI6MjA2MzMyOTI2N30.x5KnK9mtIDf-ZNiGKSGlRqwjP57WMZ0Jx_ZdWWk3--8";
 
-// Detect storage availability
+// Storage detection with error handling
 const getStorage = () => {
-  if (typeof window !== 'undefined') {
-    try {
-      // Test if localStorage is available and working
-      const testKey = 'supabase-storage-test';
-      localStorage.setItem(testKey, 'test');
-      localStorage.removeItem(testKey);
-      return localStorage;
-    } catch (error) {
-      console.warn('localStorage not available, sessions will not persist');
-      return undefined;
-    }
+  if (typeof window === 'undefined') {
+    return undefined;
   }
-  return undefined;
+  
+  try {
+    // Test localStorage availability
+    const testKey = 'supabase-storage-test';
+    window.localStorage.setItem(testKey, 'test');
+    window.localStorage.removeItem(testKey);
+    console.log('localStorage is available for session persistence');
+    return window.localStorage;
+  } catch (error) {
+    console.warn('localStorage not available, sessions will not persist:', error);
+    return undefined;
+  }
 };
 
 // Import the supabase client like this:
@@ -31,6 +33,10 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: getStorage(),
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    flowType: 'pkce'
   }
 });
+
+// Log the configuration for debugging
+console.log('Supabase client initialized with localStorage:', !!getStorage());

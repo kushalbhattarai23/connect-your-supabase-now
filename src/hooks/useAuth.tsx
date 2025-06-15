@@ -39,45 +39,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let mounted = true;
 
-    // Set up auth state listener FIRST
+    const updateAuthState = (session: Session | null) => {
+      if (!mounted) return;
+      
+      console.log('Updating auth state:', session?.user?.email || 'No session');
+      setSession(session);
+      setUser(session?.user ? adaptSupabaseUser(session.user) : null);
+      setIsLoading(false);
+    };
+
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         if (!mounted) return;
         
-        console.log('Auth state changed:', event, session?.user?.email);
-        setSession(session);
-        setUser(session?.user ? adaptSupabaseUser(session.user) : null);
-        setIsLoading(false);
+        console.log('Auth state changed:', event, session?.user?.email || 'No session');
+        updateAuthState(session);
       }
     );
 
-    // THEN check for existing session with proper error handling
-    const initializeAuth = async () => {
+    // Get initial session with proper error handling
+    const getInitialSession = async () => {
       try {
+        console.log('Getting initial session...');
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (!mounted) return;
 
         if (error) {
-          console.error('Error getting session:', error);
+          console.error('Error getting initial session:', error);
           setError(error);
+          setIsLoading(false);
         } else {
-          console.log('Initial session:', session?.user?.email || 'No session');
-          setSession(session);
-          setUser(session?.user ? adaptSupabaseUser(session.user) : null);
+          console.log('Initial session retrieved:', session?.user?.email || 'No session');
+          updateAuthState(session);
         }
       } catch (err) {
         if (!mounted) return;
-        console.error('Error initializing auth:', err);
+        console.error('Error in getInitialSession:', err);
         setError(err as Error);
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     };
 
-    initializeAuth();
+    getInitialSession();
 
     return () => {
       mounted = false;
@@ -115,20 +120,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string) => {
     try {
       setError(null);
+      console.log('Attempting sign in for:', email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        console.error('Sign in error:', error);
         setError(error);
         return { user: null, error };
       }
 
+      console.log('Sign in successful:', data.user?.email);
       const adaptedUser = data.user ? adaptSupabaseUser(data.user) : null;
       return { user: adaptedUser, error: null };
     } catch (error) {
       const authError = error as Error;
+      console.error('Sign in exception:', authError);
       setError(authError);
       return { user: null, error: authError };
     }
@@ -152,15 +162,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      setError(error);
-    } else {
-      // Clear local state immediately
-      setSession(null);
-      setUser(null);
-      // Redirect to home page after successful logout
-      window.location.href = '/';
+    try {
+      console.log('Logging out...');
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Logout error:', error);
+        setError(error);
+      } else {
+        console.log('Logout successful');
+        // State will be updated automatically by the auth state listener
+      }
+    } catch (error) {
+      console.error('Logout exception:', error);
+      setError(error as Error);
     }
   };
 
