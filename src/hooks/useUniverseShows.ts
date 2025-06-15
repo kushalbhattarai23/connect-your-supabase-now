@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -86,6 +87,7 @@ export const useUniverseShows = (universeId: string) => {
     onSuccess: (data) => {
       console.log('onSuccess for addShowToUniverse', data);
       queryClient.invalidateQueries({ queryKey: ['universe-shows', universeId] });
+      queryClient.invalidateQueries({ queryKey: ['universe-episodes', universeId] });
       toast({ title: 'Show added to universe successfully' });
     },
     onError: (error: Error) => {
@@ -109,6 +111,7 @@ export const useUniverseShows = (universeId: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['universe-shows', universeId] });
+      queryClient.invalidateQueries({ queryKey: ['universe-episodes', universeId] });
       toast({ title: 'Show removed from universe successfully' });
     },
     onError: (error: Error) => {

@@ -24,7 +24,6 @@ export const UniverseDetail: React.FC = () => {
   const location = useLocation();
   const [selectedShow, setSelectedShow] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [episodeKey, setEpisodeKey] = useState(0);
 
   // Fetch universe by slug or ID
   const { data: universe, isLoading: universeLoading, error } = useQuery({
@@ -117,11 +116,7 @@ export const UniverseDetail: React.FC = () => {
 
   const handleAddShow = () => {
     if (selectedShow) {
-      addShowToUniverse.mutate(selectedShow, {
-        onSuccess: () => {
-          setEpisodeKey(prev => prev + 1);
-        }
-      });
+      addShowToUniverse.mutate(selectedShow);
       setSelectedShow('');
       setIsDialogOpen(false);
     }
@@ -129,11 +124,7 @@ export const UniverseDetail: React.FC = () => {
 
   const handleRemoveShow = (showUniverseId: string) => {
     if (confirm('Are you sure you want to remove this show from the universe?')) {
-      removeShowFromUniverse.mutate(showUniverseId, {
-        onSuccess: () => {
-          setEpisodeKey(prev => prev + 1);
-        }
-      });
+      removeShowFromUniverse.mutate(showUniverseId);
     }
   };
 
@@ -349,7 +340,7 @@ export const UniverseDetail: React.FC = () => {
         <TabsContent value="episodes" className="space-y-4 mt-4 sm:mt-6">
           <div>
             <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-blue-700 mb-4">Episodes in this Universe</h2>
-            <UniverseEpisodes key={episodeKey} universeId={universe?.id || ''} />
+            <UniverseEpisodes universeId={universe?.id || ''} />
           </div>
         </TabsContent>
       </Tabs>
