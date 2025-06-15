@@ -378,6 +378,21 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
             <MessageSquarePlus className="w-4 h-4 flex-shrink-0" />
             {!isCollapsed && <span>Requests</span>}
           </Link>
+          {/* Add Show link - only for admins, below Requests */}
+          {isAdmin && (
+            <Link
+              to="/admin/add-show"
+              title={isCollapsed ? "Add Show" : undefined}
+              className={cn(
+                "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors",
+                location.pathname === "/admin/add-show" && "bg-accent text-accent-foreground",
+                isCollapsed && "lg:justify-center lg:space-x-0"
+              )}
+            >
+              <Plus className="w-4 h-4 flex-shrink-0" />
+              {!isCollapsed && <span>Add Show</span>}
+            </Link>
+          )}
         </div>
       )}
     </div>
