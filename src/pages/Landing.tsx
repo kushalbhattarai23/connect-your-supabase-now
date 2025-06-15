@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -41,15 +40,21 @@ export const Landing: React.FC = () => {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <Link to="/signup">
-                        <Button size="lg" className="text-lg w-full sm:w-auto">
+                        <Button size="lg" className="text-lg w-full sm:w-auto bg-blue-600 hover:bg-blue-700">
                             Get Started Free
                             <ArrowRight className="ml-2 h-5 w-5" />
                         </Button>
                     </Link>
-                    <Link to="/tv-shows/public-shows">
+                    <Link to="/public/shows">
                         <Button size="lg" variant="outline" className="text-lg w-full sm:w-auto">
                             <Tv className="mr-2 h-5 w-5" />
                             Browse Shows
+                        </Button>
+                    </Link>
+                    <Link to="/login">
+                        <Button size="lg" variant="ghost" className="text-lg w-full sm:w-auto">
+                            <LogIn className="mr-2 h-5 w-5" />
+                            Login
                         </Button>
                     </Link>
                 </div>
