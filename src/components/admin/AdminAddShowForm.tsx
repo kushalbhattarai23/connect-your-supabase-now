@@ -63,9 +63,9 @@ const AdminAddShowForm: React.FC = () => {
         snum = parseInt(match[1] || match[3] || "1", 10);
         epnum = parseInt(match[2] || match[4] || "1", 10);
       }
-      const parsedAirDate = new Date(airDate);
+      // airDate is already a string like "YYYY-MM-DD"
 
-      // Insert episode
+      // Insert episode (air_date should be a string or null)
       const { error: episodeError } = await supabase
         .from("episodes")
         .insert({
@@ -73,7 +73,7 @@ const AdminAddShowForm: React.FC = () => {
           title: episodeTitle,
           season_number: snum,
           episode_number: epnum,
-          air_date: isNaN(parsedAirDate.getTime()) ? null : parsedAirDate,
+          air_date: airDate || null, // pass as string, do not convert to Date
         });
 
       if (episodeError) throw episodeError;
