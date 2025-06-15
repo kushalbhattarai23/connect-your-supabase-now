@@ -95,17 +95,25 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
     return IconComponent || Home;
   };
 
-  // Filter apps based on user permissions
+  // Filter apps based on user permissions and authentication status
   const visibleApps = enabledApps.filter(app => {
+    // Show public app to everyone
+    if (app.id === 'public') {
+      return true;
+    }
+    
+    // Hide TV Shows and Finance if not logged in
+    if ((app.id === 'tv-shows' || app.id === 'finance') && !user) {
+      return false;
+    }
+    
+    // Admin app only for admin users
     if (app.id === 'admin') {
       const shouldShow = isAdmin;
       console.log('Admin app visibility check - isAdmin:', isAdmin, 'shouldShow:', shouldShow);
       return shouldShow;
     }
-    // Show public app to everyone
-    if (app.id === 'public') {
-      return true;
-    }
+    
     return true;
   });
 
