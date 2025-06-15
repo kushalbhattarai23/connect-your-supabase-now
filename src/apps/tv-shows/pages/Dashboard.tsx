@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Tv, Play, CheckCircle, Clock, Globe, Eye } from 'lucide-react';
+import { Tv, Play, Check, Clock, Globe, Eye } from 'lucide-react';
 import { useUserShows } from '@/hooks/useUserShows';
 
 // Mock data for overall stats - replace with actual data from your store
@@ -197,43 +197,45 @@ export const TVShowDashboard: React.FC = () => {
           <CardTitle className="text-purple-800">Show Progress</CardTitle>
           <CardDescription className="text-purple-600">Shows organized by status</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent>
           <div className="grid grid-cols-2 gap-4">
-            <Button 
-              variant="outline" 
-              className="h-20 flex flex-col space-y-2 cursor-pointer hover:bg-purple-50 border-purple-200 text-purple-700"
+            <div 
+              className="p-4 rounded-lg border border-purple-200 bg-purple-50/50 hover:bg-purple-100 cursor-pointer flex flex-col items-center justify-center text-center transition-colors h-24"
               onClick={() => handleStatusClick('all')}
             >
-              <span className="text-2xl font-bold">{showsByStatus.all}</span>
-              <span className="text-sm">All Shows</span>
-            </Button>
-            <Button 
-              variant="outline" 
-              className="h-20 flex flex-col space-y-2 cursor-pointer hover:bg-blue-50 border-purple-200"
+              <span className="text-3xl font-bold text-purple-800">{showsByStatus.all}</span>
+              <span className="text-sm font-medium text-purple-700 mt-1">All Shows</span>
+            </div>
+            <div 
+              className="p-4 rounded-lg border border-blue-200 bg-blue-50/50 hover:bg-blue-100 cursor-pointer flex flex-col items-center justify-center text-center transition-colors h-24"
               onClick={() => handleStatusClick('watching')}
             >
-              <span className="text-2xl font-bold text-blue-600">{showsByStatus.watching}</span>
-              <span className="text-sm text-purple-700">Watching</span>
-              <Eye className="h-4 w-4 text-blue-500" />
-            </Button>
-            <Button 
-              variant="outline" 
-              className="h-20 flex flex-col space-y-2 cursor-pointer hover:bg-gray-50 border-purple-200"
+              <span className="text-3xl font-bold text-blue-800">{showsByStatus.watching}</span>
+              <div className="flex items-center gap-1.5 mt-1">
+                <Eye className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-medium text-blue-700">Watching</span>
+              </div>
+            </div>
+            <div 
+              className="p-4 rounded-lg border border-gray-300 bg-gray-100 hover:bg-gray-200 cursor-pointer flex flex-col items-center justify-center text-center transition-colors h-24"
               onClick={() => handleStatusClick('not_started')}
             >
-              <span className="text-2xl font-bold text-gray-600">{showsByStatus.not_started}</span>
-              <span className="text-sm text-purple-700">Not Started</span>
-              <Clock className="h-4 w-4 text-gray-500" />
-            </Button>
-            <Button 
-              variant="outline" 
-              className="h-20 flex flex-col space-y-2 cursor-pointer hover:bg-green-50 border-purple-200"
+              <span className="text-3xl font-bold text-gray-800">{showsByStatus.not_started}</span>
+              <div className="flex items-center gap-1.5 mt-1">
+                <Clock className="h-4 w-4 text-gray-600" />
+                <span className="text-sm font-medium text-gray-700">Not Started</span>
+              </div>
+            </div>
+            <div 
+              className="p-4 rounded-lg border border-green-200 bg-green-50/50 hover:bg-green-100 cursor-pointer flex flex-col items-center justify-center text-center transition-colors h-24"
               onClick={() => handleStatusClick('completed')}
             >
-              <span className="text-2xl font-bold text-green-600">{showsByStatus.completed}</span>
-              <span className="text-sm text-purple-700">Completed</span>
-              <CheckCircle className="h-4 w-4 text-green-500" />
-            </Button>
+              <span className="text-3xl font-bold text-green-800">{showsByStatus.completed}</span>
+              <div className="flex items-center gap-1.5 mt-1">
+                <Check className="h-4 w-4 text-green-600" />
+                <span className="text-sm font-medium text-green-700">Completed</span>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
