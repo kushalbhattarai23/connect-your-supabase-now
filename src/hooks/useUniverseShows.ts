@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -67,6 +66,7 @@ export const useUniverseShows = (universeId: string) => {
 
   const addShowToUniverse = useMutation({
     mutationFn: async (showId: string) => {
+      console.log(`Attempting to add show ${showId} to universe ${universeId} by user ${user?.id}`);
       const { data, error } = await supabase
         .from('show_universes')
         .insert({
@@ -76,26 +76,36 @@ export const useUniverseShows = (universeId: string) => {
         .select()
         .single();
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error adding show to universe:', error);
+        throw error;
+      }
+      console.log('Show added to universe successfully:', data);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('onSuccess for addShowToUniverse', data);
       queryClient.invalidateQueries({ queryKey: ['universe-shows', universeId] });
       toast({ title: 'Show added to universe successfully' });
     },
     onError: (error: Error) => {
+      console.error('onError for addShowToUniverse', error);
       toast({ title: 'Error adding show to universe', description: error.message, variant: 'destructive' });
     }
   });
 
   const removeShowFromUniverse = useMutation({
     mutationFn: async (showUniverseId: string) => {
+      console.log(`Attempting to remove show_universe link ${showUniverseId} by user ${user?.id}`);
       const { error } = await supabase
         .from('show_universes')
         .delete()
         .eq('id', showUniverseId);
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error removing show from universe:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['universe-shows', universeId] });
