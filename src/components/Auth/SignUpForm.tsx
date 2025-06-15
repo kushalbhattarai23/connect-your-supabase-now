@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -79,14 +78,14 @@ export const SignUpForm: React.FC = () => {
         <div>
           <div className="flex items-center space-x-3 mb-8">
             <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur">
-              <span className="text-xl font-bold">M</span>
+              <span className="text-xl font-bold">T</span>
             </div>
-            <span className="text-2xl font-bold">ModularApp</span>
+            <span className="text-2xl font-bold">Tracker Hub</span>
           </div>
           
           <div className="space-y-8">
             <div>
-              <h1 className="text-4xl font-bold mb-4">Join ModularApp</h1>
+              <h1 className="text-4xl font-bold mb-4">Join Tracker Hub</h1>
               <p className="text-xl text-white/90 leading-relaxed">
                 Start tracking your favorite TV shows and managing your finances in one powerful platform.
               </p>
@@ -124,15 +123,15 @@ export const SignUpForm: React.FC = () => {
             <CardHeader className="space-y-1 text-center">
               <div className="lg:hidden flex items-center justify-center space-x-2 mb-4">
                 <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">M</span>
+                  <span className="text-white font-bold text-sm">T</span>
                 </div>
-                <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">ModularApp</span>
+                <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">Tracker Hub</span>
               </div>
               <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                 Create your account
               </CardTitle>
               <CardDescription className="text-base">
-                Sign up to get started with ModularApp
+                Sign up to get started with Tracker Hub
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
