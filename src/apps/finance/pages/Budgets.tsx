@@ -134,30 +134,42 @@ export const Budgets: React.FC = () => {
 
   // Helper to get category spending summary for current month/year
   const categorySpendingSummary = React.useMemo(() => {
-    // Map: categoryId => { name, color, total }
-    const summary: { [id: string]: { name: string; color: string; total: number } } = {};
+    // Map: categoryId => { name, color, expense, income }
+    const summary: { [id: string]: { name: string; color: string; expense: number; income: number } } = {};
     transactions
       .filter(
         (t) =>
-          t.type === 'expense' &&
+          (t.type === 'expense' || t.type === 'income') &&
           new Date(t.date).getMonth() + 1 === selectedMonth &&
           new Date(t.date).getFullYear() === selectedYear
       )
       .forEach((t) => {
-        const categoryId = t.category_id || '__uncategorized__';
-        const categoryName = t.categories?.name || 'Uncategorized';
-        const categoryColor = t.categories?.color || '#9ca3af'; // gray
+        // Use the categories from the transaction if available, otherwise from the categories list
+        let categoryId = t.category_id || '__uncategorized__';
+        let catObj =
+          (t as any).categories ||
+          categories.find((c) => c.id === t.category_id) ||
+          undefined;
+
+        const categoryName = catObj?.name || 'Uncategorized';
+        const categoryColor = catObj?.color || '#9ca3af';
 
         if (!summary[categoryId]) {
-          summary[categoryId] = { name: categoryName, color: categoryColor, total: 0 };
+          summary[categoryId] = { name: categoryName, color: categoryColor, expense: 0, income: 0 };
         }
-        summary[categoryId].total += t.expense || 0;
+        if (t.type === 'expense') {
+          summary[categoryId].expense += t.expense || 0;
+        }
+        if (t.type === 'income') {
+          summary[categoryId].income += t.income || 0;
+        }
       });
 
+    // Sort by total transaction amount (expense + income)
     return Object.values(summary).sort(
-      (a, b) => b.total - a.total
+      (a, b) => (b.expense + b.income) - (a.expense + a.income)
     );
-  }, [transactions, selectedMonth, selectedYear]);
+  }, [transactions, selectedMonth, selectedYear, categories]);
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-64">Loading budgets...</div>;
@@ -360,13 +372,14 @@ export const Budgets: React.FC = () => {
             <thead className="bg-green-50">
               <tr>
                 <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-green-700">Category</th>
-                <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wider text-green-700">Spent</th>
+                <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wider text-green-700">Expense</th>
+                <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wider text-green-700">Income</th>
               </tr>
             </thead>
             <tbody>
               {categorySpendingSummary.length === 0 ? (
                 <tr>
-                  <td colSpan={2} className="py-4 px-4 text-center text-muted-foreground">No expenses in this month.</td>
+                  <td colSpan={3} className="py-4 px-4 text-center text-muted-foreground">No transactions in this month.</td>
                 </tr>
               ) : (
                 categorySpendingSummary.map((cat) => (
@@ -375,8 +388,11 @@ export const Budgets: React.FC = () => {
                       <span className="w-3 h-3 rounded-full" style={{ background: cat.color }} />
                       <span>{cat.name}</span>
                     </td>
-                    <td className="py-2 px-4 text-right font-mono font-medium text-green-900">
-                      {formatCurrency(cat.total)}
+                    <td className="py-2 px-4 text-right font-mono font-medium text-red-600">
+                      {cat.expense > 0 ? formatCurrency(cat.expense) : '-'}
+                    </td>
+                    <td className="py-2 px-4 text-right font-mono font-medium text-green-600">
+                      {cat.income > 0 ? formatCurrency(cat.income) : '-'}
                     </td>
                   </tr>
                 ))
