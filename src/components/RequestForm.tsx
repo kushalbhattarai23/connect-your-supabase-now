@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
-import { useRequests } from '@/hooks/useRequests';
+import { useRequests, NewRequest } from '@/hooks/useRequests';
 import { toast } from 'sonner';
 import { useState } from 'react';
 
@@ -47,11 +47,14 @@ export const RequestForm = () => {
 
     setIsSubmitting(true);
     try {
-      await createRequest({
-        ...values,
+      const newRequest: NewRequest = {
+        title: values.title,
+        type: values.type,
         message: values.message || null,
         user_id: user.id,
-      });
+      };
+
+      await createRequest(newRequest);
       toast.success('Request Submitted', {
         description: 'Thank you! We have received your request.',
       });
