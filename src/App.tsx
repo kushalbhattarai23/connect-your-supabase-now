@@ -18,6 +18,7 @@ import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import TermsOfService from "@/pages/TermsOfService";
 import Sitemap from "@/pages/Sitemap";
 import RequireAuth from '@/components/Auth/RequireAuth';
+import RequireAdmin from "@/components/Auth/RequireAdmin";
 import { HelmetProvider } from 'react-helmet-async';
 
 // Lazy load pages
@@ -320,26 +321,34 @@ function App() {
                         }
                       />
 
-                      {/* Admin Routes (not protected here) */}
+                      {/* Admin Routes (protected by RequireAdmin) */}
                       <Route path="/admin" element={
-                        <Suspense fallback={<div>Loading...</div>}>
-                          <AdminDashboard />
-                        </Suspense>
+                        <RequireAdmin>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <AdminDashboard />
+                          </Suspense>
+                        </RequireAdmin>
                       } />
                       <Route path="/admin/users" element={
-                        <Suspense fallback={<div>Loading...</div>}>
-                          <AdminUsers />
-                        </Suspense>
+                        <RequireAdmin>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <AdminUsers />
+                          </Suspense>
+                        </RequireAdmin>
                       } />
                       <Route path="/admin/content" element={
-                        <Suspense fallback={<div>Loading...</div>}>
-                          <AdminContent />
-                        </Suspense>
+                        <RequireAdmin>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <AdminContent />
+                          </Suspense>
+                        </RequireAdmin>
                       } />
                       <Route path="/admin/add-show" element={
-                        <Suspense fallback={<div>Loading...</div>}>
-                          <AdminAddShow />
-                        </Suspense>
+                        <RequireAdmin>
+                          <Suspense fallback={<div>Loading...</div>}>
+                            <AdminAddShow />
+                          </Suspense>
+                        </RequireAdmin>
                       } />
                     </Route>
                     <Route path="*" element={<NotFound />} />
