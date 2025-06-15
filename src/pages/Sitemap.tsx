@@ -1,7 +1,7 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Tv } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 
 const sitemapLinks = [
   {
@@ -132,21 +132,27 @@ const CardLink = ({ to, title }: { to: string; title: string }) => (
 );
 
 const Sitemap: React.FC = () => (
-  <div className="max-w-3xl mx-auto py-8 px-4">
-    <h1 className="text-3xl font-bold mb-8">Sitemap</h1>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      {sitemapLinks.map((section) => (
-        <div key={section.section}>
-          <h2 className="text-xl font-semibold mb-3">{section.section}</h2>
-          <div className="space-y-2">
-            {section.links.map((link) => (
-              <CardLink key={link.to} to={link.to} title={link.title} />
-            ))}
+  <>
+    <Helmet>
+      <title>Sitemap | Track Hub</title>
+      <meta name="description" content="Explore all public and private pages and features in Track Hub." />
+    </Helmet>
+    <div className="max-w-3xl mx-auto py-8 px-4">
+      <h1 className="text-3xl font-bold mb-8">Sitemap</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {sitemapLinks.map((section) => (
+          <div key={section.section}>
+            <h2 className="text-xl font-semibold mb-3">{section.section}</h2>
+            <div className="space-y-2">
+              {section.links.map((link) => (
+                <CardLink key={link.to} to={link.to} title={link.title} />
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
-  </div>
+  </>
 );
 
 export default Sitemap;
