@@ -104,6 +104,24 @@ export const Budgets: React.FC = () => {
         setFormError('A Monthly Total Budget for this month/year already exists.');
         return;
       }
+      // Additional CHECK: prevent monthly total < sum of category budgets
+      const totalCategoryBudgets = budgets
+        .filter(
+          (b) =>
+            !!b.category_id &&
+            b.month === formData.month &&
+            b.year === formData.year
+        )
+        .reduce((sum, b) => sum + b.amount, 0);
+
+      // If editing, exclude the old value from editingBudget
+      // (but we're only editing a monthly in this path, so shouldn't matter.)
+      if (formData.amount < totalCategoryBudgets) {
+        setFormError(
+          `Monthly Total Budget (${formData.amount}) cannot be less than the sum of all category budgets (${totalCategoryBudgets}).`
+        );
+        return;
+      }
     }
 
     // If creating/updating a category budget, run the check for budget exceeding monthly total
