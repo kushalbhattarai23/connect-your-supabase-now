@@ -38,55 +38,106 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     let mounted = true;
+    let retryTimeout: NodeJS.Timeout;
 
-    const updateAuthState = (session: Session | null) => {
+    const updateAuthState = (session: Session | null, source: string = 'unknown') => {
       if (!mounted) return;
       
-      console.log('Updating auth state:', session?.user?.email || 'No session');
+      console.log(`Updating auth state from ${source}:`, {
+        hasSession: !!session,
+        userEmail: session?.user?.email || 'No session',
+        accessToken: session?.access_token ? 'Present' : 'Missing',
+        refreshToken: session?.refresh_token ? 'Present' : 'Missing'
+      });
+      
       setSession(session);
       setUser(session?.user ? adaptSupabaseUser(session.user) : null);
       setIsLoading(false);
+      setError(null);
     };
 
-    // Set up auth state listener
+    // Set up auth state listener first
+    console.log('Setting up auth state listener...');
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
         
-        console.log('Auth state changed:', event, session?.user?.email || 'No session');
-        updateAuthState(session);
+        console.log('Auth event received:', {
+          event,
+          userEmail: session?.user?.email || 'No session',
+          timestamp: new Date().toISOString()
+        });
+        
+        updateAuthState(session, `auth-event-${event}`);
       }
     );
 
-    // Get initial session with proper error handling
-    const getInitialSession = async () => {
+    // Function to get initial session with retry logic
+    const getInitialSession = async (attempt = 1) => {
       try {
-        console.log('Getting initial session...');
-        const { data: { session }, error } = await supabase.auth.getSession();
+        console.log(`Getting initial session (attempt ${attempt})...`);
+        
+        // First try to get the session
+        const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
         
         if (!mounted) return;
 
-        if (error) {
-          console.error('Error getting initial session:', error);
-          setError(error);
-          setIsLoading(false);
+        if (sessionError) {
+          console.error('Error getting initial session:', sessionError);
+          
+          // If it's a token refresh error, try to refresh explicitly
+          if (sessionError.message?.includes('refresh') && attempt === 1) {
+            console.log('Attempting token refresh...');
+            const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+            
+            if (refreshError) {
+              console.error('Token refresh failed:', refreshError);
+              setError(sessionError);
+              setIsLoading(false);
+            } else if (refreshData.session) {
+              console.log('Token refresh successful');
+              updateAuthState(refreshData.session, 'token-refresh');
+            } else {
+              console.log('No session after refresh');
+              updateAuthState(null, 'no-session-after-refresh');
+            }
+          } else {
+            setError(sessionError);
+            setIsLoading(false);
+          }
         } else {
-          console.log('Initial session retrieved:', session?.user?.email || 'No session');
-          updateAuthState(session);
+          console.log('Initial session retrieved:', {
+            hasSession: !!initialSession,
+            userEmail: initialSession?.user?.email || 'No session',
+            expiresAt: initialSession?.expires_at ? new Date(initialSession.expires_at * 1000).toISOString() : 'No expiry'
+          });
+          updateAuthState(initialSession, 'initial-load');
         }
       } catch (err) {
         if (!mounted) return;
-        console.error('Error in getInitialSession:', err);
-        setError(err as Error);
-        setIsLoading(false);
+        console.error(`Error in getInitialSession (attempt ${attempt}):`, err);
+        
+        // Retry once after a short delay
+        if (attempt === 1) {
+          retryTimeout = setTimeout(() => {
+            getInitialSession(2);
+          }, 1000);
+        } else {
+          setError(err as Error);
+          setIsLoading(false);
+        }
       }
     };
 
+    // Start session retrieval
     getInitialSession();
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      if (retryTimeout) {
+        clearTimeout(retryTimeout);
+      }
     };
   }, []);
 

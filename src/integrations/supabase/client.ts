@@ -6,23 +6,83 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://gzampnmelaeqhwzzsvam.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd6YW1wbm1lbGFlcWh3enpzdmFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3NTMyNjcsImV4cCI6MjA2MzMyOTI2N30.x5KnK9mtIDf-ZNiGKSGlRqwjP57WMZ0Jx_ZdWWk3--8";
 
-// Storage detection with error handling
-const getStorage = () => {
+// Custom storage implementation with cookie fallback
+const createCustomStorage = () => {
   if (typeof window === 'undefined') {
-    return undefined;
+    return {
+      getItem: () => null,
+      setItem: () => {},
+      removeItem: () => {},
+    };
   }
-  
-  try {
-    // Test localStorage availability
-    const testKey = 'supabase-storage-test';
-    window.localStorage.setItem(testKey, 'test');
-    window.localStorage.removeItem(testKey);
-    console.log('localStorage is available for session persistence');
-    return window.localStorage;
-  } catch (error) {
-    console.warn('localStorage not available, sessions will not persist:', error);
-    return undefined;
-  }
+
+  // Cookie helper functions
+  const setCookie = (name: string, value: string, days: number = 30) => {
+    const expires = new Date();
+    expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax`;
+  };
+
+  const getCookie = (name: string) => {
+    const nameEQ = name + "=";
+    const ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+      if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+    }
+    return null;
+  };
+
+  const removeCookie = (name: string) => {
+    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`;
+  };
+
+  return {
+    getItem: (key: string) => {
+      try {
+        // Try localStorage first
+        const localItem = window.localStorage.getItem(key);
+        if (localItem) {
+          console.log('Retrieved from localStorage:', key);
+          return localItem;
+        }
+        
+        // Fallback to cookies
+        const cookieItem = getCookie(key);
+        if (cookieItem) {
+          console.log('Retrieved from cookies:', key);
+          return cookieItem;
+        }
+        
+        return null;
+      } catch (error) {
+        console.warn('Storage getItem error:', error);
+        return getCookie(key);
+      }
+    },
+    setItem: (key: string, value: string) => {
+      try {
+        // Set in both localStorage and cookies
+        window.localStorage.setItem(key, value);
+        setCookie(key, value, 30);
+        console.log('Stored in both localStorage and cookies:', key);
+      } catch (error) {
+        console.warn('localStorage setItem failed, using cookies only:', error);
+        setCookie(key, value, 30);
+      }
+    },
+    removeItem: (key: string) => {
+      try {
+        window.localStorage.removeItem(key);
+        removeCookie(key);
+        console.log('Removed from both localStorage and cookies:', key);
+      } catch (error) {
+        console.warn('localStorage removeItem failed, removing from cookies only:', error);
+        removeCookie(key);
+      }
+    },
+  };
 };
 
 // Import the supabase client like this:
@@ -30,13 +90,23 @@ const getStorage = () => {
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: getStorage(),
+    storage: createCustomStorage(),
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    flowType: 'pkce'
+    flowType: 'pkce',
+    storageKey: 'supabase.auth.token',
+    debug: true
   }
 });
 
-// Log the configuration for debugging
-console.log('Supabase client initialized with localStorage:', !!getStorage());
+// Test storage on initialization
+console.log('Supabase client initialized with custom storage');
+if (typeof window !== 'undefined') {
+  const testKey = 'supabase-storage-test';
+  const storage = createCustomStorage();
+  storage.setItem(testKey, 'test-value');
+  const retrieved = storage.getItem(testKey);
+  storage.removeItem(testKey);
+  console.log('Storage test result:', retrieved === 'test-value' ? 'PASSED' : 'FAILED');
+}
