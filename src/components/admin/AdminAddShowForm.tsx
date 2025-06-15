@@ -5,13 +5,23 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRoles } from "@/hooks/useUserRoles";
-import { UploadIcon, Import, Download } from "lucide-react";
+import { UploadIcon, Import, Download, Calendar, Tv } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { parseCSV, downloadCSV, convertToCSV } from "@/utils/csvUtils";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { Link } from "react-router-dom";
 
 const CSV_HEADERS = ["Show", "Episode", "Title", "Air Date"];
+const EPISODES_PER_PAGE = 6;
 
 const AdminAddShowForm: React.FC = () => {
   const { isAdmin } = useUserRoles();
@@ -21,6 +31,7 @@ const AdminAddShowForm: React.FC = () => {
   const [csvLoading, setCsvLoading] = useState(false);
   const [importedEpisodes, setImportedEpisodes] = useState<any[]>([]);
   const [importErrorRows, setImportErrorRows] = useState<{ row: number, error: string }[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Only render if admin
   if (!isAdmin) return null;
@@ -192,6 +203,16 @@ const AdminAddShowForm: React.FC = () => {
     if (uploadedEpisodes.length > 0) setCsvText("");
   };
 
+  // Pagination logic
+  const totalPages = Math.ceil(importedEpisodes.length / EPISODES_PER_PAGE);
+  const startIndex = (currentPage - 1) * EPISODES_PER_PAGE;
+  const endIndex = startIndex + EPISODES_PER_PAGE;
+  const currentEpisodes = importedEpisodes.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   return (
     <Card className="max-w-3xl mx-auto my-6 border-blue-100">
       <CardHeader>
@@ -266,29 +287,79 @@ Agent Carter,S01E02,Bridge and Tunnel,"January 13, 2015"
         </form>
         {importedEpisodes.length > 0 && (
           <div className="mt-8">
-            <div className="font-semibold mb-2 text-lg">Imported Episodes</div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Show</TableHead>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Season</TableHead>
-                  <TableHead>Episode</TableHead>
-                  <TableHead>Air Date</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {importedEpisodes.map((ep, idx) => (
-                  <TableRow key={ep.id || idx}>
-                    <TableCell>{ep.show_title}</TableCell>
-                    <TableCell>{ep.title}</TableCell>
-                    <TableCell>{ep.season_number}</TableCell>
-                    <TableCell>{ep.episode_number}</TableCell>
-                    <TableCell>{ep.air_date}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-blue-700">Imported Episodes</h3>
+              <div className="text-sm text-muted-foreground">
+                {importedEpisodes.length} episode{importedEpisodes.length !== 1 ? 's' : ''} imported
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              {currentEpisodes.map((episode, idx) => (
+                <Card key={episode.id || idx} className="hover:shadow-lg transition-shadow border-blue-100">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <CardTitle className="text-lg text-blue-600 line-clamp-2">
+                        {episode.title}
+                      </CardTitle>
+                      <div className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full whitespace-nowrap ml-2">
+                        S{episode.season_number}E{episode.episode_number}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Tv className="h-4 w-4 text-blue-500" />
+                      <Link 
+                        to={`/show/${episode.show_id}`}
+                        className="text-blue-600 hover:text-blue-800 hover:underline font-medium text-sm"
+                      >
+                        {episode.show_title}
+                      </Link>
+                    </div>
+                    
+                    {episode.air_date && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Calendar className="h-4 w-4" />
+                        {new Date(episode.air_date).toLocaleDateString()}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <Pagination className="justify-center">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                  
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        onClick={() => handlePageChange(page)}
+                        isActive={currentPage === page}
+                        className="cursor-pointer"
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                  
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
           </div>
         )}
         {(importErrorRows.length > 0 && importedEpisodes.length > 0) && (
