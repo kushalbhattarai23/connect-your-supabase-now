@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,6 +46,11 @@ export const PublicUniverseDetail: React.FC = () => {
   }).filter(Boolean);
 
   const allEpisodes = universeItems.sort((a, b) => {
+    // Default sort by air date
+    if (a.air_date && b.air_date) {
+      return new Date(a.air_date).getTime() - new Date(b.air_date).getTime();
+    }
+    // Fallback to season/episode if air dates are missing
     if (a.season_number !== b.season_number) {
       return a.season_number - b.season_number;
     }
@@ -65,8 +69,15 @@ export const PublicUniverseDetail: React.FC = () => {
       return matchesSearch && matchesSeason;
     });
 
-    // Sort by episode number
+    // Sort by air date
     filtered.sort((a, b) => {
+      if (a.air_date && b.air_date) {
+        const dateA = new Date(a.air_date).getTime();
+        const dateB = new Date(b.air_date).getTime();
+        return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+      }
+      
+      // Fallback to season/episode if air dates are missing
       const seasonA = a.season_number;
       const seasonB = b.season_number;
       const episodeA = a.episode_number;
@@ -171,15 +182,15 @@ export const PublicUniverseDetail: React.FC = () => {
               />
             </div>
 
-            {/* Episode Number Sort */}
+            {/* Air Date Sort */}
             <Select value={sortOrder} onValueChange={(value: 'asc' | 'desc') => setSortOrder(value)}>
               <SelectTrigger className="border-blue-200 focus:border-blue-500 focus:ring-blue-500">
                 <ArrowUpDown className="h-4 w-4 mr-2 text-blue-500" />
                 <SelectValue placeholder="Sort order" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="asc">Ascending</SelectItem>
-                <SelectItem value="desc">Descending</SelectItem>
+                <SelectItem value="asc">Oldest First</SelectItem>
+                <SelectItem value="desc">Newest First</SelectItem>
               </SelectContent>
             </Select>
 
