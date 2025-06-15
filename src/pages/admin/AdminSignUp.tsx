@@ -5,18 +5,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+// Removed Alert import
+// import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2, UserPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from "@/hooks/use-toast";
 
 export default function AdminSignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Remove error state - we will display errors using toast
+  // const [error, setError] = useState<string | null>(null);
   const { signUp, user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   React.useEffect(() => {
     if (user) navigate('/admin');
@@ -25,10 +29,29 @@ export default function AdminSignUp() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError(null);
+    // setError(null);
     const { user: newUser, error } = await signUp(email, password);
+
     if (error) {
-      setError(error.message);
+      // Show specific toast for already registered error
+      const msg = error.message?.toLowerCase() || "";
+      if (
+        msg.includes("already registered") ||
+        msg.includes("user already exists") ||
+        msg.includes("already exists")
+      ) {
+        toast({
+          title: "Error",
+          description: "Email already registered.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
       setIsLoading(false);
       return;
     }
@@ -51,7 +74,8 @@ export default function AdminSignUp() {
           <CardDescription>Create a new admin account</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
+          {/* Removed inline Alert.
+          {error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>} */}
           <form onSubmit={handleSignUp} className="space-y-4">
             <div>
               <Label>Email</Label>
