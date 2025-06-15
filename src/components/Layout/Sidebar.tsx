@@ -26,7 +26,8 @@ import {
   ChevronUp,
   User,
   Target,
-  CreditCard
+  CreditCard,
+  MessageSquarePlus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -361,6 +362,18 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
           >
             <SettingsIcon className="w-4 h-4 flex-shrink-0" />
             {!isCollapsed && <span>Settings</span>}
+          </Link>
+          <Link
+            to="/requests"
+            title={isCollapsed ? "Requests" : undefined}
+            className={cn(
+              "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors",
+              location.pathname === "/requests" && "bg-accent text-accent-foreground",
+              isCollapsed && "lg:justify-center lg:space-x-0"
+            )}
+          >
+            <MessageSquarePlus className="w-4 h-4 flex-shrink-0" />
+            {!isCollapsed && <span>Requests</span>}
           </Link>
         </div>
       )}

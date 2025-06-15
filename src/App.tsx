@@ -18,6 +18,7 @@ import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import TermsOfService from "@/pages/TermsOfService";
 import Sitemap from "@/pages/Sitemap";
 import RequireAuth from '@/components/Auth/RequireAuth';
+import Requests from '@/pages/Requests';
 
 // Lazy load pages
 const TvShowsDashboard = lazy(() => import('@/apps/tv-shows/pages/Dashboard'));
@@ -52,6 +53,7 @@ const PublicUniversesList = lazy(() => import('@/pages/PublicUniverses'));
 const PublicShowsList = lazy(() => import('@/pages/PublicShows'));
 const PublicUniverseDetail = lazy(() => import('@/pages/PublicUniverseDetail'));
 const PublicShowDetail = lazy(() => import('@/pages/PublicShowDetail'));
+const Requests = lazy(() => import('@/pages/Requests'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -85,6 +87,14 @@ function App() {
                     <Route path="/" element={<Index />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/settings" element={<Settings />} />
+
+                    <Route path="/requests" element={
+                      <RequireAuth>
+                        <Suspense fallback={<div>Loading...</div>}>
+                          <Requests />
+                        </Suspense>
+                      </RequireAuth>
+                    } />
 
                     {/* Public routes with layout */}
                     <Route path="/public/universes" element={
