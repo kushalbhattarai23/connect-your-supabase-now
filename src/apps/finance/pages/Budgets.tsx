@@ -90,15 +90,33 @@ export const Budgets: React.FC = () => {
 
     setFormError(null);
 
-    // If creating/updating a category budget, run the check
+    // --- Restrict to only one Monthly Total Budget per month/year ---
+    if (budgetType === 'monthly') {
+      // If there is a monthly total budget already and it's not the one we are editing, block creation
+      const existingMonthly = budgets.find(
+        (b) =>
+          b.category_id === null &&
+          b.month === formData.month &&
+          b.year === formData.year &&
+          (!editingBudget || b.id !== editingBudget.id)
+      );
+      if (existingMonthly) {
+        setFormError('A Monthly Total Budget for this month/year already exists.');
+        return;
+      }
+    }
+
+    // If creating/updating a category budget, run the check for budget exceeding monthly total
     if (budgetType === "category") {
-      // If we are editing, exclude the old budget and add the new amount
+      const monthlyTotalBudget = budgets.find((b) => !b.category_id && b.month === formData.month && b.year === formData.year);
       const oldAmount = editingBudget ? editingBudget.amount : 0;
       const totalCatBudgetsExcludingThis = budgets
         .filter(
           (b) =>
             !!b.category_id &&
-            (editingBudget ? b.id !== editingBudget.id : true)
+            (editingBudget ? b.id !== editingBudget.id : true) &&
+            b.month === formData.month &&
+            b.year === formData.year
         )
         .reduce((sum, b) => sum + b.amount, 0);
       const newCatBudgetsTotal = totalCatBudgetsExcludingThis + formData.amount;
@@ -107,10 +125,6 @@ export const Budgets: React.FC = () => {
         monthlyTotalBudget &&
         newCatBudgetsTotal > monthlyTotalBudget.amount
       ) {
-        // Show toast and abort
-        window?.toast?.error?.(
-          `Category budgets (${formatCurrency(newCatBudgetsTotal)}) cannot exceed the Monthly Total Budget (${formatCurrency(monthlyTotalBudget.amount)}).`
-        );
         setFormError(
           `Category budgets cannot exceed the Monthly Total Budget (${formatCurrency(monthlyTotalBudget.amount)}).`
         );
