@@ -1,6 +1,18 @@
+
 import { AppConfig } from '@/types';
 
 export const availableApps: AppConfig[] = [
+  {
+    id: 'public',
+    name: 'Public',
+    description: 'Browse public shows and universes',
+    icon: 'Globe',
+    color: 'blue',
+    routes: [
+      { path: '/public/universes', name: 'All Universes', icon: 'Globe' },
+      { path: '/public/shows', name: 'All Shows', icon: 'Tv' }
+    ]
+  },
   {
     id: 'tv-shows',
     name: 'TV Shows',
@@ -48,6 +60,6 @@ export const availableApps: AppConfig[] = [
 ];
 
 export const getEnabledApps = (settings: any) => {
-  // For now, return all apps except admin. In the future, this could be configured per user/org
+  // Return all apps including the new public app - available to everyone
   return availableApps.filter(app => app.id !== 'admin');
 };

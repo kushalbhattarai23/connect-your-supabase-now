@@ -76,6 +76,7 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
   
   // State for accordion sections
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    'public': true,
     'tv-shows': true,
     'finance': true,
     'admin': true
@@ -94,12 +95,16 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
     return IconComponent || Home;
   };
 
-  // Filter out the admin app if user is not admin
+  // Filter apps based on user permissions
   const visibleApps = enabledApps.filter(app => {
     if (app.id === 'admin') {
       const shouldShow = isAdmin;
       console.log('Admin app visibility check - isAdmin:', isAdmin, 'shouldShow:', shouldShow);
       return shouldShow;
+    }
+    // Show public app to everyone
+    if (app.id === 'public') {
+      return true;
     }
     return true;
   });
@@ -198,6 +203,27 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ isCollapsed = false, on
                     .filter(route => route.path !== '/tv-shows/show/:slug')
                     .map((route) => {
                       const Icon = getIcon(route.icon || 'Home');
+                      
+                      // Show public app routes to everyone
+                      if (app.id === 'public') {
+                        return (
+                          <Link
+                            key={route.path}
+                            to={route.path}
+                            title={isCollapsed ? route.name : undefined}
+                            className={cn(
+                              "flex items-center space-x-3 px-3 lg:px-6 py-2 rounded-lg transition-colors text-sm",
+                              location.pathname === route.path
+                                ? `bg-${app.color}-100 text-${app.color}-700 dark:bg-${app.color}-900 dark:text-${app.color}-300`
+                                : "text-muted-foreground hover:text-foreground hover:bg-accent",
+                              isCollapsed && "lg:justify-center lg:space-x-0 lg:px-3"
+                            )}
+                          >
+                            <Icon className="w-4 h-4 flex-shrink-0" />
+                            {!isCollapsed && <span>{route.name}</span>}
+                          </Link>
+                        );
+                      }
                       
                       // Show TV Shows routes to everyone, but finance/admin routes only to authenticated users
                       if ((app.id === 'finance' || app.id === 'admin') && !user) {
