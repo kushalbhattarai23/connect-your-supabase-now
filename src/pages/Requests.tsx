@@ -1,20 +1,30 @@
 
 import { RequestForm } from "@/components/RequestForm";
-import { useRequests } from "@/hooks/useRequests";
+import { useRequests, UpdateRequest } from "@/hooks/useRequests";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from 'date-fns';
 import { Skeleton } from "@/components/ui/skeleton";
+import { useUserRoles } from "@/hooks/useUserRoles";
+import { AdminRequestActions } from "@/components/AdminRequestActions";
 
 const RequestsPage = () => {
-    const { requests, isLoading, error } = useRequests();
+    const { isAdmin } = useUserRoles();
+    const { requests, isLoading, error, updateRequest } = useRequests({ isAdmin });
 
-    const getStatusVariant = (status: string) => {
+    const getStatusVariant = (status: string): "secondary" | "default" | "destructive" | "outline" => {
         switch (status) {
-            case 'pending': return 'secondary';
-            case 'approved': return 'default';
-            case 'rejected': return 'destructive';
-            default: return 'outline';
+            case 'pending':
+            case 'will do in future':
+                return 'secondary';
+            case 'approved':
+            case 'done':
+                return 'default';
+            case 'rejected':
+            case 'will not be available':
+                return 'destructive';
+            default:
+                return 'outline';
         }
     };
 
@@ -39,7 +49,9 @@ const RequestsPage = () => {
                 </div>
 
                 <div className="md:col-span-2">
-                    <h2 className="text-2xl font-bold tracking-tight mb-4">Your Past Requests</h2>
+                    <h2 className="text-2xl font-bold tracking-tight mb-4">
+                        {isAdmin ? 'All User Requests' : 'Your Past Requests'}
+                    </h2>
                     
                     {isLoading && (
                         <div className="space-y-4">
@@ -63,7 +75,15 @@ const RequestsPage = () => {
                                                         {request.type === 'tv_show_request' ? 'TV Show Request' : 'Other Feedback'} - Submitted on {format(new Date(request.created_at), 'PPP')}
                                                     </CardDescription>
                                                 </div>
-                                                <Badge variant={getStatusVariant(request.status)}>{request.status}</Badge>
+                                                {isAdmin && updateRequest ? (
+                                                    <AdminRequestActions
+                                                        requestId={request.id}
+                                                        currentStatus={request.status}
+                                                        updateRequest={updateRequest}
+                                                    />
+                                                ) : (
+                                                    <Badge variant={getStatusVariant(request.status)} className="capitalize">{request.status}</Badge>
+                                                )}
                                             </div>
                                         </CardHeader>
                                         {request.message && (
@@ -76,7 +96,9 @@ const RequestsPage = () => {
                             </div>
                         ) : (
                             <Card className="flex items-center justify-center h-32">
-                                <p className="text-muted-foreground">You haven't made any requests yet.</p>
+                                <p className="text-muted-foreground">
+                                    {isAdmin ? 'No requests have been made yet.' : "You haven't made any requests yet."}
+                                </p>
                             </Card>
                         )
                     )}

@@ -6,23 +6,29 @@ import { Database } from '@/integrations/supabase/types';
 
 export type Request = Database['public']['Tables']['requests']['Row'];
 export type NewRequest = Database['public']['Tables']['requests']['Insert'];
+export type UpdateRequest = Database['public']['Tables']['requests']['Update'];
 
-export function useRequests() {
+export function useRequests({ isAdmin = false } = {}) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: requests, isLoading, error } = useQuery({
-    queryKey: ['requests', user?.id],
+    queryKey: ['requests', user?.id, isAdmin],
     queryFn: async () => {
       if (!user) return [];
-      const { data, error } = await supabase
+      
+      let query = supabase
         .from('requests')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .select('*');
 
-      if (error) {
-        throw error;
+      if (!isAdmin) {
+        query = query.eq('user_id', user.id)
+      }
+      
+      const { data, error: queryError } = await query.order('created_at', { ascending: false });
+
+      if (queryError) {
+        throw queryError;
       }
       return data;
     },
@@ -31,19 +37,38 @@ export function useRequests() {
 
   const createRequestMutation = useMutation({
     mutationFn: async (newRequest: NewRequest) => {
-      const { data, error } = await supabase
+      const { data, error: mutationError } = await supabase
         .from('requests')
         .insert(newRequest)
         .select()
         .single();
         
-      if (error) {
-        throw error;
+      if (mutationError) {
+        throw mutationError;
       }
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['requests', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['requests'] });
+    },
+  });
+
+  const updateRequestMutation = useMutation({
+    mutationFn: async ({ id, ...updateData }: { id: string } & UpdateRequest) => {
+      const { data, error: mutationError } = await supabase
+        .from('requests')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+        
+      if (mutationError) {
+        throw mutationError;
+      }
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['requests'] });
     },
   });
 
@@ -52,5 +77,6 @@ export function useRequests() {
     isLoading,
     error,
     createRequest: createRequestMutation.mutateAsync,
+    updateRequest: updateRequestMutation.mutateAsync,
   };
 }
