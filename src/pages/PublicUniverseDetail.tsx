@@ -300,7 +300,7 @@ export const PublicUniverseDetail: React.FC = () => {
                     S{episode.season_number}E{episode.episode_number}
                   </Badge>
                 </div>
-                <h3 className="text-base font-semibold text-gray-900 truncate">{episode.episode_title}</h3>
+                <span className="text-base font-semibold text-gray-900 truncate">{episode.episode_title}</span>
               </CardHeader>
               <CardContent className="space-y-2">
                 {episode.air_date && (
