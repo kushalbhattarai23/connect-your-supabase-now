@@ -6,12 +6,31 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://gzampnmelaeqhwzzsvam.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd6YW1wbm1lbGFlcWh3enpzdmFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3NTMyNjcsImV4cCI6MjA2MzMyOTI2N30.x5KnK9mtIDf-ZNiGKSGlRqwjP57WMZ0Jx_ZdWWk3--8";
 
+// Detect storage availability
+const getStorage = () => {
+  if (typeof window !== 'undefined') {
+    try {
+      // Test if localStorage is available and working
+      const testKey = 'supabase-storage-test';
+      localStorage.setItem(testKey, 'test');
+      localStorage.removeItem(testKey);
+      return localStorage;
+    } catch (error) {
+      console.warn('localStorage not available, sessions will not persist');
+      return undefined;
+    }
+  }
+  return undefined;
+};
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
+    storage: getStorage(),
     persistSession: true,
-    autoRefreshToken: true
+    autoRefreshToken: true,
+    detectSessionInUrl: true
   }
 });

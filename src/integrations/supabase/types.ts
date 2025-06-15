@@ -206,6 +206,39 @@ export type Database = {
           },
         ]
       }
+      episodes_clone: {
+        Row: {
+          air_date: string | null
+          created_at: string
+          episode_number: number
+          id: string
+          season_number: number
+          show_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          air_date?: string | null
+          created_at?: string
+          episode_number: number
+          id?: string
+          season_number?: number
+          show_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          air_date?: string | null
+          created_at?: string
+          episode_number?: number
+          id?: string
+          season_number?: number
+          show_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       inventory_items: {
         Row: {
           category: string | null
@@ -381,7 +414,61 @@ export type Database = {
           },
         ]
       }
+      show_universes_clone: {
+        Row: {
+          created_at: string
+          id: string
+          show_id: string
+          universe_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          show_id: string
+          universe_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          show_id?: string
+          universe_id?: string
+        }
+        Relationships: []
+      }
       shows: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_public: boolean
+          poster_url: string | null
+          slug: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          poster_url?: string | null
+          slug?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          poster_url?: string | null
+          slug?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      shows_clone: {
         Row: {
           created_at: string
           description: string | null
@@ -619,6 +706,39 @@ export type Database = {
         }
         Relationships: []
       }
+      universes_clone: {
+        Row: {
+          created_at: string
+          creator_id: string | null
+          description: string | null
+          id: string
+          is_public: boolean
+          name: string
+          slug: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          creator_id?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          name: string
+          slug?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          name?: string
+          slug?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_episode_status: {
         Row: {
           created_at: string
@@ -751,6 +871,53 @@ export type Database = {
       generate_slug: {
         Args: { title: string }
         Returns: string
+      }
+      get_show_universe_data: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          universe_id: string
+          universe_name: string
+          universe_description: string
+          show_id: string
+          show_title: string
+          show_description: string
+          poster_url: string
+          slug: string
+          is_public: boolean
+          episode_id: string
+          episode_title: string
+          season_number: number
+          episode_number: number
+          air_date: string
+        }[]
+      }
+      get_universe_shows_episodes: {
+        Args: { in_universe_slug: string }
+        Returns: {
+          universe_name: string
+          show_title: string
+          episode_title: string
+          season_number: number
+          episode_number: number
+          air_date: string
+        }[]
+      }
+      get_universedata: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          universe_id: string
+          show_id: string
+          show_title: string
+          show_description: string
+          poster_url: string
+          slug: string
+          is_public: boolean
+          episode_id: string
+          episode_title: string
+          season_number: number
+          episode_number: number
+          air_date: string
+        }[]
       }
       get_user_organization_access: {
         Args: { org_id: string }
