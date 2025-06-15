@@ -54,7 +54,8 @@ export const availableApps: AppConfig[] = [
     routes: [
       { path: '/admin', name: 'Dashboard', icon: 'BarChart3' },
       { path: '/admin/users', name: 'Users', icon: 'Users' },
-      { path: '/admin/content', name: 'Content', icon: 'Globe' }
+      { path: '/admin/content', name: 'Content', icon: 'Globe' },
+      { path: '/admin/add-show', name: 'Add Show', icon: 'Plus' }
     ]
   }
 ];
@@ -63,3 +64,4 @@ export const getEnabledApps = (settings: any) => {
   // Return all apps including the new public app - available to everyone
   return availableApps.filter(app => app.id !== 'admin');
 };
+

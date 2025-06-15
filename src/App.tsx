@@ -47,6 +47,7 @@ const Credits = lazy(() => import('@/apps/finance/pages/Credits'));
 const AdminDashboard = lazy(() => import('@/apps/admin/pages/Dashboard'));
 const AdminUsers = lazy(() => import('@/apps/admin/pages/Users'));
 const AdminContent = lazy(() => import('@/apps/admin/pages/Content'));
+const AdminAddShow = lazy(() => import('@/pages/admin/AdminAddShow'));
 
 // Public pages
 const PublicUniversesList = lazy(() => import('@/pages/PublicUniverses'));
@@ -333,6 +334,11 @@ function App() {
                       <Route path="/admin/content" element={
                         <Suspense fallback={<div>Loading...</div>}>
                           <AdminContent />
+                        </Suspense>
+                      } />
+                      <Route path="/admin/add-show" element={
+                        <Suspense fallback={<div>Loading...</div>}>
+                          <AdminAddShow />
                         </Suspense>
                       } />
                     </Route>

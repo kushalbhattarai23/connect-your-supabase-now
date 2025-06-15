@@ -27,7 +27,8 @@ import {
   User,
   Target,
   CreditCard,
-  MessageSquarePlus
+  MessageSquarePlus,
+  Plus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -55,7 +56,9 @@ const iconMap = {
   X,
   User,
   Target,
-  CreditCard
+  CreditCard,
+  MessageSquarePlus,
+  Plus
 };
 
 interface SidebarContentProps {
