@@ -1,61 +1,150 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
+import { Tv } from "lucide-react";
+
+const sitemapLinks = [
+  {
+    section: "Public",
+    links: [
+      {
+        title: "All Universes",
+        to: "/public/universes",
+      },
+      {
+        title: "All Shows",
+        to: "/public/shows",
+      },
+    ],
+  },
+  {
+    section: "TV Shows",
+    links: [
+      {
+        title: "Dashboard",
+        to: "/tv-shows",
+      },
+      {
+        title: "My Shows",
+        to: "/tv-shows/my-shows",
+      },
+      {
+        title: "Browse Shows",
+        to: "/tv-shows/public-shows",
+      },
+      {
+        title: "Public Universes",
+        to: "/tv-shows/public-universes",
+      },
+      {
+        title: "Private Universes",
+        to: "/tv-shows/private-universes",
+      },
+    ],
+  },
+  {
+    section: "Finance",
+    links: [
+      {
+        title: "Dashboard",
+        to: "/finance",
+      },
+      {
+        title: "Transactions",
+        to: "/finance/transactions",
+      },
+      {
+        title: "Wallets",
+        to: "/finance/wallets",
+      },
+      {
+        title: "Categories",
+        to: "/finance/categories",
+      },
+      {
+        title: "Transfers",
+        to: "/finance/transfers",
+      },
+      {
+        title: "Budgets",
+        to: "/finance/budgets",
+      },
+      {
+        title: "Reports",
+        to: "/finance/reports",
+      },
+      {
+        title: "Settings",
+        to: "/finance/settings",
+      },
+      {
+        title: "Credits",
+        to: "/finance/credits",
+      },
+    ],
+  },
+  {
+    section: "General",
+    links: [
+      {
+        title: "Home",
+        to: "/",
+      },
+      {
+        title: "Profile",
+        to: "/profile",
+      },
+      {
+        title: "Settings",
+        to: "/settings",
+      },
+      {
+        title: "Sign In",
+        to: "/login",
+      },
+      {
+        title: "Sign Up",
+        to: "/signup",
+      },
+      {
+        title: "Privacy Policy",
+        to: "/privacy",
+      },
+      {
+        title: "Terms of Service",
+        to: "/terms",
+      },
+    ],
+  },
+];
+
+const CardLink = ({ to, title }: { to: string; title: string }) => (
+  <Link
+    to={to}
+    className="block group bg-white border border-blue-100 rounded-lg px-5 py-4 shadow-sm hover:shadow-md transition-shadow duration-200 mb-2 hover:border-blue-200"
+  >
+    <div className="flex items-center gap-2">
+      <Tv className="w-5 h-5 text-blue-400 group-hover:text-blue-600" />
+      <span className="font-semibold text-blue-700 group-hover:underline">{title}</span>
+    </div>
+    {/* Optionally add a description below the title if desired */}
+  </Link>
+);
 
 const Sitemap: React.FC = () => (
-  <div className="max-w-xl mx-auto py-8 px-4">
-    <h1 className="text-3xl font-bold mb-6">Sitemap</h1>
-    <div className="space-y-6">
-
-      {/* Public Links */}
-      <div>
-        <h2 className="text-xl font-semibold mb-2">Public</h2>
-        <div className="space-y-2 ml-2">
-          <Link to="/public/universes" className="block text-blue-600 hover:underline">All Universes</Link>
-          <Link to="/public/shows" className="block text-blue-600 hover:underline">All Shows</Link>
+  <div className="max-w-3xl mx-auto py-8 px-4">
+    <h1 className="text-3xl font-bold mb-8">Sitemap</h1>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {sitemapLinks.map((section) => (
+        <div key={section.section}>
+          <h2 className="text-xl font-semibold mb-3">{section.section}</h2>
+          <div className="space-y-2">
+            {section.links.map((link) => (
+              <CardLink key={link.to} to={link.to} title={link.title} />
+            ))}
+          </div>
         </div>
-      </div>
-
-      {/* TV Shows Links */}
-      <div>
-        <h2 className="text-xl font-semibold mb-2">TV Shows</h2>
-        <div className="space-y-2 ml-2">
-          <Link to="/tv-shows" className="block text-purple-600 hover:underline">Dashboard</Link>
-          <Link to="/tv-shows/my-shows" className="block text-purple-600 hover:underline">My Shows</Link>
-          <Link to="/tv-shows/public-shows" className="block text-purple-600 hover:underline">Browse Shows</Link>
-          <Link to="/tv-shows/public-universes" className="block text-purple-600 hover:underline">Public Universes</Link>
-          <Link to="/tv-shows/private-universes" className="block text-purple-600 hover:underline">Private Universes</Link>
-        </div>
-      </div>
-
-      {/* Finance Links */}
-      <div>
-        <h2 className="text-xl font-semibold mb-2">Finance</h2>
-        <div className="space-y-2 ml-2">
-          <Link to="/finance" className="block text-green-600 hover:underline">Dashboard</Link>
-          <Link to="/finance/transactions" className="block text-green-600 hover:underline">Transactions</Link>
-          <Link to="/finance/wallets" className="block text-green-600 hover:underline">Wallets</Link>
-          <Link to="/finance/categories" className="block text-green-600 hover:underline">Categories</Link>
-          <Link to="/finance/transfers" className="block text-green-600 hover:underline">Transfers</Link>
-          <Link to="/finance/budgets" className="block text-green-600 hover:underline">Budgets</Link>
-          <Link to="/finance/reports" className="block text-green-600 hover:underline">Reports</Link>
-          <Link to="/finance/settings" className="block text-green-600 hover:underline">Settings</Link>
-          <Link to="/finance/credits" className="block text-green-600 hover:underline">Credits</Link>
-        </div>
-      </div>
-
-      {/* Other Links */}
-      <div>
-        <h2 className="text-xl font-semibold mb-2">General</h2>
-        <div className="space-y-2 ml-2">
-          <Link to="/" className="block text-blue-600 hover:underline">Home</Link>
-          <Link to="/profile" className="block text-blue-600 hover:underline">Profile</Link>
-          <Link to="/settings" className="block text-blue-600 hover:underline">Settings</Link>
-          <Link to="/login" className="block text-blue-600 hover:underline">Sign In</Link>
-          <Link to="/signup" className="block text-blue-600 hover:underline">Sign Up</Link>
-          <Link to="/privacy" className="block text-blue-600 hover:underline">Privacy Policy</Link>
-          <Link to="/terms" className="block text-blue-600 hover:underline">Terms of Service</Link>
-        </div>
-      </div>
+      ))}
     </div>
   </div>
 );
