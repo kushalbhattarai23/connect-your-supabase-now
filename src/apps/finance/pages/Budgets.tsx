@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -132,6 +131,33 @@ export const Budgets: React.FC = () => {
   const totalMonthlySpent = getSpentAmount();
   const monthlyBudgetRemaining = totalMonthlyBudget - totalMonthlySpent;
   const monthlyProgressPercentage = totalMonthlyBudget > 0 ? (totalMonthlySpent / totalMonthlyBudget) * 100 : 0;
+
+  // Helper to get category spending summary for current month/year
+  const categorySpendingSummary = React.useMemo(() => {
+    // Map: categoryId => { name, color, total }
+    const summary: { [id: string]: { name: string; color: string; total: number } } = {};
+    transactions
+      .filter(
+        (t) =>
+          t.type === 'expense' &&
+          new Date(t.date).getMonth() + 1 === selectedMonth &&
+          new Date(t.date).getFullYear() === selectedYear
+      )
+      .forEach((t) => {
+        const categoryId = t.category_id || '__uncategorized__';
+        const categoryName = t.categories?.name || 'Uncategorized';
+        const categoryColor = t.categories?.color || '#9ca3af'; // gray
+
+        if (!summary[categoryId]) {
+          summary[categoryId] = { name: categoryName, color: categoryColor, total: 0 };
+        }
+        summary[categoryId].total += t.expense || 0;
+      });
+
+    return Object.values(summary).sort(
+      (a, b) => b.total - a.total
+    );
+  }, [transactions, selectedMonth, selectedYear]);
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-64">Loading budgets...</div>;
@@ -325,6 +351,40 @@ export const Budgets: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* --- Monthly Category Transactions Table --- */}
+      <div>
+        <h2 className="text-xl font-bold text-green-700 mt-6 mb-2">Monthly Transactions by Category</h2>
+        <div className="rounded-lg border border-green-100 shadow-sm overflow-x-auto bg-white">
+          <table className="min-w-full divide-y divide-green-100">
+            <thead className="bg-green-50">
+              <tr>
+                <th className="py-3 px-4 text-left text-xs font-semibold uppercase tracking-wider text-green-700">Category</th>
+                <th className="py-3 px-4 text-right text-xs font-semibold uppercase tracking-wider text-green-700">Spent</th>
+              </tr>
+            </thead>
+            <tbody>
+              {categorySpendingSummary.length === 0 ? (
+                <tr>
+                  <td colSpan={2} className="py-4 px-4 text-center text-muted-foreground">No expenses in this month.</td>
+                </tr>
+              ) : (
+                categorySpendingSummary.map((cat) => (
+                  <tr key={cat.name} className="border-b last:border-0 hover:bg-green-50 transition">
+                    <td className="py-2 px-4 flex items-center gap-2">
+                      <span className="w-3 h-3 rounded-full" style={{ background: cat.color }} />
+                      <span>{cat.name}</span>
+                    </td>
+                    <td className="py-2 px-4 text-right font-mono font-medium text-green-900">
+                      {formatCurrency(cat.total)}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {budgets.map((budget) => {
