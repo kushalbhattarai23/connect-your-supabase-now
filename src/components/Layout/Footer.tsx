@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Separator } from '@/components/ui/separator';
@@ -64,23 +65,18 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Features */}
+          {/* Public Section (NEW, replaces Features section) */}
           <div className="space-y-4">
-            <h3 className="font-semibold">Features</h3>
+            <h3 className="font-semibold">Public</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="/tv-shows/universes" className="text-muted-foreground hover:text-foreground transition-colors">
-                  TV Show Universes
+                <Link to="/public/universes" className="text-muted-foreground hover:text-foreground transition-colors">
+                  All Universes
                 </Link>
               </li>
               <li>
-                <Link to="/finance/wallets" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Wallets
-                </Link>
-              </li>
-              <li>
-                <Link to="/finance/loans" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Loans
+                <Link to="/public/shows" className="text-muted-foreground hover:text-foreground transition-colors">
+                  All Shows
                 </Link>
               </li>
             </ul>
@@ -115,3 +111,4 @@ export const Footer: React.FC = () => {
     </footer>
   );
 };
+
